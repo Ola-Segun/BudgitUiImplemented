@@ -234,7 +234,7 @@ class _RecurringIncomeReceiptRecordingScreenState
 
                 return accountsAsync.when(
                   data: (accounts) => DropdownButtonFormField<Account>(
-                    value: _selectedAccount,
+                    initialValue: _selectedAccount,
                     decoration: const InputDecoration(
                       labelText: 'Deposit Account',
                       border: OutlineInputBorder(),

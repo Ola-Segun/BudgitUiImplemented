@@ -7,7 +7,6 @@ import 'package:budget_tracker/core/error/result.dart';
 import 'package:budget_tracker/features/accounts/domain/entities/account.dart';
 import 'package:budget_tracker/features/accounts/domain/repositories/account_repository.dart';
 import 'package:budget_tracker/features/recurring_incomes/domain/entities/recurring_income.dart';
-import 'package:budget_tracker/features/recurring_incomes/domain/entities/recurring_income_instance.dart';
 import 'package:budget_tracker/features/recurring_incomes/domain/repositories/recurring_income_repository.dart';
 import 'package:budget_tracker/features/transactions/domain/entities/transaction.dart';
 import 'package:budget_tracker/features/transactions/domain/repositories/transaction_repository.dart';

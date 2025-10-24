@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -109,19 +110,48 @@ class _TransactionListScreenState extends ConsumerState<TransactionListScreen> {
       floatingActionButton: Consumer(
         builder: (context, ref, child) {
           final isLoading = ref.watch(transactionNotifierProvider).value?.isLoading ?? false;
-          return FloatingActionButton.extended(
-            onPressed: isLoading ? null : () => _showAddTransactionSheet(context),
-            icon: isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          return Container(
+            height: 56.0,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: isLoading ? null : () => _showAddTransactionSheet(context),
+                borderRadius: BorderRadius.circular(16),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isLoading)
+                      const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    else
+                      const Icon(Icons.add_rounded, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Text(
+                      isLoading ? 'Adding...' : 'Add',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
                     ),
-                  )
-                : const Icon(Icons.add_rounded),
-            label: Text(isLoading ? 'Adding...' : 'Add'),
+                  ],
+                ),
+              ),
+            ),
           ).pressEffect();
         },
       ),
@@ -159,7 +189,9 @@ class _TransactionListScreenState extends ConsumerState<TransactionListScreen> {
         itemBuilder: (context, index) {
           return _buildListItem(context, index, groupedTransactions, statsState, state);
         },
-      ),
+      ).animate()
+        .fadeIn(duration: 300.ms)
+        .slideY(begin: 0.02, duration: 300.ms, curve: Curves.easeOutCubic),
     );
   }
 
@@ -300,7 +332,9 @@ class _TransactionListScreenState extends ConsumerState<TransactionListScreen> {
           TransactionFiltersBar(),
           SizedBox(height: 18),
         ],
-      );
+      ).animate()
+        .fadeIn(duration: 400.ms)
+        .slideY(begin: -0.1, duration: 400.ms, curve: Curves.easeOutCubic);
     }
 
     // Stats Card (index 1)
@@ -308,7 +342,10 @@ class _TransactionListScreenState extends ConsumerState<TransactionListScreen> {
       return Column(
         children: [
           statsState.when(
-            data: (stats) => TransactionStatsCard(stats: stats),
+            data: (stats) => TransactionStatsCard(stats: stats)
+                .animate()
+                .fadeIn(duration: 500.ms, delay: 200.ms)
+                .slideY(begin: 0.1, duration: 500.ms, delay: 200.ms, curve: Curves.easeOutCubic),
             loading: () => const SizedBox.shrink(),
             error: (error, stack) => const SizedBox.shrink(),
           ),
@@ -333,13 +370,18 @@ class _TransactionListScreenState extends ConsumerState<TransactionListScreen> {
                   fontWeight: FontWeight.w600,
                 ),
           ),
-        );
+        ).animate()
+          .fadeIn(duration: 300.ms, delay: Duration(milliseconds: 100 * (currentIndex ~/ 2)))
+          .slideX(begin: 0.1, duration: 300.ms, delay: Duration(milliseconds: 100 * (currentIndex ~/ 2)), curve: Curves.easeOutCubic);
       }
 
       // Transactions for this date
       for (final transaction in dayTransactions) {
         if (index == currentIndex++) {
-          return TransactionTile(transaction: transaction);
+          return TransactionTile(transaction: transaction)
+              .animate()
+              .fadeIn(duration: 400.ms, delay: Duration(milliseconds: 50 * (currentIndex - 1)))
+              .slideY(begin: 0.05, duration: 400.ms, delay: Duration(milliseconds: 50 * (currentIndex - 1)), curve: Curves.easeOutCubic);
         }
       }
 

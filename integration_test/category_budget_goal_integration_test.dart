@@ -24,7 +24,7 @@ void main() {
       // This depends on the MainNavigationScaffold implementation
 
       // For now, let's try to navigate using GoRouter
-      final BuildContext context = tester.element(find.byType(MaterialApp));
+      final BuildContext context = tester.element(find.byType(MaterialApp).first);
       context.go('/more/categories');
       await tester.pumpAndSettle();
 
@@ -53,7 +53,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // Navigate to budget creation
-      context.go('/budgets/add');
+      final BuildContext context2 = tester.element(find.byType(MaterialApp).first);
+      context2.go('/budgets/add');
       await tester.pumpAndSettle();
 
       // Check if the new category appears in the dropdown

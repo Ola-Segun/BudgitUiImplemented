@@ -368,7 +368,7 @@ class _RecurringIncomeEditingScreenState extends ConsumerState<RecurringIncomeEd
                         }
 
                         return DropdownButtonFormField<String>(
-                          value: _selectedCategoryId,
+                          initialValue: _selectedCategoryId,
                           decoration: const InputDecoration(
                             labelText: 'Category',
                           ),
@@ -434,7 +434,7 @@ class _RecurringIncomeEditingScreenState extends ConsumerState<RecurringIncomeEd
 
                 // Frequency Selection
                 DropdownButtonFormField<RecurringIncomeFrequency>(
-                  value: _selectedFrequency,
+                  initialValue: _selectedFrequency,
                   decoration: const InputDecoration(
                     labelText: 'Frequency',
                   ),
@@ -780,7 +780,7 @@ class _RecurringIncomeEditingScreenState extends ConsumerState<RecurringIncomeEd
               children: [
                 // Default Account
                 DropdownButtonFormField<String>(
-                  value: _selectedDefaultAccountId,
+                  initialValue: _selectedDefaultAccountId,
                   isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Default Account (Optional)',

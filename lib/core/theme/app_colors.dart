@@ -1,78 +1,112 @@
 import 'package:flutter/material.dart';
 
-/// App color constants
-/// All colors used throughout the app should be defined here
+/// Central color system for the application
+/// Based on hybrid design: TrackFinz (teal) + Pink App (clean) + Modern Budget Tracker
 class AppColors {
-  // Primary colors
-  static const Color primary = Color(0xFF2563EB); // Blue 600
-  static const Color primaryLight = Color(0xFF3B82F6); // Blue 500
-  static const Color primaryDark = Color(0xFF1D4ED8); // Blue 700
+  AppColors._(); // Private constructor prevents instantiation
 
-  // Secondary colors
-  static const Color secondary = Color(0xFF64748B); // Slate 500
-  static const Color secondaryLight = Color(0xFF94A3B8); // Slate 400
-  static const Color secondaryDark = Color(0xFF475569); // Slate 600
+  // ═══════════════════════════════════════════════════════════
+  // PRIMARY COLORS - Teal from TrackFinz
+  // ═══════════════════════════════════════════════════════════
 
-  // Semantic colors
-  static const Color success = Color(0xFF10B981); // Emerald 500
-  static const Color successLight = Color(0xFF34D399); // Emerald 400
-  static const Color successDark = Color(0xFF059669); // Emerald 600
+  /// Main brand color - Use for primary actions, active states
+  static const Color primary = Color(0xFF14B8A6);
 
-  static const Color warning = Color(0xFFF59E0B); // Amber 500
-  static const Color warningLight = Color(0xFFFCD34D); // Amber 300
-  static const Color warningDark = Color(0xFFD97706); // Amber 600
+  /// Lighter teal - Use for hover states, backgrounds
+  static const Color primaryLight = Color(0xFF5EEAD4);
 
-  static const Color danger = Color(0xFFEF4444); // Red 500
-  static const Color dangerLight = Color(0xFFF87171); // Red 400
-  static const Color dangerDark = Color(0xFFDC2626); // Red 600
+  /// Darker teal - Use for pressed states
+  static const Color primaryDark = Color(0xFF0F766E);
 
-  static const Color info = Color(0xFF06B6D4); // Cyan 500
-  static const Color infoLight = Color(0xFF22D3EE); // Cyan 400
-  static const Color infoDark = Color(0xFF0891B2); // Cyan 600
+  /// Accent teal - Use for highlights
+  static const Color primaryAccent = Color(0xFF2DD4BF);
 
-  // Neutral colors
-  static const Color background = Color(0xFFFFFFFF); // White
-  static const Color surface = Color(0xFFF8FAFC); // Slate 50
-  static const Color surfaceDark = Color(0xFFF1F5F9); // Slate 100
+  // ═══════════════════════════════════════════════════════════
+  // SECONDARY COLORS - Pink for warmth
+  // ═══════════════════════════════════════════════════════════
 
-  static const Color textPrimary = Color(0xFF0F172A); // Slate 900
-  static const Color textSecondary = Color(0xFF64748B); // Slate 500
-  static const Color textTertiary = Color(0xFF94A3B8); // Slate 400
+  static const Color secondary = Color(0xFFEC4899);
+  static const Color secondaryLight = Color(0xFFF9A8D4);
+  static const Color secondaryDark = Color(0xFFDB2777);
 
-  // Border colors
-  static const Color border = Color(0xFFE2E8F0); // Slate 200
-  static const Color borderLight = Color(0xFFF1F5F9); // Slate 100
-  static const Color borderDark = Color(0xFFCBD5E1); // Slate 300
+  // ═══════════════════════════════════════════════════════════
+  // SEMANTIC COLORS - Status indicators
+  // ═══════════════════════════════════════════════════════════
 
-  // Special colors
-  static const Color income = Color(0xFF10B981); // Green for income
-  static const Color expense = Color(0xFFEF4444); // Red for expenses
+  static const Color success = Color(0xFF10B981);
+  static const Color successLight = Color(0xFFD1FAE5);
 
-  // Chart colors
-  static const List<Color> chartColors = [
-    Color(0xFF2563EB), // Blue
-    Color(0xFF10B981), // Green
-    Color(0xFFF59E0B), // Yellow
-    Color(0xFFEF4444), // Red
-    Color(0xFF8B5CF6), // Purple
-    Color(0xFFF97316), // Orange
-    Color(0xFF06B6D4), // Cyan
-    Color(0xFFEC4899), // Pink
-  ];
+  static const Color warning = Color(0xFFF59E0B);
+  static const Color warningLight = Color(0xFFFEF3C7);
 
-  // Category colors
-  static const List<Color> categoryColors = [
-    Color(0xFF2563EB), // Blue
-    Color(0xFF10B981), // Green
-    Color(0xFFF59E0B), // Yellow
-    Color(0xFFEF4444), // Red
-    Color(0xFF8B5CF6), // Purple
-    Color(0xFFF97316), // Orange
-    Color(0xFF06B6D4), // Cyan
-    Color(0xFFEC4899), // Pink
-    Color(0xFF84CC16), // Lime
-    Color(0xFFF43F5E), // Rose
-    Color(0xFF6366F1), // Indigo
-    Color(0xFF14B8A6), // Teal
-  ];
+  static const Color error = Color(0xFFEF4444);
+  static const Color errorLight = Color(0xFFFEE2E2);
+
+  static const Color danger = error;
+
+  static const Color info = Color(0xFF3B82F6);
+  static const Color infoLight = Color(0xFFDBEAFE);
+
+  // ═══════════════════════════════════════════════════════════
+  // NEUTRAL COLORS - Backgrounds, surfaces
+  // ═══════════════════════════════════════════════════════════
+
+  static const Color background = Color(0xFFF2F4F6);
+  static const Color background2 = Color(0xFFE9ECF0);
+  static const Color backgroundAlt = Color(0xFFF1F5F9);
+  static const Color surface = Color(0xFFFFFFFF);
+  static const Color surfaceElevated = Color(0xFFFFFFFF);
+
+  // Borders
+  static const Color border = Color(0xFFE2E8F0);
+  static const Color borderSubtle = Color(0xFFF1F5F9);
+
+  // Additional colors
+  static const Color surfaceDark = backgroundAlt;
+
+  // Text
+  static const Color textPrimary = Color(0xFF0F172A);
+  static const Color textSecondary = Color(0xFF475569);
+  static const Color textTertiary = Color(0xFF94A3B8);
+  static const Color textDisabled = Color(0xFFCBD5E1);
+
+  // ═══════════════════════════════════════════════════════════
+  // CATEGORY COLORS - For transactions/budgets
+  // ═══════════════════════════════════════════════════════════
+
+  static const Map<String, Color> categoryColors = {
+    'food': Color(0xFFF97316),
+    'transport': Color(0xFF3B82F6),
+    'shopping': Color(0xFFEC4899),
+    'entertainment': Color(0xFF8B5CF6),
+    'health': Color(0xFF10B981),
+    'utilities': Color(0xFF06B6D4),
+    'housing': Color(0xFF6366F1),
+    'education': Color(0xFFFBBF24),
+    'business': Color(0xFF14B8A6),
+  };
+
+  // ═══════════════════════════════════════════════════════════
+  // GRADIENTS
+  // ═══════════════════════════════════════════════════════════
+
+  static const LinearGradient primaryGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF14B8A6), Color(0xFF2DD4BF)],
+  );
+
+  // ═══════════════════════════════════════════════════════════
+  // HELPER METHODS
+  // ═══════════════════════════════════════════════════════════
+
+  /// Get category color by name, returns primary if not found
+  static Color getCategoryColor(String category) {
+    return categoryColors[category.toLowerCase()] ?? primary;
+  }
+
+  /// Get category color with opacity for backgrounds
+  static Color getCategoryBackground(String category, {double opacity = 0.1}) {
+    return getCategoryColor(category).withOpacity(opacity);
+  }
 }

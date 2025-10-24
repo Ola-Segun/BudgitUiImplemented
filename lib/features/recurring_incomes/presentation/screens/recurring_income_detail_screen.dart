@@ -6,11 +6,8 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../accounts/domain/entities/account.dart';
 import '../../../accounts/presentation/providers/account_providers.dart';
-import '../../../transactions/domain/entities/transaction.dart';
-import '../../../transactions/presentation/providers/transaction_providers.dart';
 import '../../domain/entities/recurring_income.dart';
 import '../providers/recurring_income_providers.dart';
-import '../states/recurring_income_state.dart';
 
 /// Detail screen for viewing and managing a specific recurring income
 class RecurringIncomeDetailScreen extends ConsumerStatefulWidget {

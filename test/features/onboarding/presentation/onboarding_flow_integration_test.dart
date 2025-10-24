@@ -6,9 +6,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'package:budget_tracker/features/onboarding/presentation/onboarding_flow.dart';
-import 'package:budget_tracker/features/onboarding/presentation/providers/onboarding_providers.dart';
-import 'package:budget_tracker/features/onboarding/presentation/states/onboarding_state.dart';
-import 'package:budget_tracker/features/budgets/domain/entities/budget.dart';
 
 void main() {
   setUp(() async {

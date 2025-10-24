@@ -14,9 +14,11 @@ class AddTransactionBottomSheet extends ConsumerStatefulWidget {
   const AddTransactionBottomSheet({
     super.key,
     required this.onSubmit,
+    this.initialType,
   });
 
-  final void Function(Transaction) onSubmit;
+  final Future<void> Function(Transaction) onSubmit;
+  final TransactionType? initialType;
 
   @override
   ConsumerState<AddTransactionBottomSheet> createState() => _AddTransactionBottomSheetState();
@@ -28,12 +30,19 @@ class _AddTransactionBottomSheetState extends ConsumerState<AddTransactionBottom
   final _descriptionController = TextEditingController();
   final _noteController = TextEditingController();
 
-  TransactionType _selectedType = TransactionType.expense;
+  late TransactionType _selectedType;
   DateTime _selectedDate = DateTime.now();
   String? _selectedCategoryId; // Will be set dynamically based on transaction type
   String? _selectedAccountId; // Will be set from real accounts
 
   bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedType = widget.initialType ?? TransactionType.expense;
+    debugPrint('AddTransactionBottomSheet: Initialized with initialType: ${widget.initialType}, selectedType: $_selectedType');
+  }
 
   @override
   void dispose() {
@@ -54,6 +63,7 @@ class _AddTransactionBottomSheetState extends ConsumerState<AddTransactionBottom
     final screenWidth = screenSize.width;
     final screenHeight = screenSize.height;
     debugPrint('AddTransactionBottomSheet: Screen size: ${screenWidth}x$screenHeight');
+    debugPrint('DEBUG: AddTransactionBottomSheet is building with selectedType: $_selectedType');
 
     final buttonChild = _isSubmitting
         ? SizedBox(
@@ -416,12 +426,15 @@ class _AddTransactionBottomSheetState extends ConsumerState<AddTransactionBottom
 
 
   Future<void> _submitTransaction() async {
+    debugPrint('DEBUG: _submitTransaction called');
     if (!_formKey.currentState!.validate()) {
+      debugPrint('DEBUG: Form validation failed');
       return;
     }
 
     // Additional validation for account selection
     if (_selectedAccountId == null || _selectedAccountId!.isEmpty) {
+      debugPrint('DEBUG: No account selected');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select an account')),
       );
@@ -430,6 +443,7 @@ class _AddTransactionBottomSheetState extends ConsumerState<AddTransactionBottom
 
     // Additional validation for category selection
     if (_selectedCategoryId == null || _selectedCategoryId!.isEmpty) {
+      debugPrint('DEBUG: No category selected');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a category')),
       );
@@ -463,15 +477,22 @@ class _AddTransactionBottomSheetState extends ConsumerState<AddTransactionBottom
             : null,
       );
 
-      debugPrint('AddTransactionBottomSheet: Calling onSubmit with transaction: ${transaction.title}, amount: ${transaction.amount}, accountId: ${transaction.accountId}');
-      widget.onSubmit(transaction);
+      debugPrint('AddTransactionBottomSheet: Created transaction - ID: ${transaction.id}, Title: ${transaction.title}, Amount: ${transaction.amount}, Type: ${transaction.type}, Category: ${transaction.categoryId}, Account: ${transaction.accountId}, Date: ${transaction.date}');
+      debugPrint('AddTransactionBottomSheet: Calling onSubmit with transaction');
+      await widget.onSubmit(transaction);
+      debugPrint('AddTransactionBottomSheet: onSubmit completed - dismissing bottom sheet');
+      if (mounted) {
+        Navigator.pop(context);
+      }
     } catch (e) {
+      debugPrint('AddTransactionBottomSheet: Error during transaction creation: $e');
       if (mounted) {
         NotificationManager.transactionAddFailed(context, e.toString());
       }
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);
+        debugPrint('AddTransactionBottomSheet: Reset _isSubmitting to false');
       }
     }
   }

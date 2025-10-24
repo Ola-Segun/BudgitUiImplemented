@@ -6,18 +6,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 
 import '../../../../test_setup.dart';
-import '../../../../../lib/features/bills/domain/entities/bill.dart';
-import '../../../../../lib/features/bills/presentation/providers/bill_providers.dart';
-import '../../../../../lib/features/bills/presentation/screens/bill_creation_screen.dart';
-import '../../../../../lib/features/bills/presentation/widgets/edit_bill_bottom_sheet.dart';
-import '../../../../../lib/features/bills/presentation/notifiers/bill_notifier.dart';
-import '../../../../../lib/features/bills/presentation/states/bill_state.dart';
-import '../../../../../lib/features/transactions/domain/entities/transaction.dart';
-import '../../../../../lib/features/transactions/presentation/notifiers/category_notifier.dart';
-import '../../../../../lib/features/transactions/presentation/providers/transaction_providers.dart';
-import '../../../../../lib/features/transactions/presentation/states/category_state.dart';
-import '../../../../../lib/core/widgets/error_view.dart';
-import '../../../../../lib/core/widgets/loading_view.dart';
+import 'package:budget_tracker/features/bills/domain/entities/bill.dart';
+import 'package:budget_tracker/features/bills/presentation/providers/bill_providers.dart';
+import 'package:budget_tracker/features/bills/presentation/screens/bill_creation_screen.dart';
+import 'package:budget_tracker/features/bills/presentation/widgets/edit_bill_bottom_sheet.dart';
+import 'package:budget_tracker/features/bills/presentation/notifiers/bill_notifier.dart';
+import 'package:budget_tracker/features/bills/presentation/states/bill_state.dart';
+import 'package:budget_tracker/features/transactions/domain/entities/transaction.dart';
+import 'package:budget_tracker/features/transactions/presentation/notifiers/category_notifier.dart';
+import 'package:budget_tracker/features/transactions/presentation/providers/transaction_providers.dart';
+import 'package:budget_tracker/features/transactions/presentation/states/category_state.dart';
+import 'package:budget_tracker/core/widgets/error_view.dart';
+import 'package:budget_tracker/core/widgets/loading_view.dart';
 
 class MockBillNotifier extends Mock implements BillNotifier {}
 

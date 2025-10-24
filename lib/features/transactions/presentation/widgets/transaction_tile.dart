@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_animations.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/extensions/date_extensions.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../domain/entities/transaction.dart';
 import '../providers/transaction_providers.dart';
@@ -73,7 +75,9 @@ class TransactionTile extends ConsumerWidget {
             label: 'Delete',
             borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
             autoClose: true,
-          ),
+          ).animate()
+            .fadeIn(duration: 200.ms)
+            .slideX(begin: 0.2, duration: 200.ms, curve: Curves.easeOut),
           // Duplicate action (blue)
           SlidableAction(
             onPressed: (_) => _duplicateTransaction(context, ref),
@@ -83,7 +87,9 @@ class TransactionTile extends ConsumerWidget {
             label: 'Duplicate',
             borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
             autoClose: true,
-          ),
+          ).animate()
+            .fadeIn(duration: 200.ms, delay: 50.ms)
+            .slideX(begin: 0.2, duration: 200.ms, delay: 50.ms, curve: Curves.easeOut),
         ],
       ),
       startActionPane: ActionPane(
@@ -98,7 +104,9 @@ class TransactionTile extends ConsumerWidget {
             label: 'Edit',
             borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
             autoClose: true,
-          ),
+          ).animate()
+            .fadeIn(duration: 200.ms)
+            .slideX(begin: -0.2, duration: 200.ms, curve: Curves.easeOut),
           // Categorize action (green)
           SlidableAction(
             onPressed: (_) => _showCategorizeDialog(context, ref),
@@ -108,7 +116,9 @@ class TransactionTile extends ConsumerWidget {
             label: 'Categorize',
             borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
             autoClose: true,
-          ),
+          ).animate()
+            .fadeIn(duration: 200.ms, delay: 50.ms)
+            .slideX(begin: -0.2, duration: 200.ms, delay: 50.ms, curve: Curves.easeOut),
         ],
       ),
 child: SizedBox(
@@ -123,7 +133,7 @@ child: SizedBox(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Category Icon
+            // Category Icon with entrance animation
             Container(
               width: 40,
               height: 40,
@@ -136,7 +146,9 @@ child: SizedBox(
                 color: categoryColor,
                 size: 20,
               ),
-            ),
+            ).animate()
+              .fadeIn(duration: 300.ms, delay: 100.ms)
+              .scale(begin: const Offset(0.8, 0.8), duration: 300.ms, delay: 100.ms, curve: Curves.elasticOut),
             const SizedBox(width: 12),
 
             // Transaction Details - Expanded to take remaining space
@@ -148,23 +160,43 @@ child: SizedBox(
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Title - takes available space
+                      // Title and Category - takes available space
                       Expanded(
-                        child: Text(
-                          transaction.title,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Transaction Title
+                            Text(
+                              transaction.title,
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ).animate()
+                              .fadeIn(duration: 400.ms, delay: 200.ms)
+                              .slideX(begin: 0.2, duration: 400.ms, delay: 200.ms, curve: Curves.easeOutCubic),
+                            const SizedBox(height: 2),
+                            // Category Name - directly under transaction name
+                            Text(
+                              categoryName,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ).animate()
+                              .fadeIn(duration: 300.ms, delay: 250.ms),
+                          ],
                         ),
                       ),
                       const SizedBox(width: 12),
-                      // Amount - fixed width section
+                      // Amount and Time Since - fixed width section
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          // Transaction Amount
                           Text(
                             transaction.signedAmount,
                             style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -175,18 +207,19 @@ child: SizedBox(
                                 ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                          ),
-                          // Time (if today)
-                          if (_isToday(transaction.date)) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              DateFormat('HH:mm').format(transaction.date),
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                  ),
-                              maxLines: 1,
-                            ),
-                          ],
+                          ).animate()
+                            .fadeIn(duration: 400.ms, delay: 300.ms)
+                            .slideX(begin: -0.2, duration: 400.ms, delay: 300.ms, curve: Curves.easeOutCubic),
+                          const SizedBox(height: 2),
+                          // Time Since - always shown, aligned to bottom of amount
+                          Text(
+                            transaction.date.toTimeAgo(),
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                ),
+                            maxLines: 1,
+                          ).animate()
+                            .fadeIn(duration: 300.ms, delay: 350.ms),
                         ],
                       ),
                     ],
@@ -194,7 +227,7 @@ child: SizedBox(
 
                   // Description (if available)
                   if (transaction.description != null) ...[
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Text(
                       transaction.description!,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -202,35 +235,15 @@ child: SizedBox(
                           ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                    ),
+                    ).animate()
+                      .fadeIn(duration: 300.ms, delay: 400.ms)
+                      .slideY(begin: 0.1, duration: 300.ms, delay: 400.ms, curve: Curves.easeOut),
                   ],
 
-                  // Category, Account and Date
+                  // Account and Date
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      // Category name - flexible
-                      Flexible(
-                        flex: 2,
-                        child: Text(
-                          categoryName,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        width: 4,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
                       // Account indicator - flexible
                       Flexible(
                         flex: 2,
@@ -249,7 +262,9 @@ child: SizedBox(
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                        ),
+                        ).animate()
+                          .fadeIn(duration: 300.ms, delay: 450.ms)
+                          .scale(begin: const Offset(0.9, 0.9), duration: 300.ms, delay: 450.ms),
                       ),
                       const SizedBox(width: 8),
                       Container(
@@ -259,9 +274,10 @@ child: SizedBox(
                           color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                           shape: BoxShape.circle,
                         ),
-                      ),
+                      ).animate()
+                        .fadeIn(duration: 200.ms, delay: 500.ms),
                       const SizedBox(width: 8),
-                      // Date - fixed content, no need for SizedBox
+                      // Date - fixed content
                       Text(
                         DateFormat('MMM dd').format(transaction.date),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -269,7 +285,8 @@ child: SizedBox(
                             ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                      ),
+                      ).animate()
+                        .fadeIn(duration: 300.ms, delay: 550.ms),
                     ],
                   ),
                 ],
@@ -280,7 +297,10 @@ child: SizedBox(
       ),
     ),
   ),
-).pressEffect(),
+).animate()
+  .fadeIn(duration: 500.ms)
+  .slideY(begin: 0.1, duration: 500.ms, curve: Curves.easeOutCubic)
+  .pressEffect(),
   );
   }
 
@@ -435,10 +455,4 @@ child: SizedBox(
     }
   }
 
-  bool _isToday(DateTime date) {
-    final now = DateTime.now();
-    return date.year == now.year &&
-           date.month == now.month &&
-           date.day == now.day;
-  }
 }

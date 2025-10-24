@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive/hive.dart';
 
 import '../storage/hive_storage.dart';
 import '../router/app_router.dart';
@@ -75,7 +74,6 @@ import '../../features/recurring_incomes/domain/usecases/create_recurring_income
 import '../../features/recurring_incomes/domain/usecases/get_recurring_incomes.dart';
 import '../../features/recurring_incomes/domain/usecases/record_income_receipt.dart';
 import '../../features/recurring_incomes/data/datasources/recurring_income_hive_datasource.dart';
-import '../../features/recurring_incomes/data/models/recurring_income_dto.dart';
 import '../../features/recurring_incomes/presentation/providers/recurring_income_providers.dart' as recurring_income_providers;
 import '../../features/notifications/presentation/providers/notification_providers.dart' as notification_providers;
 

@@ -76,8 +76,8 @@ class MyApp extends ConsumerWidget {
           debugPrint('MyApp: Showing OnboardingFlow');
           return MaterialApp(
             title: 'Budget Tracker',
-            theme: AppTheme.light,
-            darkTheme: AppTheme.dark,
+            theme: AppTheme.lightTheme(),
+            darkTheme: AppTheme.darkTheme(),
             themeMode: themeMode,
             home: const OnboardingFlow(),
             debugShowCheckedModeBanner: false,
@@ -87,23 +87,11 @@ class MyApp extends ConsumerWidget {
         debugPrint('MyApp: Showing main app');
         return MaterialApp.router(
           title: 'Budget Tracker',
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
+          theme: AppTheme.lightTheme(),
+          darkTheme: AppTheme.darkTheme(),
           themeMode: themeMode,
           routerConfig: AppRouter.router,
           debugShowCheckedModeBanner: false,
-          builder: (context, child) {
-            // Wrap with Overlay for proper overlay management
-            return Overlay(
-              initialEntries: [
-                OverlayEntry(
-                  builder: (context) => ScaffoldMessenger(
-                    child: _ErrorBoundary(child: child),
-                  ),
-                ),
-              ],
-            );
-          },
         );
       },
     );

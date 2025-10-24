@@ -1,6 +1,5 @@
 import '../../../../core/error/result.dart';
 import '../entities/recurring_income.dart';
-import '../entities/recurring_income_instance.dart';
 import '../repositories/recurring_income_repository.dart';
 
 /// Use case for recording income receipt

@@ -229,7 +229,6 @@ class UpdateTransaction {
       }
 
       final account = accountResult.dataOrNull!;
-      if (account == null) continue;
 
       // Calculate net impact on this account
       final originalImpact = _calculateAccountImpact(originalTransaction, accountId);

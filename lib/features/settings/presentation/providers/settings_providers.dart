@@ -49,7 +49,10 @@ final settingsNotifierProvider = StateNotifierProvider<SettingsNotifier, AsyncVa
 // Current settings provider (convenience provider)
 final currentSettingsProvider = Provider<AppSettings?>((ref) {
   final settingsState = ref.watch(settingsNotifierProvider);
-  return settingsState.value?.settings;
+  return settingsState.maybeWhen(
+    data: (state) => state.settings,
+    orElse: () => null,
+  );
 });
 
 // Theme mode provider (for app-wide theme switching)

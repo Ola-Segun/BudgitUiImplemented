@@ -6,17 +6,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 
 import '../../../../test_setup.dart';
-import '../../../../../lib/features/budgets/domain/entities/budget.dart';
-import '../../../../../lib/features/budgets/domain/entities/budget_template.dart';
-import '../../../../../lib/features/budgets/presentation/providers/budget_providers.dart';
-import '../../../../../lib/features/budgets/presentation/screens/budget_creation_screen.dart';
-import '../../../../../lib/features/budgets/presentation/notifiers/budget_notifier.dart';
-import '../../../../../lib/features/transactions/domain/entities/transaction.dart';
-import '../../../../../lib/features/transactions/presentation/notifiers/category_notifier.dart';
-import '../../../../../lib/features/transactions/presentation/providers/transaction_providers.dart';
-import '../../../../../lib/features/transactions/presentation/states/category_state.dart';
-import '../../../../../lib/core/widgets/error_view.dart';
-import '../../../../../lib/core/widgets/loading_view.dart';
+import 'package:budget_tracker/features/budgets/domain/entities/budget.dart';
+import 'package:budget_tracker/features/budgets/domain/entities/budget_template.dart';
+import 'package:budget_tracker/features/budgets/presentation/providers/budget_providers.dart';
+import 'package:budget_tracker/features/budgets/presentation/screens/budget_creation_screen.dart';
+import 'package:budget_tracker/features/budgets/presentation/notifiers/budget_notifier.dart';
+import 'package:budget_tracker/features/transactions/domain/entities/transaction.dart';
+import 'package:budget_tracker/features/transactions/presentation/notifiers/category_notifier.dart';
+import 'package:budget_tracker/features/transactions/presentation/providers/transaction_providers.dart';
+import 'package:budget_tracker/features/transactions/presentation/states/category_state.dart';
+import 'package:budget_tracker/core/widgets/error_view.dart';
+import 'package:budget_tracker/core/widgets/loading_view.dart';
 
 class MockBudgetNotifier extends Mock implements BudgetNotifier {}
 

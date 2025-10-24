@@ -870,7 +870,7 @@ class _BudgetCreationScreenState extends ConsumerState<BudgetCreationScreen> {
             matchedCategory = _expenseCategories.firstWhere(
               (cat) => cat.name.toLowerCase() == templateName,
             );
-            debugPrint('DEBUG: Exact match found for "${templateCategory.name}": ${matchedCategory?.name}');
+            debugPrint('DEBUG: Exact match found for "${templateCategory.name}": ${matchedCategory.name}');
           } catch (e) {
             matchedCategory = null;
             debugPrint('DEBUG: No exact match for "${templateCategory.name}"');
@@ -883,7 +883,7 @@ class _BudgetCreationScreenState extends ConsumerState<BudgetCreationScreen> {
                 (cat) => templateName.contains(cat.name.toLowerCase()) ||
                         cat.name.toLowerCase().contains(templateName),
               );
-              debugPrint('DEBUG: Partial match found for "${templateCategory.name}": ${matchedCategory?.name}');
+              debugPrint('DEBUG: Partial match found for "${templateCategory.name}": ${matchedCategory.name}');
             } catch (e) {
               matchedCategory = null;
               debugPrint('DEBUG: No partial match for "${templateCategory.name}"');
@@ -899,11 +899,9 @@ class _BudgetCreationScreenState extends ConsumerState<BudgetCreationScreen> {
                 matchedCategory = _expenseCategories.firstWhere(
                   (cat) => cat.name.toLowerCase().contains(keyword),
                 );
-                if (matchedCategory != null) {
-                  debugPrint('DEBUG: Keyword match found for "${templateCategory.name}" with keyword "$keyword": ${matchedCategory?.name}');
-                  break;
-                }
-              } catch (e) {
+                debugPrint('DEBUG: Keyword match found for "${templateCategory.name}" with keyword "$keyword": ${matchedCategory?.name}');
+                break;
+                            } catch (e) {
                 continue;
               }
             }

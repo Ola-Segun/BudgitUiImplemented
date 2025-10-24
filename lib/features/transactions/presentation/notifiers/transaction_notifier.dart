@@ -132,7 +132,7 @@ class TransactionNotifier extends StateNotifier<AsyncValue<TransactionState>> {
 
   /// Add a new transaction
   Future<bool> addTransaction(Transaction transaction) async {
-    debugPrint('TransactionNotifier: Adding transaction - type: ${transaction.type}, amount: ${transaction.amount}');
+    debugPrint('TransactionNotifier: Adding transaction - type: ${transaction.type}, amount: ${transaction.amount}, title: ${transaction.title}');
     final currentState = state.value;
     if (currentState == null) {
       return false;
@@ -140,14 +140,17 @@ class TransactionNotifier extends StateNotifier<AsyncValue<TransactionState>> {
 
     // Set loading state
     state = AsyncValue.data(currentState.copyWith(isLoading: true));
+    debugPrint('TransactionNotifier: Set loading state to true');
 
     final result = await _addTransaction(transaction);
+    debugPrint('TransactionNotifier: Add transaction result received');
 
     return result.when(
       success: (addedTransaction) {
         debugPrint('TransactionNotifier: Transaction added successfully, reloading transactions');
         // Reload transactions to ensure consistency with pagination and filters
         loadTransactions();
+        debugPrint('TransactionNotifier: Transactions reloaded after successful addition');
         return true;
       },
       error: (failure) {

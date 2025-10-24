@@ -5,8 +5,10 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 
 import '../../../../core/di/providers.dart' as core_providers;
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/presentation/widgets/cards/app_card.dart';
+import '../../../../shared/presentation/widgets/buttons/app_icon_button.dart';
 import '../../domain/entities/transaction.dart';
 import '../../domain/usecases/add_category.dart';
 import '../../domain/usecases/delete_category.dart';
@@ -52,7 +54,7 @@ class _CategoryManagementScreenState extends ConsumerState<CategoryManagementScr
           }
 
           return ListView.builder(
-            padding: AppTheme.screenPaddingAll,
+            padding: EdgeInsets.all(AppDimensions.screenPaddingH),
             itemCount: categoryState.categories.length,
             itemBuilder: (context, index) {
               final category = categoryState.categories[index];
@@ -84,7 +86,7 @@ class _CategoryManagementScreenState extends ConsumerState<CategoryManagementScr
     return Slidable(
       key: ValueKey(category.id),
       endActionPane: ActionPane(
-        motion: const ScrollMotion(),
+        motion: const BehindMotion(),
         children: [
           // Edit action (blue)
           SlidableAction(
@@ -96,7 +98,7 @@ class _CategoryManagementScreenState extends ConsumerState<CategoryManagementScr
             foregroundColor: Colors.white,
             icon: Icons.edit,
             label: 'Edit',
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           ),
           // Delete action (red)
           SlidableAction(
@@ -108,53 +110,72 @@ class _CategoryManagementScreenState extends ConsumerState<CategoryManagementScr
             foregroundColor: Colors.white,
             icon: Icons.delete,
             label: 'Delete',
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           ),
         ],
       ),
-      child: Card(
-        margin: const EdgeInsets.only(bottom: 8),
-        child: ListTile(
-          leading: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Color(category.color).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              categoryIconColorService.getIconForCategory(category.id),
-              color: categoryIconColorService.getColorForCategory(category.id),
-            ),
-          ),
-          title: Text(
-            category.name,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-          subtitle: Text(
-            category.type.displayName,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
+      child: Container(
+        margin: EdgeInsets.only(bottom: AppDimensions.spacing2),
+        child: AppCard(
+          elevation: AppCardElevation.low,
+          padding: EdgeInsets.all(AppDimensions.cardPadding),
+          child: Row(
             children: [
-              IconButton(
-                icon: const Icon(Icons.edit),
-                onPressed: isOperationInProgress ? null : () => _showEditCategoryDialog(context, category),
+              Container(
+                width: AppDimensions.categoryIconSize,
+                height: AppDimensions.categoryIconSize,
+                decoration: BoxDecoration(
+                  color: Color(category.color).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppDimensions.categoryIconRadius),
+                ),
+                child: Icon(
+                  categoryIconColorService.getIconForCategory(category.id),
+                  color: categoryIconColorService.getColorForCategory(category.id),
+                  size: AppDimensions.iconMd,
+                ),
               ),
-              IconButton(
-                icon: const Icon(Icons.delete),
-                onPressed: isOperationInProgress ? null : () => _confirmDeleteCategory(context, category),
+              SizedBox(width: AppDimensions.spacing3),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      category.name,
+                      style: AppTypography.body.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: AppDimensions.spacing1),
+                    Text(
+                      category.type.displayName,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AppIconButton(
+                    icon: Icons.edit,
+                    onPressed: isOperationInProgress ? null : () => _showEditCategoryDialog(context, category),
+                    variant: AppIconButtonVariant.ghost,
+                    size: AppIconButtonSize.small,
+                  ),
+                  SizedBox(width: AppDimensions.spacing1),
+                  AppIconButton(
+                    icon: Icons.delete,
+                    onPressed: isOperationInProgress ? null : () => _confirmDeleteCategory(context, category),
+                    variant: AppIconButtonVariant.ghost,
+                    size: AppIconButtonSize.small,
+                  ),
+                ],
               ),
             ],
           ),
-          onTap: () {
-            // Could navigate to category details or show options
-          },
         ),
       ),
     );
@@ -449,16 +470,6 @@ class _AddCategoryDialogState extends ConsumerState<AddCategoryDialog> {
             ref.invalidate(filteredTransactionsProvider);
             ref.invalidate(transactionStatsProvider);
             // Invalidate dashboard and insights that might use category data
-            // Note: dashboardDataProvider watches transactionNotifierProvider so it will auto-update
-            // But we can also invalidate insight providers if they depend on categories
-            ref.invalidate(insightNotifierProvider);
-            // Invalidate dashboard and insights that might use category data
-            // Note: dashboardDataProvider watches transactionNotifierProvider so it will auto-update
-            // But we can also invalidate insight providers if they depend on categories
-            ref.invalidate(insightNotifierProvider);
-            // Invalidate dashboard and insights that might use category data
-            // Note: dashboardDataProvider watches transactionNotifierProvider so it will auto-update
-            // But we can also invalidate insight providers if they depend on categories
             ref.invalidate(insightNotifierProvider);
           },
           error: (failure) {

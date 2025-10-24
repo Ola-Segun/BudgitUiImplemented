@@ -6,27 +6,94 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:mockito/mockito.dart';
 
-import '../lib/core/di/providers.dart' as di;
-import '../lib/core/navigation/main_navigation_scaffold.dart';
-import '../lib/features/bills/domain/entities/bill.dart';
-import '../lib/features/bills/presentation/notifiers/bill_notifier.dart';
-import '../lib/features/bills/presentation/providers/bill_providers.dart';
-import '../lib/features/bills/presentation/states/bill_state.dart';
-import '../lib/features/recurring_incomes/domain/entities/recurring_income.dart';
-import '../lib/features/recurring_incomes/presentation/notifiers/recurring_income_notifier.dart';
-import '../lib/features/recurring_incomes/presentation/providers/recurring_income_providers.dart' as income_providers;
-import '../lib/features/recurring_incomes/presentation/states/recurring_income_state.dart';
-import '../lib/features/transactions/domain/entities/transaction.dart';
-import '../lib/features/transactions/presentation/notifiers/transaction_notifier.dart';
-import '../lib/features/transactions/presentation/providers/transaction_providers.dart';
-import '../lib/features/transactions/presentation/states/transaction_state.dart';
-import '../lib/main.dart';
+import 'package:budget_tracker/core/di/providers.dart' as di;
+import 'package:budget_tracker/core/navigation/main_navigation_scaffold.dart';
+import 'package:budget_tracker/features/bills/domain/entities/bill.dart';
+import 'package:budget_tracker/features/bills/presentation/notifiers/bill_notifier.dart';
+import 'package:budget_tracker/features/bills/presentation/providers/bill_providers.dart';
+import 'package:budget_tracker/features/bills/presentation/states/bill_state.dart';
+import 'package:budget_tracker/features/recurring_incomes/domain/entities/recurring_income.dart';
+import 'package:budget_tracker/features/recurring_incomes/presentation/notifiers/recurring_income_notifier.dart';
+import 'package:budget_tracker/features/recurring_incomes/presentation/providers/recurring_income_providers.dart' as income_providers;
+import 'package:budget_tracker/features/recurring_incomes/presentation/states/recurring_income_state.dart';
+import 'package:budget_tracker/features/transactions/domain/entities/transaction.dart';
+import 'package:budget_tracker/features/transactions/presentation/notifiers/transaction_notifier.dart';
+import 'package:budget_tracker/features/transactions/presentation/providers/transaction_providers.dart';
+import 'package:budget_tracker/features/transactions/presentation/states/transaction_state.dart';
+import 'package:budget_tracker/main.dart';
 
-class MockBillNotifier extends Mock implements BillNotifier {}
+class MockBillNotifier extends Mock implements BillNotifier {
+  @override
+  BillState get state => super.noSuchMethod(
+        Invocation.getter(#state),
+        returnValue: const BillState.loaded(
+          bills: [],
+          summary: BillsSummary(
+            totalBills: 0,
+            paidThisMonth: 0,
+            dueThisMonth: 0,
+            overdue: 0,
+            totalMonthlyAmount: 0.0,
+            paidAmount: 0.0,
+            remainingAmount: 0.0,
+            upcomingBills: [],
+          ),
+        ),
+        returnValueForMissingStub: const BillState.loaded(
+          bills: [],
+          summary: BillsSummary(
+            totalBills: 0,
+            paidThisMonth: 0,
+            dueThisMonth: 0,
+            overdue: 0,
+            totalMonthlyAmount: 0.0,
+            paidAmount: 0.0,
+            remainingAmount: 0.0,
+            upcomingBills: [],
+          ),
+        ),
+      );
+}
 
-class MockRecurringIncomeNotifier extends Mock implements RecurringIncomeNotifier {}
+class MockRecurringIncomeNotifier extends Mock implements RecurringIncomeNotifier {
+  @override
+  RecurringIncomeState get state => super.noSuchMethod(
+        Invocation.getter(#state),
+        returnValue: const RecurringIncomeState.loaded(
+          incomes: [],
+          summary: RecurringIncomesSummary(
+            totalIncomes: 0,
+            activeIncomes: 0,
+            expectedThisMonth: 0,
+            totalMonthlyAmount: 0.0,
+            receivedThisMonth: 0.0,
+            expectedAmount: 0.0,
+            upcomingIncomes: [],
+          ),
+        ),
+        returnValueForMissingStub: const RecurringIncomeState.loaded(
+          incomes: [],
+          summary: RecurringIncomesSummary(
+            totalIncomes: 0,
+            activeIncomes: 0,
+            expectedThisMonth: 0,
+            totalMonthlyAmount: 0.0,
+            receivedThisMonth: 0.0,
+            expectedAmount: 0.0,
+            upcomingIncomes: [],
+          ),
+        ),
+      );
+}
 
-class MockTransactionNotifier extends Mock implements TransactionNotifier {}
+class MockTransactionNotifier extends Mock implements TransactionNotifier {
+  @override
+  AsyncValue<TransactionState> get state => super.noSuchMethod(
+        Invocation.getter(#state),
+        returnValue: const AsyncData(TransactionState(transactions: [], hasMoreData: false)),
+        returnValueForMissingStub: const AsyncData(TransactionState(transactions: [], hasMoreData: false)),
+      );
+}
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();

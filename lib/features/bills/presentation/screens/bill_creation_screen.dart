@@ -168,7 +168,7 @@ class _BillCreationScreenState extends ConsumerState<BillCreationScreen> {
                     errorStyle: const TextStyle(height: 0.8),
                     errorBorder: (_nameValidationError != null ||
                             (ref.watch(billNotifierProvider).maybeWhen(
-                              error: (message, bills, summary) => message?.contains('Bill names must be unique') ?? false,
+                              error: (message, bills, summary) => message.contains('Bill names must be unique') ?? false,
                               orElse: () => false,
                             )))
                         ? OutlineInputBorder(
@@ -181,7 +181,7 @@ class _BillCreationScreenState extends ConsumerState<BillCreationScreen> {
                         : null,
                   focusedErrorBorder: (_nameValidationError != null ||
                             (ref.watch(billNotifierProvider).maybeWhen(
-                              error: (message, bills, summary) => message?.contains('Bill names must be unique') ?? false,
+                              error: (message, bills, summary) => message.contains('Bill names must be unique') ?? false,
                               orElse: () => false,
                             )))
                         ? OutlineInputBorder(

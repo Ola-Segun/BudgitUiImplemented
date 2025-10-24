@@ -6,25 +6,47 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:mockito/mockito.dart';
 
-import '../lib/core/di/providers.dart' as di;
-import '../lib/features/accounts/domain/entities/account.dart';
-import '../lib/features/recurring_incomes/domain/entities/recurring_income.dart';
-import '../lib/features/recurring_incomes/domain/entities/recurring_income_instance.dart';
-import '../lib/features/recurring_incomes/presentation/notifiers/recurring_income_notifier.dart';
-import '../lib/features/recurring_incomes/presentation/providers/recurring_income_providers.dart' as income_providers;
-import '../lib/features/recurring_incomes/presentation/states/recurring_income_state.dart';
-import '../lib/features/transactions/domain/entities/transaction.dart';
-import '../lib/features/transactions/presentation/notifiers/transaction_notifier.dart';
-import '../lib/features/transactions/presentation/providers/transaction_providers.dart';
-import '../lib/features/transactions/presentation/states/transaction_state.dart';
-import '../lib/main.dart';
+import 'package:budget_tracker/core/di/providers.dart' as di;
+import 'package:budget_tracker/features/accounts/domain/entities/account.dart';
+import 'package:budget_tracker/features/recurring_incomes/domain/entities/recurring_income.dart';
+import 'package:budget_tracker/features/recurring_incomes/domain/entities/recurring_income_instance.dart';
+import 'package:budget_tracker/features/recurring_incomes/presentation/notifiers/recurring_income_notifier.dart';
+import 'package:budget_tracker/features/recurring_incomes/presentation/providers/recurring_income_providers.dart' as income_providers;
+import 'package:budget_tracker/features/recurring_incomes/presentation/states/recurring_income_state.dart';
+import 'package:budget_tracker/features/transactions/domain/entities/transaction.dart';
+import 'package:budget_tracker/features/transactions/presentation/notifiers/transaction_notifier.dart';
+import 'package:budget_tracker/features/transactions/presentation/providers/transaction_providers.dart';
+import 'package:budget_tracker/features/transactions/presentation/states/transaction_state.dart';
+import 'package:budget_tracker/main.dart';
 
 class MockRecurringIncomeNotifier extends Mock implements RecurringIncomeNotifier {
   @override
   RecurringIncomeState get state => super.noSuchMethod(
         Invocation.getter(#state),
-        returnValue: const RecurringIncomeState.initial(),
-        returnValueForMissingStub: const RecurringIncomeState.initial(),
+        returnValue: const RecurringIncomeState.loaded(
+          incomes: [],
+          summary: RecurringIncomesSummary(
+            totalIncomes: 0,
+            activeIncomes: 0,
+            expectedThisMonth: 0,
+            totalMonthlyAmount: 0.0,
+            receivedThisMonth: 0.0,
+            expectedAmount: 0.0,
+            upcomingIncomes: [],
+          ),
+        ),
+        returnValueForMissingStub: const RecurringIncomeState.loaded(
+          incomes: [],
+          summary: RecurringIncomesSummary(
+            totalIncomes: 0,
+            activeIncomes: 0,
+            expectedThisMonth: 0,
+            totalMonthlyAmount: 0.0,
+            receivedThisMonth: 0.0,
+            expectedAmount: 0.0,
+            upcomingIncomes: [],
+          ),
+        ),
       );
 }
 
@@ -32,8 +54,8 @@ class MockTransactionNotifier extends Mock implements TransactionNotifier {
   @override
   AsyncValue<TransactionState> get state => super.noSuchMethod(
         Invocation.getter(#state),
-        returnValue: const AsyncValue.loading(),
-        returnValueForMissingStub: const AsyncValue.loading(),
+        returnValue: const AsyncData(TransactionState(transactions: [], hasMoreData: false)),
+        returnValueForMissingStub: const AsyncData(TransactionState(transactions: [], hasMoreData: false)),
       );
 }
 
@@ -286,13 +308,13 @@ void main() {
         description: 'Income from Test Bonus',
       );
 
-      // Mock successful operations
+      // Mock successful operations - using any matchers
       when(mockRecurringIncomeNotifier.recordIncomeReceipt(
-        testIncome.id,
-        testInstance,
-        accountId: testAccount.id,
+        any,
+        any,
+        accountId: any,
       )).thenAnswer((_) async => true);
-      when(mockTransactionNotifier.addTransaction(expectedTransaction)).thenAnswer((_) async => true);
+      when(mockTransactionNotifier.addTransaction(any)).thenAnswer((_) async => true);
 
       // Mock state for this test
       when(mockRecurringIncomeNotifier.state).thenReturn(
@@ -372,9 +394,9 @@ void main() {
 
       // Mock transaction creation failure
       when(mockRecurringIncomeNotifier.recordIncomeReceipt(
-        testIncome.id,
-        testInstance,
-        accountId: testAccount.id,
+        any,
+        any,
+        accountId: any,
       )).thenAnswer((_) async => false); // Simulate failure
 
       // Mock state for error test

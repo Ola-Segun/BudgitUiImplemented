@@ -32,8 +32,6 @@ import '../../features/recurring_incomes/presentation/screens/recurring_income_d
 import '../../features/recurring_incomes/presentation/screens/recurring_income_editing_screen.dart';
 import '../../features/recurring_incomes/presentation/screens/recurring_income_creation_screen.dart';
 import '../../features/recurring_incomes/presentation/screens/recurring_income_receipt_recording_screen.dart';
-import '../../features/recurring_incomes/domain/entities/recurring_income.dart';
-import '../../features/recurring_incomes/presentation/providers/recurring_income_providers.dart';
 import '../widgets/app_bottom_sheet.dart';
 import '../navigation/main_navigation_scaffold.dart';
 import '../navigation/screens/home_dashboard_screen.dart';

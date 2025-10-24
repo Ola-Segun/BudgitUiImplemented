@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../accounts/domain/entities/account.dart';
 import '../../../accounts/presentation/providers/account_providers.dart';
 import '../../domain/entities/transaction.dart';
@@ -117,69 +120,104 @@ class _TransactionFiltersBarState extends ConsumerState<TransactionFiltersBar> {
 
   Widget _buildSearchField() {
     final screenWidth = MediaQuery.of(context).size.width;
-    
+
     if (_isSearchExpanded) {
       // Calculate responsive width
-      final expandedWidth = screenWidth < 360 
+      final expandedWidth = screenWidth < 360
           ? screenWidth - 32 // Full width minus padding on small screens
-          : screenWidth < 400 
-              ? 160.0 
-              : screenWidth < 600 
-                  ? 200.0 
+          : screenWidth < 400
+              ? 160.0
+              : screenWidth < 600
+                  ? 200.0
                   : 250.0;
-      
+
       return SizedBox(
         width: expandedWidth,
-        height: 48,
-        child: Material(
-          child: TextField(
-            controller: _searchController,
-            autofocus: true,
-            decoration: InputDecoration(
-              hintText: 'Search...',
-              hintStyle: const TextStyle(fontSize: 14),
-              prefixIcon: const Icon(Icons.search, size: 18),
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.close, size: 18),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                onPressed: () {
-                  setState(() {
-                    _isSearchExpanded = false;
-                    _searchController.clear();
-                  });
-                  ref.read(transactionNotifierProvider.notifier).clearSearch();
-                },
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              isDense: true,
+        height: AppDimensions.buttonHeightMd,
+        child: TextField(
+          controller: _searchController,
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText: 'Search...',
+            hintStyle: AppTypography.bodySmall.copyWith(
+              color: AppColors.textTertiary,
             ),
-            style: const TextStyle(fontSize: 14),
-            onChanged: (query) {
-              ref.read(transactionNotifierProvider.notifier).searchTransactions(query);
-            },
+            prefixIcon: Icon(
+              Icons.search,
+              color: AppColors.textSecondary,
+              size: AppDimensions.iconSm,
+            ),
+            suffixIcon: IconButton(
+              icon: Icon(
+                Icons.close,
+                size: AppDimensions.iconSm,
+                color: AppColors.textSecondary,
+              ),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              onPressed: () {
+                setState(() {
+                  _isSearchExpanded = false;
+                  _searchController.clear();
+                });
+                ref.read(transactionNotifierProvider.notifier).clearSearch();
+              },
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+              borderSide: BorderSide(
+                color: AppColors.border,
+                width: 1.5,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+              borderSide: BorderSide(
+                color: AppColors.border,
+                width: 1.5,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+              borderSide: BorderSide(
+                color: AppColors.primary,
+                width: 2,
+              ),
+            ),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: AppDimensions.spacing3,
+              vertical: AppDimensions.spacing2,
+            ),
+            filled: true,
+            fillColor: AppColors.surface,
           ),
+          style: AppTypography.body.copyWith(
+            color: AppColors.textPrimary,
+          ),
+          onChanged: (query) {
+            ref.read(transactionNotifierProvider.notifier).searchTransactions(query);
+          },
         ),
       );
     } else {
-      return SizedBox(
-        width: 48,
-        height: 48,
-        child: IconButton(
-          icon: const Icon(Icons.search, size: 20),
-          onPressed: () {
-            setState(() {
-              _isSearchExpanded = true;
-            });
-          },
-          style: IconButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            side: BorderSide(color: Theme.of(context).colorScheme.outline),
-            padding: EdgeInsets.zero,
+      return IconButton(
+        icon: Icon(
+          Icons.search,
+          size: AppDimensions.iconMd,
+          color: AppColors.textSecondary,
+        ),
+        onPressed: () {
+          setState(() {
+            _isSearchExpanded = true;
+          });
+        },
+        style: IconButton.styleFrom(
+          backgroundColor: AppColors.surface,
+          side: BorderSide(
+            color: AppColors.border,
+            width: 1.5,
           ),
+          padding: EdgeInsets.all(AppDimensions.spacing2),
         ),
       );
     }
@@ -250,66 +288,123 @@ class _TransactionFiltersBarState extends ConsumerState<TransactionFiltersBar> {
   }
 
   Widget _buildDateRangePicker() {
-    return SizedBox(
-      height: 48,
-      child: OutlinedButton.icon(
-        onPressed: () => _showDateRangePicker(),
-        icon: const Icon(Icons.date_range, size: 16),
-        label: const Text('Date', style: TextStyle(fontSize: 12)),
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          minimumSize: const Size(0, 48),
+    return OutlinedButton.icon(
+      onPressed: () => _showDateRangePicker(),
+      icon: Icon(
+        Icons.date_range,
+        size: AppDimensions.iconSm,
+        color: AppColors.primary,
+      ),
+      label: Text(
+        'Date',
+        style: AppTypography.bodySmall.copyWith(
+          color: AppColors.primary,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      style: OutlinedButton.styleFrom(
+        padding: EdgeInsets.symmetric(
+          horizontal: AppDimensions.spacing3,
+          vertical: AppDimensions.spacing2,
+        ),
+        side: BorderSide(
+          color: AppColors.border,
+          width: 1.5,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         ),
       ),
     );
   }
 
   Widget _buildCategoriesFilter(List<TransactionCategory> categories) {
-    return SizedBox(
-      height: 48,
-      child: OutlinedButton.icon(
-        onPressed: () => _showCategoriesMultiSelect(categories),
-        icon: const Icon(Icons.category, size: 16),
-        label: const Text('Category', style: TextStyle(fontSize: 12)),
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          minimumSize: const Size(0, 48),
+    return OutlinedButton.icon(
+      onPressed: () => _showCategoriesMultiSelect(categories),
+      icon: Icon(
+        Icons.category,
+        size: AppDimensions.iconSm,
+        color: AppColors.primary,
+      ),
+      label: Text(
+        'Category',
+        style: AppTypography.bodySmall.copyWith(
+          color: AppColors.primary,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      style: OutlinedButton.styleFrom(
+        padding: EdgeInsets.symmetric(
+          horizontal: AppDimensions.spacing3,
+          vertical: AppDimensions.spacing2,
+        ),
+        side: BorderSide(
+          color: AppColors.border,
+          width: 1.5,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         ),
       ),
     );
   }
 
   Widget _buildAmountRangeFilter() {
-    return SizedBox(
-      height: 48,
-      child: OutlinedButton.icon(
-        onPressed: () => _showAmountRangePicker(),
-        icon: const Icon(Icons.attach_money, size: 16),
-        label: const Text('Amount', style: TextStyle(fontSize: 12)),
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          minimumSize: const Size(0, 48),
+    return OutlinedButton.icon(
+      onPressed: () => _showAmountRangePicker(),
+      icon: Icon(
+        Icons.attach_money,
+        size: AppDimensions.iconSm,
+        color: AppColors.primary,
+      ),
+      label: Text(
+        'Amount',
+        style: AppTypography.bodySmall.copyWith(
+          color: AppColors.primary,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      style: OutlinedButton.styleFrom(
+        padding: EdgeInsets.symmetric(
+          horizontal: AppDimensions.spacing3,
+          vertical: AppDimensions.spacing2,
+        ),
+        side: BorderSide(
+          color: AppColors.border,
+          width: 1.5,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
         ),
       ),
     );
   }
 
   Widget _buildClearFiltersButton() {
-    return SizedBox(
-      height: 48,
-      child: TextButton.icon(
-        onPressed: () {
-          ref.read(transactionNotifierProvider.notifier).clearFilter();
-          setState(() {
-            _isSearchExpanded = false;
-            _searchController.clear();
-          });
-        },
-        icon: const Icon(Icons.clear, size: 16),
-        label: const Text('Clear', style: TextStyle(fontSize: 12)),
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          minimumSize: const Size(0, 48),
+    return TextButton.icon(
+      onPressed: () {
+        ref.read(transactionNotifierProvider.notifier).clearFilter();
+        setState(() {
+          _isSearchExpanded = false;
+          _searchController.clear();
+        });
+      },
+      icon: Icon(
+        Icons.clear,
+        size: AppDimensions.iconSm,
+        color: AppColors.primary,
+      ),
+      label: Text(
+        'Clear',
+        style: AppTypography.bodySmall.copyWith(
+          color: AppColors.primary,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      style: TextButton.styleFrom(
+        padding: EdgeInsets.symmetric(
+          horizontal: AppDimensions.spacing3,
+          vertical: AppDimensions.spacing2,
         ),
       ),
     );

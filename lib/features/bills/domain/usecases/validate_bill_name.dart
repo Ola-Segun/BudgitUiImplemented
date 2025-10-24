@@ -1,6 +1,5 @@
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
-import '../entities/bill.dart';
 import '../repositories/bill_repository.dart';
 
 /// Use case for validating bill name uniqueness

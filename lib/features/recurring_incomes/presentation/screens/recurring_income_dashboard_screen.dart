@@ -5,10 +5,8 @@ import 'package:intl/intl.dart';
 import 'dart:developer' as developer;
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../dashboard/presentation/providers/dashboard_providers.dart';
 import '../../domain/entities/recurring_income.dart';
 import '../providers/recurring_income_providers.dart';
-import '../states/recurring_income_state.dart';
 
 /// Dashboard screen for managing recurring incomes
 class RecurringIncomeDashboardScreen extends ConsumerStatefulWidget {

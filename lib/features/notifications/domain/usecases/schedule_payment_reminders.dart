@@ -65,7 +65,7 @@ class SchedulePaymentReminders {
           notifications.add(AppNotification(
             id: 'bill_reminder_${bill.id}',
             title: 'Bill Due Soon',
-            message: '${bill.name} is due in ${daysUntilDue} day${daysUntilDue == 1 ? '' : 's'}',
+            message: '${bill.name} is due in $daysUntilDue day${daysUntilDue == 1 ? '' : 's'}',
             type: NotificationType.billReminder,
             priority: daysUntilDue <= 1 ? NotificationPriority.high : NotificationPriority.medium,
             createdAt: DateTime.now(),
@@ -102,7 +102,7 @@ class SchedulePaymentReminders {
             notifications.add(AppNotification(
               id: 'income_reminder_${income.id}',
               title: 'Income Expected Soon',
-              message: '${income.name} is expected in ${daysUntilExpected} day${daysUntilExpected == 1 ? '' : 's'}',
+              message: '${income.name} is expected in $daysUntilExpected day${daysUntilExpected == 1 ? '' : 's'}',
               type: NotificationType.custom, // Using custom for income reminders
               priority: NotificationPriority.medium,
               createdAt: DateTime.now(),

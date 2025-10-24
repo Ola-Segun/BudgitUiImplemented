@@ -40,7 +40,7 @@ class _RecurringIncomeCreationScreenState extends ConsumerState<RecurringIncomeC
   DateTime? _selectedEndDate;
   String _selectedCategoryId = '';
   String? _selectedDefaultAccountId;
-  List<String> _selectedAllowedAccountIds = [];
+  final List<String> _selectedAllowedAccountIds = [];
   bool _isVariableAmount = false;
 
   bool _isSubmitting = false;
