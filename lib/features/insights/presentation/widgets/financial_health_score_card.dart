@@ -6,6 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../domain/entities/insight.dart';
+import '../providers/insight_providers.dart';
 
 /// Card widget displaying financial health score
 class FinancialHealthScoreCard extends ConsumerWidget {
@@ -13,8 +14,190 @@ class FinancialHealthScoreCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // TODO: Replace with actual health score from provider
-    final healthScore = _getMockHealthScore();
+    final healthScoreAsync = ref.watch(financialHealthScoreProvider);
+
+    return healthScoreAsync.when(
+      data: (healthScore) => healthScore != null ? _buildHealthScoreCard(healthScore) : _buildEmptyState(),
+      loading: () => _buildLoadingState(),
+      error: (error, stack) => _buildErrorState(error.toString()),
+    );
+  }
+
+
+  Widget _buildEmptyState() {
+    return Card(
+      elevation: AppSpacing.elevationSm,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+      ),
+      child: Padding(
+        padding: AppSpacing.cardPaddingAll,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: AppSpacing.iconXxl,
+                  height: AppSpacing.iconXxl,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                  ),
+                  child: Icon(
+                    Icons.analytics_outlined,
+                    color: AppColors.textSecondary,
+                    size: AppSpacing.iconLg,
+                  ),
+                ),
+                Gap(AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Financial Health Score',
+                        style: AppTypography.titleMedium.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Gap(AppSpacing.xs),
+                      Text(
+                        'Add transactions to see your score',
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Card(
+      elevation: AppSpacing.elevationSm,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+      ),
+      child: Padding(
+        padding: AppSpacing.cardPaddingAll,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: AppSpacing.iconXxl,
+                  height: AppSpacing.iconXxl,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                  ),
+                  child: Icon(
+                    Icons.analytics_outlined,
+                    color: AppColors.textSecondary,
+                    size: AppSpacing.iconLg,
+                  ),
+                ),
+                Gap(AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Financial Health Score',
+                        style: AppTypography.titleMedium.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Gap(AppSpacing.xs),
+                      Text(
+                        'Calculating...',
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String error) {
+    return Card(
+      elevation: AppSpacing.elevationSm,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+      ),
+      child: Padding(
+        padding: AppSpacing.cardPaddingAll,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: AppSpacing.iconXxl,
+                  height: AppSpacing.iconXxl,
+                  decoration: BoxDecoration(
+                    color: AppColors.danger.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                  ),
+                  child: Icon(
+                    Icons.error_outline,
+                    color: AppColors.danger,
+                    size: AppSpacing.iconLg,
+                  ),
+                ),
+                Gap(AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Financial Health Score',
+                        style: AppTypography.titleMedium.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Gap(AppSpacing.xs),
+                      Text(
+                        'Unable to calculate score',
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHealthScoreCard(FinancialHealthScore healthScore) {
 
     return Card(
       elevation: AppSpacing.elevationSm,

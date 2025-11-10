@@ -118,6 +118,44 @@ class TransactionCategoryHiveDataSource {
     }
   }
 
+  /// Get active (non-archived) categories
+  Future<Result<List<TransactionCategory>>> getActive() async {
+    try {
+      if (_box == null) {
+        return Result.error(Failure.cache('Data source not initialized'));
+      }
+
+      final dtos = _box!.values.where((dto) => !dto.isArchived).toList();
+      final categories = dtos.map((dto) => dto.toDomain()).toList();
+
+      // Sort by name
+      categories.sort((a, b) => a.name.compareTo(b.name));
+
+      return Result.success(categories);
+    } catch (e) {
+      return Result.error(Failure.cache('Failed to get active categories: $e'));
+    }
+  }
+
+  /// Get archived categories
+  Future<Result<List<TransactionCategory>>> getArchived() async {
+    try {
+      if (_box == null) {
+        return Result.error(Failure.cache('Data source not initialized'));
+      }
+
+      final dtos = _box!.values.where((dto) => dto.isArchived).toList();
+      final categories = dtos.map((dto) => dto.toDomain()).toList();
+
+      // Sort by name
+      categories.sort((a, b) => a.name.compareTo(b.name));
+
+      return Result.success(categories);
+    } catch (e) {
+      return Result.error(Failure.cache('Failed to get archived categories: $e'));
+    }
+  }
+
   /// Add new category
   Future<Result<TransactionCategory>> add(TransactionCategory category) async {
     try {

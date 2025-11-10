@@ -161,3 +161,34 @@ final receivedIncomesThisMonthProvider = Provider<double>((ref) {
   final summary = ref.watch(recurringIncomesSummaryProvider);
   return summary?.receivedThisMonth ?? 0.0;
 });
+
+/// Provider for subscriptions from bills
+final subscriptionsProvider = Provider<List<Subscription>>((ref) {
+  final billState = ref.watch(billNotifierProvider);
+
+  return billState.maybeWhen(
+    loaded: (bills, summary) => bills
+        .whereType<Subscription>()
+        .map((bill) => bill as Subscription)
+        .toList(),
+    orElse: () => [],
+  );
+});
+
+/// Provider for active subscriptions
+final activeSubscriptionsProvider = Provider<List<Subscription>>((ref) {
+  final subscriptions = ref.watch(subscriptionsProvider);
+  return subscriptions.where((subscription) => !subscription.isCancelled).toList();
+});
+
+/// Provider for unused subscriptions
+final unusedSubscriptionsProvider = Provider<List<Subscription>>((ref) {
+  final activeSubscriptions = ref.watch(activeSubscriptionsProvider);
+  return activeSubscriptions.where((subscription) => subscription.isUnused).toList();
+});
+
+/// Provider for total monthly subscription cost
+final totalMonthlySubscriptionsProvider = Provider<double>((ref) {
+  final activeSubscriptions = ref.watch(activeSubscriptionsProvider);
+  return activeSubscriptions.fold<double>(0, (sum, subscription) => sum + subscription.amount);
+});

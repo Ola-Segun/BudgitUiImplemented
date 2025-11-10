@@ -39,10 +39,8 @@ class CheckBillReminders {
       final notifications = <AppNotification>[];
 
       for (final bill in bills) {
-        final reminder = _checkBillReminder(bill, settings.billReminderDays);
-        if (reminder != null) {
-          notifications.add(reminder);
-        }
+        final billReminders = _createBillReminders(bill);
+        notifications.addAll(billReminders);
       }
 
       return Result.success(notifications);
@@ -51,40 +49,91 @@ class CheckBillReminders {
     }
   }
 
-  AppNotification? _checkBillReminder(Bill bill, int reminderDays) {
+  List<AppNotification> _createBillReminders(Bill bill) {
     // Skip if bill is already paid
-    if (bill.isPaid) return null;
+    if (bill.isPaid) return [];
 
+    final notifications = <AppNotification>[];
+    final now = DateTime.now();
     final daysUntilDue = bill.daysUntilDue;
 
-    // Check if bill is due within the reminder period
-    if (daysUntilDue > reminderDays || daysUntilDue < 0) return null;
+    // Define reminder intervals as per Guide.md (lines 703-709)
+    final reminderIntervals = [
+      {'days': 7, 'message': '${bill.name} due in one week (\$${bill.amount.toStringAsFixed(2)})'},
+      {'days': 3, 'message': '${bill.name} due soon'},
+      {'days': 1, 'message': 'Reminder: ${bill.name} due tomorrow'},
+      {'days': 0, 'message': '${bill.name} is due today'},
+    ];
 
-    final priority = bill.isOverdue
-        ? NotificationPriority.critical
-        : bill.isDueToday
-            ? NotificationPriority.high
-            : NotificationPriority.medium;
+    // Check each reminder interval
+    for (final interval in reminderIntervals) {
+      final daysBefore = interval['days'] as int;
+      final message = interval['message'] as String;
 
-    final dueDateStr = bill.dueDate.toString().split(' ')[0]; // YYYY-MM-DD format
+      // Calculate when this reminder should be shown
+      final reminderDate = bill.dueDate.subtract(Duration(days: daysBefore));
 
-    return AppNotification(
-      id: 'bill_reminder_${bill.id}_${DateTime.now().millisecondsSinceEpoch}',
-      title: bill.isOverdue ? 'Overdue Bill: ${bill.name}' : 'Upcoming Bill: ${bill.name}',
-      message: bill.isOverdue
-          ? '${bill.name} was due on $dueDateStr. Please pay \$${bill.amount.toStringAsFixed(2)} as soon as possible.'
-          : '${bill.name} is due in ${daysUntilDue == 0 ? 'today' : '$daysUntilDue day${daysUntilDue == 1 ? '' : 's'}'} ($dueDateStr). Amount: \$${bill.amount.toStringAsFixed(2)}.',
-      type: NotificationType.billReminder,
-      priority: priority,
-      createdAt: DateTime.now(),
-      scheduledFor: bill.dueDate.subtract(Duration(days: reminderDays)),
-      metadata: {
-        'billId': bill.id,
-        'dueDate': dueDateStr,
-        'amount': bill.amount,
-        'daysUntilDue': daysUntilDue,
-        'isOverdue': bill.isOverdue,
-      },
-    );
+      // Only create reminder if it's time to show it (within reasonable window)
+      if (reminderDate.isBefore(now) || reminderDate.isAtSameMomentAs(now)) {
+        final priority = bill.isOverdue
+            ? NotificationPriority.critical
+            : daysBefore == 0
+                ? NotificationPriority.high
+                : daysBefore <= 3
+                    ? NotificationPriority.medium
+                    : NotificationPriority.low;
+
+        final title = bill.isOverdue
+            ? '⚠️ ${bill.name} payment overdue'
+            : daysBefore == 7
+                ? 'Bill Reminder'
+                : daysBefore == 3
+                    ? 'Bill Reminder'
+                    : daysBefore == 1
+                        ? 'Bill Reminder'
+                        : 'Bill Due Today';
+
+        notifications.add(AppNotification(
+          id: 'bill_reminder_${bill.id}_${daysBefore}_${DateTime.now().millisecondsSinceEpoch}',
+          title: title,
+          message: message,
+          type: NotificationType.billReminder,
+          priority: priority,
+          createdAt: DateTime.now(),
+          scheduledFor: reminderDate,
+          metadata: {
+            'billId': bill.id,
+            'dueDate': bill.dueDate.toString().split(' ')[0],
+            'amount': bill.amount,
+            'daysUntilDue': daysUntilDue,
+            'isOverdue': bill.isOverdue,
+            'reminderType': daysBefore == 7 ? '7_days' : daysBefore == 3 ? '3_days' : daysBefore == 1 ? '1_day' : 'due_today',
+          },
+        ));
+      }
+    }
+
+    // Special handling for overdue bills
+    if (bill.isOverdue) {
+      notifications.add(AppNotification(
+        id: 'bill_overdue_${bill.id}_${DateTime.now().millisecondsSinceEpoch}',
+        title: '⚠️ ${bill.name} payment overdue',
+        message: '⚠️ ${bill.name} payment overdue',
+        type: NotificationType.billReminder,
+        priority: NotificationPriority.critical,
+        createdAt: DateTime.now(),
+        scheduledFor: bill.dueDate, // Schedule for due date, but show as overdue
+        metadata: {
+          'billId': bill.id,
+          'dueDate': bill.dueDate.toString().split(' ')[0],
+          'amount': bill.amount,
+          'daysUntilDue': daysUntilDue,
+          'isOverdue': true,
+          'reminderType': 'overdue',
+        },
+      ));
+    }
+
+    return notifications;
   }
 }

@@ -11,6 +11,7 @@ import '../../../budgets/presentation/providers/budget_providers.dart';
 import '../../../bills/presentation/providers/bill_providers.dart';
 import '../../../accounts/presentation/providers/account_providers.dart';
 import '../../../recurring_incomes/presentation/providers/recurring_income_providers.dart';
+import '../../../goals/presentation/providers/goal_providers.dart';
 
 // Repository providers
 final dashboardRepositoryProvider = Provider<DashboardRepository>((ref) {
@@ -60,75 +61,121 @@ class _DashboardCache {
 
 final _dashboardCache = _DashboardCache();
 
-// State providers
-final dashboardDataProvider = FutureProvider<DashboardData>((ref) async {
-  // Watch reactive providers to trigger invalidation when data changes
-  ref.watch(transactionNotifierProvider);
-  ref.watch(budgetNotifierProvider);
-  ref.watch(billNotifierProvider);
-  ref.watch(accountNotifierProvider);
-  ref.watch(recurringIncomeNotifierProvider);
-
-  // Invalidate cache when underlying data changes
-  ref.listen(transactionNotifierProvider, (previous, next) {
-    if (previous != next) {
-      _dashboardCache.invalidate();
-    }
-  });
-
-  ref.listen(budgetNotifierProvider, (previous, next) {
-    if (previous != next) {
-      _dashboardCache.invalidate();
-    }
-  });
-
-  ref.listen(billNotifierProvider, (previous, next) {
-    if (previous != next) {
-      _dashboardCache.invalidate();
-    }
-  });
-
-  ref.listen(accountNotifierProvider, (previous, next) {
-    if (previous != next) {
-      _dashboardCache.invalidate();
-    }
-  });
-
-  ref.listen(recurringIncomeNotifierProvider, (previous, next) {
-    if (previous != next) {
-      _dashboardCache.invalidate();
-    }
-  });
-
-  // Return cached data if valid and no data changes
-  if (_dashboardCache.isValid) {
-    return _dashboardCache.data!;
-  }
-
-  // Use the async use case for computation
-  final calculateDashboardData = ref.watch(calculateDashboardDataUseCaseProvider);
-  final result = await calculateDashboardData();
-
-  return result.when(
-    success: (data) {
-      // Cache the result
-      _dashboardCache.setData(data);
-      return data;
-    },
-    error: (failure) {
-      throw failure;
-    },
-  );
+// State providers - using StateNotifier for synchronous access and reduced flickering
+final dashboardDataProvider = StateNotifierProvider<DashboardDataNotifier, AsyncValue<DashboardData>>((ref) {
+  final notifier = DashboardDataNotifier(ref);
+  return notifier;
 });
 
-// Provider for refreshing dashboard data
-final refreshDashboardProvider = FutureProvider<void>((ref) async {
-  _dashboardCache.invalidate();
-  final calculateDashboardData = ref.watch(calculateDashboardDataUseCaseProvider);
-  final result = await calculateDashboardData.refresh();
+class DashboardDataNotifier extends StateNotifier<AsyncValue<DashboardData>> {
+  final Ref ref;
 
-  return result.when(
-    success: (_) => null,
-    error: (failure) => throw failure,
-  );
+  DashboardDataNotifier(this.ref) : super(const AsyncValue.loading()) {
+    _initialize();
+    _setupListeners();
+  }
+
+  void _initialize() async {
+    try {
+      // Check cache first
+      if (_dashboardCache.isValid) {
+        state = AsyncValue.data(_dashboardCache.data!);
+        return;
+      }
+
+      // Load data asynchronously
+      final calculateDashboardData = ref.read(calculateDashboardDataUseCaseProvider);
+      final result = await calculateDashboardData();
+
+      result.when(
+        success: (data) {
+          _dashboardCache.setData(data);
+          state = AsyncValue.data(data);
+        },
+        error: (failure) {
+          state = AsyncValue.error(failure, StackTrace.current);
+        },
+      );
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+    }
+  }
+
+  void _setupListeners() {
+    // Listen to reactive providers to trigger data refresh
+    ref.listen(transactionNotifierProvider, (previous, next) {
+      if (previous != next) {
+        _dashboardCache.invalidate();
+        _refreshData();
+      }
+    });
+
+    ref.listen(budgetNotifierProvider, (previous, next) {
+      if (previous != next) {
+        _dashboardCache.invalidate();
+        _refreshData();
+      }
+    });
+
+    ref.listen(billNotifierProvider, (previous, next) {
+      if (previous != next) {
+        _dashboardCache.invalidate();
+        _refreshData();
+      }
+    });
+
+    ref.listen(accountNotifierProvider, (previous, next) {
+      if (previous != next) {
+        _dashboardCache.invalidate();
+        _refreshData();
+      }
+    });
+
+    ref.listen(recurringIncomeNotifierProvider, (previous, next) {
+      if (previous != next) {
+        _dashboardCache.invalidate();
+        _refreshData();
+      }
+    });
+
+    // Listen to goal changes to invalidate dashboard
+    ref.listen(goalNotifierProvider, (previous, next) {
+      if (previous != next) {
+        _dashboardCache.invalidate();
+        _refreshData();
+      }
+    });
+  }
+
+  Future<void> _refreshData() async {
+    state = const AsyncValue.loading();
+
+    try {
+      final calculateDashboardData = ref.read(calculateDashboardDataUseCaseProvider);
+      final result = await calculateDashboardData();
+
+      result.when(
+        success: (data) {
+          _dashboardCache.setData(data);
+          state = AsyncValue.data(data);
+        },
+        error: (failure) {
+          state = AsyncValue.error(failure, StackTrace.current);
+        },
+      );
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+    }
+  }
+
+  Future<void> refresh() async {
+    _dashboardCache.invalidate();
+    await _refreshData();
+  }
+}
+
+// Provider for refreshing dashboard data - now uses the notifier
+final refreshDashboardProvider = FutureProvider<void>((ref) async {
+  final notifier = ref.read(dashboardDataProvider.notifier);
+  await notifier.refresh();
 });

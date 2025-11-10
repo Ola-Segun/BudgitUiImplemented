@@ -1,19 +1,45 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../providers/budget_providers.dart';
 
 /// Card widget for displaying budget statistics
-class BudgetStatsCard extends StatelessWidget {
+class BudgetStatsCard extends ConsumerWidget {
   const BudgetStatsCard({
     super.key,
-    required this.stats,
+    this.stats,
   });
 
-  final BudgetStats stats;
+  final BudgetStats? stats;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Use provided stats or fetch from provider
+    final asyncStats = stats != null
+        ? AsyncValue.data(stats!)
+        : ref.watch(budgetStatsProvider);
+
+    return asyncStats.when(
+      data: (stats) => _buildCard(context, stats),
+      loading: () => const Card(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      ),
+      error: (error, stack) => Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Center(
+            child: Text('Error loading budget stats: $error'),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCard(BuildContext context, BudgetStats stats) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -103,46 +129,115 @@ class BudgetStatsCard extends StatelessWidget {
                 color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Row(
+              child: Column(
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Total Budgeted',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Total Budgeted',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  ),
+                            ),
+                            Text(
+                              NumberFormat.currency(symbol: '\$').format(stats.totalBudgetAmount),
+                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                            ),
+                          ],
                         ),
-                        Text(
-                          NumberFormat.currency(symbol: '\$').format(stats.totalBudgetAmount),
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              'Active Budgets',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  ),
+                            ),
+                            Text(
+                              NumberFormat.currency(symbol: '\$').format(stats.activeBudgetAmount),
+                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: Theme.of(context).colorScheme.primary,
+                                  ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          'Active Budgets',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Active Costs',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  ),
+                            ),
+                            TweenAnimationBuilder<double>(
+                              tween: Tween(begin: 0.0, end: stats.totalActiveCosts),
+                              duration: const Duration(milliseconds: 1000),
+                              curve: Curves.easeOutCubic,
+                              builder: (context, value, child) {
+                                return Text(
+                                  NumberFormat.currency(symbol: '\$').format(value),
+                                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: stats.totalActiveCosts > stats.activeBudgetAmount * 0.9
+                                            ? Colors.red
+                                            : Theme.of(context).colorScheme.onSurface,
+                                      ),
+                                );
+                              },
+                            ),
+                          ],
                         ),
-                        Text(
-                          NumberFormat.currency(symbol: '\$').format(stats.activeBudgetAmount),
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              'Usage Rate',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  ),
+                            ),
+                            TweenAnimationBuilder<double>(
+                              tween: Tween(begin: 0.0, end: stats.activeCostsPercentage),
+                              duration: const Duration(milliseconds: 1000),
+                              curve: Curves.easeOutCubic,
+                              builder: (context, value, child) {
+                                return Text(
+                                  '${value.toInt()}%',
+                                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: value > 90
+                                            ? Colors.red
+                                            : value > 75
+                                                ? Colors.orange
+                                                : Colors.green,
+                                      ),
+                                );
+                              },
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -171,7 +266,7 @@ class BudgetStatsCard extends StatelessWidget {
           children: [
             Icon(
               icon,
-              size: 20,
+              size: 16,
               color: color ?? Theme.of(context).colorScheme.primary,
             ),
             const SizedBox(width: 8),
@@ -212,17 +307,19 @@ class BudgetStatsCard extends StatelessWidget {
 
     return Row(
       children: [
-        SizedBox(
-          width: 80,
+        Flexible(
+          flex: 2,
           child: Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w500,
                 ),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
+          flex: 3,
           child: LinearProgressIndicator(
             value: percentage,
             backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -230,8 +327,8 @@ class BudgetStatsCard extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        SizedBox(
-          width: 40,
+        Flexible(
+          flex: 1,
           child: Text(
             '${(percentage * 100).toInt()}%',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(

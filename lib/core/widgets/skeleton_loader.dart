@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../theme/app_spacing.dart';
+import '../theme/app_animations.dart';
 
 /// Skeleton loader widget with shimmer effect
 class SkeletonLoader extends StatelessWidget {
@@ -10,19 +12,24 @@ class SkeletonLoader extends StatelessWidget {
     required this.child,
     this.baseColor,
     this.highlightColor,
+    this.period = const Duration(milliseconds: 1000), // Optimized for performance
   });
 
   final Widget child;
   final Color? baseColor;
   final Color? highlightColor;
+  final Duration period;
 
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
       baseColor: baseColor ?? Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
       highlightColor: highlightColor ?? Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
+      period: period,
       child: child,
-    );
+    ).animate()
+      .fadeIn(duration: AppAnimations.fast)
+      .shimmer(duration: AppAnimations.slow, delay: AppAnimations.fast);
   }
 }
 
@@ -163,7 +170,7 @@ class TransactionTileSkeleton extends StatelessWidget {
   }
 }
 
-/// Transaction list skeleton with multiple tiles
+/// Transaction list skeleton with multiple tiles and staggered animations
 class TransactionListSkeleton extends StatelessWidget {
   const TransactionListSkeleton({
     super.key,
@@ -180,13 +187,16 @@ class TransactionListSkeleton extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16),
         itemCount: itemCount,
-        itemBuilder: (context, index) => const TransactionTileSkeleton(),
+        itemBuilder: (context, index) => TransactionTileSkeleton()
+            .animate()
+            .fadeIn(duration: AppAnimations.normal, delay: Duration(milliseconds: index * 100))
+            .slideY(begin: 0.1, duration: AppAnimations.normal, delay: Duration(milliseconds: index * 100)),
       ),
     );
   }
 }
 
-/// Stats card skeleton
+/// Stats card skeleton with enhanced animations
 class StatsCardSkeleton extends StatelessWidget {
   const StatsCardSkeleton({super.key});
 
@@ -198,9 +208,15 @@ class StatsCardSkeleton extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SkeletonText(width: 100, height: 16),
+            const SkeletonText(width: 100, height: 16)
+                .animate()
+                .fadeIn(duration: AppAnimations.fast)
+                .slideX(begin: 0.1, duration: AppAnimations.fast),
             const SizedBox(height: 8),
-            const SkeletonText(width: 80, height: 24),
+            const SkeletonText(width: 80, height: 24)
+                .animate()
+                .fadeIn(duration: AppAnimations.fast, delay: AppAnimations.fast)
+                .slideX(begin: 0.1, duration: AppAnimations.fast, delay: AppAnimations.fast),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -208,9 +224,15 @@ class StatsCardSkeleton extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SkeletonText(width: 60, height: 14),
+                      const SkeletonText(width: 60, height: 14)
+                          .animate()
+                          .fadeIn(duration: AppAnimations.fast, delay: AppAnimations.fast * 2)
+                          .slideY(begin: 0.1, duration: AppAnimations.fast, delay: AppAnimations.fast * 2),
                       const SizedBox(height: 4),
-                      const SkeletonText(width: 40, height: 16),
+                      const SkeletonText(width: 40, height: 16)
+                          .animate()
+                          .fadeIn(duration: AppAnimations.fast, delay: AppAnimations.fast * 2.5)
+                          .slideY(begin: 0.1, duration: AppAnimations.fast, delay: AppAnimations.fast * 2.5),
                     ],
                   ),
                 ),
@@ -219,9 +241,15 @@ class StatsCardSkeleton extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SkeletonText(width: 60, height: 14),
+                      const SkeletonText(width: 60, height: 14)
+                          .animate()
+                          .fadeIn(duration: AppAnimations.fast, delay: AppAnimations.fast * 3)
+                          .slideY(begin: 0.1, duration: AppAnimations.fast, delay: AppAnimations.fast * 3),
                       const SizedBox(height: 4),
-                      const SkeletonText(width: 40, height: 16),
+                      const SkeletonText(width: 40, height: 16)
+                          .animate()
+                          .fadeIn(duration: AppAnimations.fast, delay: AppAnimations.fast * 3.5)
+                          .slideY(begin: 0.1, duration: AppAnimations.fast, delay: AppAnimations.fast * 3.5),
                     ],
                   ),
                 ),
@@ -230,6 +258,8 @@ class StatsCardSkeleton extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ).animate()
+      .fadeIn(duration: AppAnimations.fast)
+      .slideY(begin: 0.05, duration: AppAnimations.normal);
   }
 }

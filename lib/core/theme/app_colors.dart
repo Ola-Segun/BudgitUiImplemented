@@ -30,6 +30,14 @@ class AppColors {
   static const Color secondaryDark = Color(0xFFDB2777);
 
   // ═══════════════════════════════════════════════════════════
+  // TERTIARY COLORS - Purple for accents
+  // ═══════════════════════════════════════════════════════════
+
+  static const Color tertiary = Color(0xFF8B5CF6);
+  static const Color tertiaryLight = Color(0xFFC4B5FD);
+  static const Color tertiaryDark = Color(0xFF6D28D9);
+
+  // ═══════════════════════════════════════════════════════════
   // SEMANTIC COLORS - Status indicators
   // ═══════════════════════════════════════════════════════════
 

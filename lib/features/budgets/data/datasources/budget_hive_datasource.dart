@@ -21,9 +21,7 @@ class BudgetHiveDataSource {
     await HiveStorage.init();
 
     // Register adapters if not already registered
-    if (!Hive.isAdapterRegistered(2)) {
-      Hive.registerAdapter(BudgetDtoAdapter());
-    }
+    // BudgetDtoAdapter is registered globally in main.dart
     if (!Hive.isAdapterRegistered(3)) {
       Hive.registerAdapter(BudgetCategoryDtoAdapter());
     }

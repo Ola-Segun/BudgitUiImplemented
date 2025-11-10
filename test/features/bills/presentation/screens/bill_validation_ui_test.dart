@@ -1,4 +1,3 @@
-import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,8 +15,6 @@ import 'package:budget_tracker/features/transactions/domain/entities/transaction
 import 'package:budget_tracker/features/transactions/presentation/notifiers/category_notifier.dart';
 import 'package:budget_tracker/features/transactions/presentation/providers/transaction_providers.dart';
 import 'package:budget_tracker/features/transactions/presentation/states/category_state.dart';
-import 'package:budget_tracker/core/widgets/error_view.dart';
-import 'package:budget_tracker/core/widgets/loading_view.dart';
 
 class MockBillNotifier extends Mock implements BillNotifier {}
 

@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/theme/app_animations.dart';
-import '../../../../core/widgets/app_bottom_sheet.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../../core/widgets/skeleton_loader.dart';
+import '../../../../shared/presentation/widgets/cards/app_card.dart';
 import '../../domain/entities/transaction.dart';
 import '../../domain/entities/transaction_filter.dart';
 import '../providers/transaction_providers.dart';
 import '../states/transaction_state.dart';
-import '../widgets/add_transaction_bottom_sheet.dart';
+import '../widgets/enhanced_add_transaction_bottom_sheet.dart';
 import '../widgets/transaction_filters_bar.dart';
 import '../widgets/transaction_stats_card.dart';
 import '../widgets/transaction_tile.dart';
 import 'category_management_screen.dart';
-import 'transaction_detail_screen.dart';
 
 /// Screen for displaying and managing transactions
 class TransactionListScreen extends ConsumerStatefulWidget {
@@ -51,56 +53,98 @@ class _TransactionListScreenState extends ConsumerState<TransactionListScreen> {
   Widget build(BuildContext context) {
     final transactionState = ref.watch(transactionNotifierProvider);
     final categories = ref.watch(transactionCategoriesProvider);
-    final statsState = ref.watch(transactionStatsProvider);
+    final stats = ref.watch(transactionStatsProvider);
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        title: const Text('Transactions'),
+        title: Text(
+          'Transactions',
+          style: AppTypography.h2.copyWith(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: AppColors.surface,
+        elevation: 0,
         actions: [
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              switch (value) {
-                case 'categories':
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const CategoryManagementScreen(),
-                    ),
-                  );
-                  break;
-                case 'advanced_filters':
-                  _showFilterSheet(context, categories);
-                  break;
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'categories',
-                child: Row(
-                  children: [
-                    Icon(Icons.category),
-                    SizedBox(width: 8),
-                    Text('Manage Categories'),
-                  ],
-                ),
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppDimensions.spacing2,
+              vertical: AppDimensions.spacing1,
+            ),
+            decoration: BoxDecoration(
+              // color: AppColors.background2,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            ),
+            child: PopupMenuButton<String>(
+              onSelected: (value) {
+                HapticFeedback.selectionClick();
+                switch (value) {
+                  case 'categories':
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CategoryManagementScreen(),
+                      ),
+                    );
+                    break;
+                  case 'advanced_filters':
+                    _showFilterSheet(context, categories);
+                    break;
+                }
+              },
+              icon: Icon(
+                Icons.more_vert,
+                color: AppColors.textSecondary,
+                size: AppDimensions.iconMd,
               ),
-              const PopupMenuItem(
-                value: 'advanced_filters',
-                child: Row(
-                  children: [
-                    Icon(Icons.filter_list),
-                    SizedBox(width: 8),
-                    Text('Advanced Filters'),
-                  ],
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'categories',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.category,
+                        size: AppDimensions.iconSm,
+                        color: AppColors.primary,
+                      ),
+                      SizedBox(width: AppDimensions.spacing2),
+                      Text(
+                        'Manage Categories',
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                PopupMenuItem(
+                  value: 'advanced_filters',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.filter_list,
+                        size: AppDimensions.iconSm,
+                        color: AppColors.primary,
+                      ),
+                      SizedBox(width: AppDimensions.spacing2),
+                      Text(
+                        'Advanced Filters',
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
       body: transactionState.when(
-        data: (state) => _buildBody(state, statsState),
+        data: (state) => _buildBody(state, stats),
         loading: () => const LoadingView(),
         error: (error, stack) => ErrorView(
           message: error.toString(),
@@ -112,13 +156,20 @@ class _TransactionListScreenState extends ConsumerState<TransactionListScreen> {
           final isLoading = ref.watch(transactionNotifierProvider).value?.isLoading ?? false;
           return Container(
             height: 56.0,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.symmetric(horizontal: AppDimensions.spacing3),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary,
-              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.primary,
+                  AppColors.primaryDark,
+                ],
+              ),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
               boxShadow: [
                 BoxShadow(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                  color: AppColors.primary.withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
@@ -128,37 +179,46 @@ class _TransactionListScreenState extends ConsumerState<TransactionListScreen> {
               color: Colors.transparent,
               child: InkWell(
                 onTap: isLoading ? null : () => _showAddTransactionSheet(context),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (isLoading)
-                      const SizedBox(
-                        width: 20,
-                        height: 20,
+                      SizedBox(
+                        width: AppDimensions.iconMd,
+                        height: AppDimensions.iconMd,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
                     else
-                      const Icon(Icons.add_rounded, color: Colors.white),
-                    const SizedBox(width: 8),
+                      Icon(
+                        Icons.add_rounded,
+                        color: Colors.white,
+                        size: AppDimensions.iconMd,
+                      ),
+                    SizedBox(width: AppDimensions.spacing2),
                     Text(
                       isLoading ? 'Adding...' : 'Add',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
-          ).pressEffect();
+          ).animate()
+            .fadeIn(duration: 300.ms, delay: 200.ms)
+            .slideY(begin: 0.1, duration: 300.ms, delay: 200.ms, curve: Curves.elasticOut);
         },
       ),
     );
   }
 
-  Widget _buildBody(TransactionState state, AsyncValue<TransactionStats> statsState) {
+  Widget _buildBody(TransactionState state, TransactionStats stats) {
     // Show skeleton loading if we have no transactions but are not in initial loading state
     if (state.transactions.isEmpty && !state.isLoading) {
       return _buildEmptyState();
@@ -184,10 +244,13 @@ class _TransactionListScreenState extends ConsumerState<TransactionListScreen> {
         await ref.read(transactionNotifierProvider.notifier).loadTransactions();
       },
       child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: EdgeInsets.symmetric(
+          horizontal: AppDimensions.screenPaddingH,
+          vertical: AppDimensions.screenPaddingV,
+        ),
         itemCount: _calculateItemCount(groupedTransactions, state),
         itemBuilder: (context, index) {
-          return _buildListItem(context, index, groupedTransactions, statsState, state);
+          return _buildListItem(context, index, groupedTransactions, stats, state);
         },
       ).animate()
         .fadeIn(duration: 300.ms)
@@ -200,30 +263,85 @@ class _TransactionListScreenState extends ConsumerState<TransactionListScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.receipt_long_outlined,
-            size: 64,
-            color: Theme.of(context).colorScheme.outline,
-          ),
-          const SizedBox(height: 16),
+          Container(
+            padding: EdgeInsets.all(AppDimensions.spacing4),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+            ),
+            child: Icon(
+              Icons.receipt_long_outlined,
+              size: AppDimensions.iconXl,
+              color: AppColors.primary,
+            ),
+          ).animate()
+            .fadeIn(duration: 400.ms)
+            .scale(begin: const Offset(0.8, 0.8), duration: 400.ms, curve: Curves.elasticOut),
+          SizedBox(height: AppDimensions.spacing4),
           Text(
             'No transactions yet',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 8),
+            style: AppTypography.h2.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ).animate()
+            .fadeIn(duration: 300.ms, delay: 200.ms)
+            .slideY(begin: 0.1, duration: 300.ms, delay: 200.ms),
+          SizedBox(height: AppDimensions.spacing2),
           Text(
             'Add your first transaction to get started',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+            style: AppTypography.bodyLarge.copyWith(
+              color: AppColors.textSecondary,
+            ),
             textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          FilledButton.icon(
-            onPressed: () => _showAddTransactionSheet(context),
-            icon: const Icon(Icons.add),
-            label: const Text('Add Transaction'),
-          ).pressEffect(),
+          ).animate()
+            .fadeIn(duration: 300.ms, delay: 300.ms),
+          SizedBox(height: AppDimensions.spacing5),
+          AppCard(
+            elevation: AppCardElevation.medium,
+            padding: EdgeInsets.symmetric(
+              horizontal: AppDimensions.cardPadding,
+              vertical: AppDimensions.spacing3,
+            ),
+            onTap: () {
+              HapticFeedback.mediumImpact();
+              _showAddTransactionSheet(context);
+            },
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(AppDimensions.spacing2),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColors.primary,
+                        AppColors.primaryDark,
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                  ),
+                  child: Icon(
+                    Icons.add,
+                    color: Colors.white,
+                    size: AppDimensions.iconMd,
+                  ),
+                ),
+                SizedBox(width: AppDimensions.spacing3),
+                Text(
+                  'Add Transaction',
+                  style: AppTypography.bodyLarge.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ).animate()
+            .fadeIn(duration: 300.ms, delay: 400.ms)
+            .slideY(begin: 0.1, duration: 300.ms, delay: 400.ms, curve: Curves.elasticOut),
         ],
       ),
     );
@@ -234,33 +352,78 @@ class _TransactionListScreenState extends ConsumerState<TransactionListScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.search_off,
-            size: 64,
-            color: Theme.of(context).colorScheme.outline,
-          ),
-          const SizedBox(height: 16),
+          Container(
+            padding: EdgeInsets.all(AppDimensions.spacing4),
+            decoration: BoxDecoration(
+              color: AppColors.warning.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+            ),
+            child: Icon(
+              Icons.search_off,
+              size: AppDimensions.iconXl,
+              color: AppColors.warning,
+            ),
+          ).animate()
+            .fadeIn(duration: 400.ms)
+            .scale(begin: const Offset(0.8, 0.8), duration: 400.ms, curve: Curves.elasticOut),
+          SizedBox(height: AppDimensions.spacing4),
           Text(
             'No matching transactions',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 8),
+            style: AppTypography.h2.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ).animate()
+            .fadeIn(duration: 300.ms, delay: 200.ms)
+            .slideY(begin: 0.1, duration: 300.ms, delay: 200.ms),
+          SizedBox(height: AppDimensions.spacing2),
           Text(
             'Try adjusting your search or filters',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+            style: AppTypography.bodyLarge.copyWith(
+              color: AppColors.textSecondary,
+            ),
             textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          OutlinedButton.icon(
-            onPressed: () {
+          ).animate()
+            .fadeIn(duration: 300.ms, delay: 300.ms),
+          SizedBox(height: AppDimensions.spacing5),
+          AppCard(
+            elevation: AppCardElevation.low,
+            padding: EdgeInsets.symmetric(
+              horizontal: AppDimensions.cardPadding,
+              vertical: AppDimensions.spacing3,
+            ),
+            onTap: () {
               ref.read(transactionNotifierProvider.notifier).clearFilter();
               ref.read(transactionNotifierProvider.notifier).clearSearch();
             },
-            icon: const Icon(Icons.clear),
-            label: const Text('Clear Filters'),
-          ).pressEffect(),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(AppDimensions.spacing2),
+                  decoration: BoxDecoration(
+                    color: AppColors.warning.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                  ),
+                  child: Icon(
+                    Icons.clear,
+                    color: AppColors.warning,
+                    size: AppDimensions.iconMd,
+                  ),
+                ),
+                SizedBox(width: AppDimensions.spacing3),
+                Text(
+                  'Clear Filters',
+                  style: AppTypography.bodyLarge.copyWith(
+                    color: AppColors.warning,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ).animate()
+            .fadeIn(duration: 300.ms, delay: 400.ms)
+            .slideY(begin: 0.1, duration: 300.ms, delay: 400.ms, curve: Curves.elasticOut),
         ],
       ),
     );
@@ -272,11 +435,14 @@ class _TransactionListScreenState extends ConsumerState<TransactionListScreen> {
         await ref.read(transactionNotifierProvider.notifier).loadTransactions();
       },
       child: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: EdgeInsets.symmetric(
+          horizontal: AppDimensions.screenPaddingH,
+          vertical: AppDimensions.screenPaddingV,
+        ),
         children: [
           // Stats Card Skeleton
           const StatsCardSkeleton(),
-          const SizedBox(height: 16),
+          SizedBox(height: AppDimensions.sectionGap),
 
           // Transaction List Skeleton
           const TransactionListSkeleton(itemCount: 6),
@@ -320,7 +486,7 @@ class _TransactionListScreenState extends ConsumerState<TransactionListScreen> {
     BuildContext context,
     int index,
     Map<DateTime, List<Transaction>> groupedTransactions,
-    AsyncValue<TransactionStats> statsState,
+    TransactionStats stats,
     TransactionState state,
   ) {
     int currentIndex = 0;
@@ -341,14 +507,13 @@ class _TransactionListScreenState extends ConsumerState<TransactionListScreen> {
     if (index == currentIndex++) {
       return Column(
         children: [
-          statsState.when(
-            data: (stats) => TransactionStatsCard(stats: stats)
-                .animate()
-                .fadeIn(duration: 500.ms, delay: 200.ms)
-                .slideY(begin: 0.1, duration: 500.ms, delay: 200.ms, curve: Curves.easeOutCubic),
-            loading: () => const SizedBox.shrink(),
-            error: (error, stack) => const SizedBox.shrink(),
-          ),
+          TransactionStatsCard(
+            key: ValueKey('stats_${stats.totalIncome}_${stats.totalExpenses}_${stats.transactionCount}'),
+            stats: stats,
+          )
+              .animate()
+              .fadeIn(duration: 500.ms, delay: 200.ms)
+              .slideY(begin: 0.1, duration: 500.ms, delay: 200.ms, curve: Curves.easeOutCubic),
           const SizedBox(height: 16),
         ],
       );
@@ -362,13 +527,33 @@ class _TransactionListScreenState extends ConsumerState<TransactionListScreen> {
       // Date header
       if (index == currentIndex++) {
         return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Text(
-            _formatDateHeader(date),
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
+          padding: EdgeInsets.symmetric(vertical: AppDimensions.spacing3),
+          child: Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppDimensions.spacing3,
+              vertical: AppDimensions.spacing2,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.backgroundAlt,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.calendar_today,
+                  size: AppDimensions.iconSm,
+                  color: AppColors.textSecondary,
                 ),
+                SizedBox(width: AppDimensions.spacing2),
+                Text(
+                  _formatDateHeader(date),
+                  style: AppTypography.labelMedium.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
           ),
         ).animate()
           .fadeIn(duration: 300.ms, delay: Duration(milliseconds: 100 * (currentIndex ~/ 2)))
@@ -378,35 +563,68 @@ class _TransactionListScreenState extends ConsumerState<TransactionListScreen> {
       // Transactions for this date
       for (final transaction in dayTransactions) {
         if (index == currentIndex++) {
-          return TransactionTile(transaction: transaction)
-              .animate()
-              .fadeIn(duration: 400.ms, delay: Duration(milliseconds: 50 * (currentIndex - 1)))
-              .slideY(begin: 0.05, duration: 400.ms, delay: Duration(milliseconds: 50 * (currentIndex - 1)), curve: Curves.easeOutCubic);
+          return Padding(
+            padding: EdgeInsets.only(bottom: AppDimensions.spacing2), // Changed from spacing2
+            child: TransactionTile(transaction: transaction)
+                .animate()
+                .fadeIn(duration: 400.ms, delay: Duration(milliseconds: 50 * (currentIndex - 1)))
+                .slideY(begin: 0.05, duration: 400.ms, delay: Duration(milliseconds: 50 * (currentIndex - 1)), curve: Curves.easeOutCubic),
+          );
         }
       }
 
       // Spacing after date group
       if (index == currentIndex++) {
-        return const SizedBox(height: 16);
+        return SizedBox(height: AppDimensions.spacing4);
       }
     }
 
     // Load More Button or Loading Indicator
     if (state.hasMoreData && !state.isLoadingMore) {
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: EdgeInsets.symmetric(vertical: AppDimensions.spacing4),
         child: Center(
-          child: FilledButton.icon(
-            onPressed: () => ref.read(transactionNotifierProvider.notifier).loadMoreTransactions(),
-            icon: const Icon(Icons.expand_more),
-            label: const Text('Load More'),
-          ).pressEffect(),
+          child: AppCard(
+            elevation: AppCardElevation.low,
+            padding: EdgeInsets.symmetric(
+              horizontal: AppDimensions.cardPadding,
+              vertical: AppDimensions.spacing3,
+            ),
+            onTap: () => ref.read(transactionNotifierProvider.notifier).loadMoreTransactions(),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(AppDimensions.spacing2),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                  ),
+                  child: Icon(
+                    Icons.expand_more,
+                    color: AppColors.primary,
+                    size: AppDimensions.iconMd,
+                  ),
+                ),
+                SizedBox(width: AppDimensions.spacing3),
+                Text(
+                  'Load More',
+                  style: AppTypography.bodyLarge.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ).animate()
+            .fadeIn(duration: 300.ms)
+            .slideY(begin: 0.1, duration: 300.ms, curve: Curves.elasticOut),
         ),
       );
     } else if (state.isLoadingMore) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 16),
-        child: Center(
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: AppDimensions.spacing4),
+        child: const Center(
           child: CircularProgressIndicator(),
         ),
       );
@@ -416,26 +634,25 @@ class _TransactionListScreenState extends ConsumerState<TransactionListScreen> {
   }
 
   Future<void> _showAddTransactionSheet(BuildContext context) async {
-    await AppBottomSheet.show(
+    await EnhancedAddTransactionBottomSheet.show(
       context: context,
-      child: AddTransactionBottomSheet(
-        onSubmit: (transaction) async {
-          final success = await ref
-              .read(transactionNotifierProvider.notifier)
-              .addTransaction(transaction);
+      onSubmit: (transaction) async {
+        final success = await ref
+            .read(transactionNotifierProvider.notifier)
+            .addTransaction(transaction);
 
-          if (success && mounted) {
-            Navigator.pop(context);
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Transaction added successfully')),
-                );
-              }
-            });
-          }
-        },
-      ),
+        if (success && mounted) {
+          // Don't pop here - let the bottom sheet handle its own dismissal
+          // to avoid double-popping the navigation stack
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Transaction added successfully')),
+              );
+            }
+          });
+        }
+      },
     );
   }
 
@@ -460,56 +677,6 @@ class _TransactionListScreenState extends ConsumerState<TransactionListScreen> {
     );
   }
 
-  void _onTransactionTap(Transaction transaction) {
-    // Navigate to transaction detail screen
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => TransactionDetailScreen(transactionId: transaction.id),
-      ),
-    );
-  }
-
-  Future<void> _confirmDeleteTransaction(Transaction transaction) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Transaction'),
-        content: Text(
-          'Are you sure you want to delete "${transaction.description ?? 'this transaction'}"?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      final success = await ref
-          .read(transactionNotifierProvider.notifier)
-          .deleteTransaction(transaction.id);
-
-      if (success && mounted) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Transaction deleted')),
-            );
-          }
-        });
-      }
-    }
-  }
 }
 
 /// Bottom sheet for transaction filters
@@ -587,7 +754,7 @@ class _TransactionFilterBottomSheetContentState extends State<_TransactionFilter
     debugPrint('TransactionFilterBottomSheet: Screen height: $screenHeight');
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(AppDimensions.cardPadding),
       constraints: BoxConstraints(
         maxHeight: screenHeight * 0.8, // Limit to 80% of screen height
       ),
@@ -596,18 +763,41 @@ class _TransactionFilterBottomSheetContentState extends State<_TransactionFilter
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Filter Transactions',
-              style: Theme.of(context).textTheme.headlineSmall,
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(AppDimensions.spacing2),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                  ),
+                  child: Icon(
+                    Icons.filter_list,
+                    size: AppDimensions.iconMd,
+                    color: AppColors.primary,
+                  ),
+                ),
+                SizedBox(width: AppDimensions.spacing3),
+                Text(
+                  'Filter Transactions',
+                  style: AppTypography.h2.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: AppDimensions.spacing5),
 
             // Transaction Type
             Text(
               'Transaction Type',
-              style: Theme.of(context).textTheme.titleMedium,
+              style: AppTypography.h3.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: AppDimensions.spacing2),
             SegmentedButton<TransactionType?>(
               segments: const [
                 ButtonSegment(
@@ -631,89 +821,139 @@ class _TransactionFilterBottomSheetContentState extends State<_TransactionFilter
               },
             ),
 
-            const SizedBox(height: 24),
+            SizedBox(height: AppDimensions.spacing5),
 
             // Account Filter
             Text(
               'Account',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<String?>(
-              initialValue: _selectedAccountId,
-              decoration: const InputDecoration(
-                labelText: 'Select Account',
+              style: AppTypography.h3.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
               ),
-              items: [
-                const DropdownMenuItem(
-                  value: null,
-                  child: Text('All Accounts'),
+            ),
+            SizedBox(height: AppDimensions.spacing2),
+            AppCard(
+              elevation: AppCardElevation.none,
+              padding: EdgeInsets.symmetric(
+                horizontal: AppDimensions.spacing3,
+                vertical: AppDimensions.spacing2,
+              ),
+              child: DropdownButtonFormField<String?>(
+                initialValue: _selectedAccountId,
+                decoration: InputDecoration(
+                  labelText: 'Select Account',
+                  labelStyle: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
                 ),
-                const DropdownMenuItem(
-                  value: 'checking',
-                  child: Text('Checking Account'),
+                style: AppTypography.bodyLarge.copyWith(
+                  color: AppColors.textPrimary,
                 ),
-                const DropdownMenuItem(
-                  value: 'savings',
-                  child: Text('Savings Account'),
-                ),
-                const DropdownMenuItem(
-                  value: 'credit',
-                  child: Text('Credit Card'),
-                ),
-              ],
-              onChanged: (value) {
-                setState(() {
-                  _selectedAccountId = value;
-                });
-              },
+                items: [
+                  DropdownMenuItem(
+                    value: null,
+                    child: Text(
+                      'All Accounts',
+                      style: AppTypography.bodyLarge.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: 'checking',
+                    child: Text(
+                      'Checking Account',
+                      style: AppTypography.bodyLarge.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: 'savings',
+                    child: Text(
+                      'Savings Account',
+                      style: AppTypography.bodyLarge.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: 'credit',
+                    child: Text(
+                      'Credit Card',
+                      style: AppTypography.bodyLarge.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    _selectedAccountId = value;
+                  });
+                },
+              ),
             ),
 
-            const SizedBox(height: 24),
+            SizedBox(height: AppDimensions.spacing5),
 
             // Category Filter (Multi-select)
             Text(
               'Categories',
-              style: Theme.of(context).textTheme.titleMedium,
+              style: AppTypography.h3.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-            const SizedBox(height: 8),
-            InkWell(
+            SizedBox(height: AppDimensions.spacing2),
+            AppCard(
+              elevation: AppCardElevation.none,
+              padding: EdgeInsets.all(AppDimensions.spacing3),
               onTap: () => _showCategoryMultiSelect(context),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Theme.of(context).colorScheme.outline),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _selectedCategoryIds.isEmpty
-                            ? 'All Categories'
-                            : '${_selectedCategoryIds.length} selected',
-                        style: Theme.of(context).textTheme.bodyLarge,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _selectedCategoryIds.isEmpty
+                          ? 'All Categories'
+                          : '${_selectedCategoryIds.length} selected',
+                      style: AppTypography.bodyLarge.copyWith(
+                        color: AppColors.textPrimary,
                       ),
                     ),
-                    Icon(Icons.arrow_drop_down),
-                  ],
-                ),
+                  ),
+                  Icon(
+                    Icons.arrow_drop_down,
+                    color: AppColors.textSecondary,
+                    size: AppDimensions.iconMd,
+                  ),
+                ],
               ),
             ),
 
-            const SizedBox(height: 24),
+            SizedBox(height: AppDimensions.spacing5),
 
             // Date Range
             Text(
               'Date Range',
-              style: Theme.of(context).textTheme.titleMedium,
+              style: AppTypography.h3.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: AppDimensions.spacing2),
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
+                  child: AppCard(
+                    elevation: AppCardElevation.none,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppDimensions.spacing3,
+                      vertical: AppDimensions.spacing3,
+                    ),
+                    onTap: () async {
                       final date = await showDatePicker(
                         context: context,
                         initialDate: _startDate ?? DateTime.now(),
@@ -726,18 +966,35 @@ class _TransactionFilterBottomSheetContentState extends State<_TransactionFilter
                         });
                       }
                     },
-                    icon: const Icon(Icons.calendar_today),
-                    label: Text(
-                      _startDate != null
-                          ? DateFormat('MMM dd').format(_startDate!)
-                          : 'Start Date',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          size: AppDimensions.iconMd,
+                          color: AppColors.primary,
+                        ),
+                        SizedBox(width: AppDimensions.spacing2),
+                        Text(
+                          _startDate != null
+                              ? DateFormat('MMM dd').format(_startDate!)
+                              : 'Start Date',
+                          style: AppTypography.bodyMedium.copyWith(
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: AppDimensions.spacing4),
                 Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
+                  child: AppCard(
+                    elevation: AppCardElevation.none,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppDimensions.spacing3,
+                      vertical: AppDimensions.spacing3,
+                    ),
+                    onTap: () async {
                       final date = await showDatePicker(
                         context: context,
                         initialDate: _endDate ?? DateTime.now(),
@@ -750,74 +1007,138 @@ class _TransactionFilterBottomSheetContentState extends State<_TransactionFilter
                         });
                       }
                     },
-                    icon: const Icon(Icons.calendar_today),
-                    label: Text(
-                      _endDate != null
-                          ? DateFormat('MMM dd').format(_endDate!)
-                          : 'End Date',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          size: AppDimensions.iconMd,
+                          color: AppColors.primary,
+                        ),
+                        SizedBox(width: AppDimensions.spacing2),
+                        Text(
+                          _endDate != null
+                              ? DateFormat('MMM dd').format(_endDate!)
+                              : 'End Date',
+                          style: AppTypography.bodyMedium.copyWith(
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ],
             ),
 
-            const SizedBox(height: 24),
+            SizedBox(height: AppDimensions.spacing5),
 
             // Amount Range
             Text(
               'Amount Range',
-              style: Theme.of(context).textTheme.titleMedium,
+              style: AppTypography.h3.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: AppDimensions.spacing2),
             Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    decoration: const InputDecoration(
-                      labelText: 'Min Amount',
-                      prefixText: '\$',
+                  child: AppCard(
+                    elevation: AppCardElevation.none,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppDimensions.spacing3,
+                      vertical: AppDimensions.spacing2,
                     ),
-                    keyboardType: TextInputType.number,
-                    onChanged: (value) {
-                      setState(() {
-                        _minAmount = value.isEmpty ? null : double.tryParse(value);
-                      });
-                    },
+                    child: TextField(
+                      decoration: InputDecoration(
+                        labelText: 'Min Amount',
+                        prefixText: '\$',
+                        labelStyle: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      keyboardType: TextInputType.number,
+                      style: AppTypography.bodyLarge.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          _minAmount = value.isEmpty ? null : double.tryParse(value);
+                        });
+                      },
+                    ),
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: AppDimensions.spacing4),
                 Expanded(
-                  child: TextField(
-                    decoration: const InputDecoration(
-                      labelText: 'Max Amount',
-                      prefixText: '\$',
+                  child: AppCard(
+                    elevation: AppCardElevation.none,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppDimensions.spacing3,
+                      vertical: AppDimensions.spacing2,
                     ),
-                    keyboardType: TextInputType.number,
-                    onChanged: (value) {
-                      setState(() {
-                        _maxAmount = value.isEmpty ? null : double.tryParse(value);
-                      });
-                    },
+                    child: TextField(
+                      decoration: InputDecoration(
+                        labelText: 'Max Amount',
+                        prefixText: '\$',
+                        labelStyle: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      keyboardType: TextInputType.number,
+                      style: AppTypography.bodyLarge.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          _maxAmount = value.isEmpty ? null : double.tryParse(value);
+                        });
+                      },
+                    ),
                   ),
                 ),
               ],
             ),
 
-            const SizedBox(height: 32),
+            SizedBox(height: AppDimensions.spacing6),
 
             // Action Buttons
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton(
-                    onPressed: widget.onClearFilter,
-                    child: const Text('Clear'),
+                  child: AppCard(
+                    elevation: AppCardElevation.low,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppDimensions.cardPadding,
+                      vertical: AppDimensions.spacing3,
+                    ),
+                    onTap: widget.onClearFilter,
+                    child: Center(
+                      child: Text(
+                        'Clear',
+                        style: AppTypography.bodyLarge.copyWith(
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: AppDimensions.spacing4),
                 Expanded(
-                  child: FilledButton(
-                    onPressed: () {
+                  child: AppCard(
+                    elevation: AppCardElevation.medium,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppDimensions.cardPadding,
+                      vertical: AppDimensions.spacing3,
+                    ),
+                    backgroundColor: AppColors.primary,
+                    onTap: () {
                       final filter = TransactionFilter(
                         transactionType: _selectedType,
                         categoryIds: _selectedCategoryIds.isEmpty ? null : _selectedCategoryIds,
@@ -829,7 +1150,15 @@ class _TransactionFilterBottomSheetContentState extends State<_TransactionFilter
                       );
                       widget.onApplyFilter(filter);
                     },
-                    child: const Text('Apply'),
+                    child: Center(
+                      child: Text(
+                        'Apply',
+                        style: AppTypography.bodyLarge.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ],

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 /// Animation constants and utilities for the app
 class AppAnimations {
-  // Duration constants
-  static const Duration fast = Duration(milliseconds: 150);
-  static const Duration normal = Duration(milliseconds: 300);
-  static const Duration slow = Duration(milliseconds: 500);
+  // Duration constants - optimized for performance
+  static const Duration fast = Duration(milliseconds: 120);
+  static const Duration normal = Duration(milliseconds: 250);
+  static const Duration slow = Duration(milliseconds: 400);
 
   // Curve constants
   static const Curve easeInOut = Curves.easeInOut;
@@ -24,6 +25,73 @@ class AppAnimations {
   static const double scalePressed = 0.95;
   static const double scaleHover = 1.02;
   static const double opacityDisabled = 0.5;
+
+  // ═══════════════════════════════════════════════════════════
+  // ACCOUNT UI ANIMATION PRESETS
+  // ═══════════════════════════════════════════════════════════
+
+  /// Fade in + slide up animation for cards
+  static Widget fadeInSlideUp({
+    required Widget child,
+    Duration delay = Duration.zero,
+    Duration duration = const Duration(milliseconds: 400),
+  }) {
+    return child.animate()
+      .fadeIn(duration: duration, delay: delay)
+      .slideY(begin: 0.2, duration: duration, delay: delay, curve: Curves.easeOut);
+  }
+
+  /// Staggered list animation for multiple items
+  static Widget staggeredFadeIn({
+    required Widget child,
+    required int index,
+    Duration baseDelay = Duration.zero,
+    Duration duration = const Duration(milliseconds: 400),
+  }) {
+    final delay = baseDelay + Duration(milliseconds: index * 50);
+    return fadeInSlideUp(child: child, delay: delay, duration: duration);
+  }
+
+  /// Scale and fade animation for hero elements
+  static Widget heroScaleIn({
+    required Widget child,
+    Duration delay = Duration.zero,
+    Duration duration = const Duration(milliseconds: 500),
+  }) {
+    return child.animate()
+      .scale(begin: const Offset(0.8, 0.8), end: const Offset(1.0, 1.0),
+             duration: duration, delay: delay, curve: Curves.elasticOut)
+      .fadeIn(duration: duration, delay: delay);
+  }
+
+  /// Pulsing animation for indicators
+  static Widget pulsingIndicator({
+    required Widget child,
+    Duration period = const Duration(milliseconds: 1500),
+  }) {
+    return child.animate(
+      onPlay: (controller) => controller.repeat(reverse: true),
+    ).scale(
+      begin: const Offset(1.0, 1.0),
+      end: const Offset(1.1, 1.1),
+      duration: period,
+      curve: Curves.easeInOut,
+    );
+  }
+
+  /// Bounce in animation for action buttons
+  static Widget bounceIn({
+    required Widget child,
+    Duration delay = Duration.zero,
+    Duration duration = const Duration(milliseconds: 600),
+  }) {
+    return child.animate()
+      .scale(begin: const Offset(0.3, 0.3), end: const Offset(1.1, 1.1),
+             duration: duration ~/ 2, delay: delay, curve: Curves.elasticOut)
+      .then()
+      .scale(begin: const Offset(1.1, 1.1), end: const Offset(1.0, 1.0),
+             duration: duration ~/ 2, curve: Curves.easeOut);
+  }
 
   // Page transition builder
   static Widget pageTransitionBuilder(
@@ -176,7 +244,6 @@ class AppAnimations {
       ),
     );
   }
-
 }
 
 /// Extension methods for animations
@@ -239,6 +306,66 @@ extension AnimationExtensions on Widget {
       duration: duration,
       scale: scale,
       child: this,
+    );
+  }
+
+  /// Adds fade in slide up animation
+  Widget fadeInSlideUp({
+    Duration delay = Duration.zero,
+    Duration duration = const Duration(milliseconds: 400),
+  }) {
+    return AppAnimations.fadeInSlideUp(
+      child: this,
+      delay: delay,
+      duration: duration,
+    );
+  }
+
+  /// Adds staggered animation for list items
+  Widget staggeredFadeIn({
+    required int index,
+    Duration baseDelay = Duration.zero,
+    Duration duration = const Duration(milliseconds: 400),
+  }) {
+    return AppAnimations.staggeredFadeIn(
+      child: this,
+      index: index,
+      baseDelay: baseDelay,
+      duration: duration,
+    );
+  }
+
+  /// Adds hero scale in animation
+  Widget heroScaleIn({
+    Duration delay = Duration.zero,
+    Duration duration = const Duration(milliseconds: 500),
+  }) {
+    return AppAnimations.heroScaleIn(
+      child: this,
+      delay: delay,
+      duration: duration,
+    );
+  }
+
+  /// Adds pulsing animation
+  Widget pulsing({
+    Duration period = const Duration(milliseconds: 1500),
+  }) {
+    return AppAnimations.pulsingIndicator(
+      child: this,
+      period: period,
+    );
+  }
+
+  /// Adds bounce in animation
+  Widget bounceIn({
+    Duration delay = Duration.zero,
+    Duration duration = const Duration(milliseconds: 600),
+  }) {
+    return AppAnimations.bounceIn(
+      child: this,
+      delay: delay,
+      duration: duration,
     );
   }
 }

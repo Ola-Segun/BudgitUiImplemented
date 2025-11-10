@@ -1452,6 +1452,7 @@ mixin _$Subscription {
   List<String> get alternativeProviders => throw _privateConstructorUsedError;
   DateTime? get trialEndDate => throw _privateConstructorUsedError;
   bool get hasFreeTrial => throw _privateConstructorUsedError;
+  DateTime? get lastUsedDate => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $SubscriptionCopyWith<Subscription> get copyWith =>
@@ -1495,7 +1496,8 @@ abstract class $SubscriptionCopyWith<$Res> {
       String? cancellationReason,
       List<String> alternativeProviders,
       DateTime? trialEndDate,
-      bool hasFreeTrial});
+      bool hasFreeTrial,
+      DateTime? lastUsedDate});
 }
 
 /// @nodoc
@@ -1542,6 +1544,7 @@ class _$SubscriptionCopyWithImpl<$Res, $Val extends Subscription>
     Object? alternativeProviders = null,
     Object? trialEndDate = freezed,
     Object? hasFreeTrial = null,
+    Object? lastUsedDate = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -1668,6 +1671,10 @@ class _$SubscriptionCopyWithImpl<$Res, $Val extends Subscription>
           ? _value.hasFreeTrial
           : hasFreeTrial // ignore: cast_nullable_to_non_nullable
               as bool,
+      lastUsedDate: freezed == lastUsedDate
+          ? _value.lastUsedDate
+          : lastUsedDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
     ) as $Val);
   }
 }
@@ -1711,7 +1718,8 @@ abstract class _$$SubscriptionImplCopyWith<$Res>
       String? cancellationReason,
       List<String> alternativeProviders,
       DateTime? trialEndDate,
-      bool hasFreeTrial});
+      bool hasFreeTrial,
+      DateTime? lastUsedDate});
 }
 
 /// @nodoc
@@ -1756,6 +1764,7 @@ class __$$SubscriptionImplCopyWithImpl<$Res>
     Object? alternativeProviders = null,
     Object? trialEndDate = freezed,
     Object? hasFreeTrial = null,
+    Object? lastUsedDate = freezed,
   }) {
     return _then(_$SubscriptionImpl(
       id: null == id
@@ -1882,6 +1891,10 @@ class __$$SubscriptionImplCopyWithImpl<$Res>
           ? _value.hasFreeTrial
           : hasFreeTrial // ignore: cast_nullable_to_non_nullable
               as bool,
+      lastUsedDate: freezed == lastUsedDate
+          ? _value.lastUsedDate
+          : lastUsedDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
     ));
   }
 }
@@ -1920,7 +1933,8 @@ class _$SubscriptionImpl extends _Subscription {
       this.cancellationReason,
       final List<String> alternativeProviders = const [],
       this.trialEndDate,
-      this.hasFreeTrial = false})
+      this.hasFreeTrial = false,
+      this.lastUsedDate})
       : _allowedAccountIds = allowedAccountIds,
         _paymentHistory = paymentHistory,
         _recurringPaymentRules = recurringPaymentRules,
@@ -2037,10 +2051,12 @@ class _$SubscriptionImpl extends _Subscription {
   @override
   @JsonKey()
   final bool hasFreeTrial;
+  @override
+  final DateTime? lastUsedDate;
 
   @override
   String toString() {
-    return 'Subscription(id: $id, name: $name, amount: $amount, dueDate: $dueDate, frequency: $frequency, categoryId: $categoryId, description: $description, payee: $payee, defaultAccountId: $defaultAccountId, allowedAccountIds: $allowedAccountIds, accountId: $accountId, isAutoPay: $isAutoPay, isPaid: $isPaid, lastPaidDate: $lastPaidDate, nextDueDate: $nextDueDate, website: $website, notes: $notes, cancellationDifficulty: $cancellationDifficulty, lastPriceIncrease: $lastPriceIncrease, paymentHistory: $paymentHistory, isVariableAmount: $isVariableAmount, minAmount: $minAmount, maxAmount: $maxAmount, currencyCode: $currencyCode, recurringPaymentRules: $recurringPaymentRules, isCancelled: $isCancelled, cancellationDate: $cancellationDate, cancellationReason: $cancellationReason, alternativeProviders: $alternativeProviders, trialEndDate: $trialEndDate, hasFreeTrial: $hasFreeTrial)';
+    return 'Subscription(id: $id, name: $name, amount: $amount, dueDate: $dueDate, frequency: $frequency, categoryId: $categoryId, description: $description, payee: $payee, defaultAccountId: $defaultAccountId, allowedAccountIds: $allowedAccountIds, accountId: $accountId, isAutoPay: $isAutoPay, isPaid: $isPaid, lastPaidDate: $lastPaidDate, nextDueDate: $nextDueDate, website: $website, notes: $notes, cancellationDifficulty: $cancellationDifficulty, lastPriceIncrease: $lastPriceIncrease, paymentHistory: $paymentHistory, isVariableAmount: $isVariableAmount, minAmount: $minAmount, maxAmount: $maxAmount, currencyCode: $currencyCode, recurringPaymentRules: $recurringPaymentRules, isCancelled: $isCancelled, cancellationDate: $cancellationDate, cancellationReason: $cancellationReason, alternativeProviders: $alternativeProviders, trialEndDate: $trialEndDate, hasFreeTrial: $hasFreeTrial, lastUsedDate: $lastUsedDate)';
   }
 
   @override
@@ -2101,7 +2117,9 @@ class _$SubscriptionImpl extends _Subscription {
             (identical(other.trialEndDate, trialEndDate) ||
                 other.trialEndDate == trialEndDate) &&
             (identical(other.hasFreeTrial, hasFreeTrial) ||
-                other.hasFreeTrial == hasFreeTrial));
+                other.hasFreeTrial == hasFreeTrial) &&
+            (identical(other.lastUsedDate, lastUsedDate) ||
+                other.lastUsedDate == lastUsedDate));
   }
 
   @override
@@ -2137,7 +2155,8 @@ class _$SubscriptionImpl extends _Subscription {
         cancellationReason,
         const DeepCollectionEquality().hash(_alternativeProviders),
         trialEndDate,
-        hasFreeTrial
+        hasFreeTrial,
+        lastUsedDate
       ]);
 
   @JsonKey(ignore: true)
@@ -2179,7 +2198,8 @@ abstract class _Subscription extends Subscription {
       final String? cancellationReason,
       final List<String> alternativeProviders,
       final DateTime? trialEndDate,
-      final bool hasFreeTrial}) = _$SubscriptionImpl;
+      final bool hasFreeTrial,
+      final DateTime? lastUsedDate}) = _$SubscriptionImpl;
   const _Subscription._() : super._();
 
   @override
@@ -2244,6 +2264,8 @@ abstract class _Subscription extends Subscription {
   DateTime? get trialEndDate;
   @override
   bool get hasFreeTrial;
+  @override
+  DateTime? get lastUsedDate;
   @override
   @JsonKey(ignore: true)
   _$$SubscriptionImplCopyWith<_$SubscriptionImpl> get copyWith =>

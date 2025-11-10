@@ -91,13 +91,15 @@ class TransactionCategoryDtoAdapter
       ..name = fields[1] as String
       ..icon = fields[2] as String
       ..color = fields[3] as int
-      ..type = fields[4] as String;
+      ..type = fields[4] as String
+      ..isArchived = fields[5] as bool
+      ..usageCount = fields[6] as int;
   }
 
   @override
   void write(BinaryWriter writer, TransactionCategoryDto obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -107,7 +109,11 @@ class TransactionCategoryDtoAdapter
       ..writeByte(3)
       ..write(obj.color)
       ..writeByte(4)
-      ..write(obj.type);
+      ..write(obj.type)
+      ..writeByte(5)
+      ..write(obj.isArchived)
+      ..writeByte(6)
+      ..write(obj.usageCount);
   }
 
   @override

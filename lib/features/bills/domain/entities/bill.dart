@@ -422,6 +422,7 @@ class Subscription with _$Subscription {
     @Default([]) List<String> alternativeProviders,
     DateTime? trialEndDate,
     @Default(false) bool hasFreeTrial,
+    DateTime? lastUsedDate,  // Track when subscription was last used
   }) = _Subscription;
 
   const Subscription._();
@@ -485,6 +486,7 @@ class Subscription with _$Subscription {
       maxAmount: bill.maxAmount,
       currencyCode: bill.currencyCode,
       recurringPaymentRules: bill.recurringPaymentRules,
+      lastUsedDate: null, // Initialize as null for new subscriptions
     );
   }
 
@@ -511,6 +513,19 @@ class Subscription with _$Subscription {
 
   /// Check if subscription has payment history
   bool get hasPaymentHistory => toBill().hasPaymentHistory;
+
+  /// Check if subscription is considered unused (no last used date or last used > 30 days ago)
+  bool get isUnused {
+    if (lastUsedDate == null) return true;
+    final daysSinceLastUse = DateTime.now().difference(lastUsedDate!).inDays;
+    return daysSinceLastUse > 30; // Consider unused if not used in 30+ days
+  }
+
+  /// Get days since last used
+  int? get daysSinceLastUsed {
+    if (lastUsedDate == null) return null;
+    return DateTime.now().difference(lastUsedDate!).inDays;
+  }
 
   /// Validate subscription data
   Result<Subscription> validate() {

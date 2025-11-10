@@ -21,12 +21,16 @@ final categoryNotifierProvider =
   final addCategory = ref.watch(core_providers.addCategoryProvider);
   final updateCategory = ref.watch(core_providers.updateCategoryProvider);
   final deleteCategory = ref.watch(core_providers.deleteCategoryProvider);
+  final archiveCategory = ref.watch(core_providers.archiveCategoryProvider);
+  final unarchiveCategory = ref.watch(core_providers.unarchiveCategoryProvider);
 
   return CategoryNotifier(
     getCategories: getCategories,
     addCategory: addCategory,
     updateCategory: updateCategory,
     deleteCategory: deleteCategory,
+    archiveCategory: archiveCategory,
+    unarchiveCategory: unarchiveCategory,
   );
 });
 
@@ -106,13 +110,13 @@ final filteredTransactionsProvider = Provider<AsyncValue<List<Transaction>>>((re
 });
 
 /// Provider for transaction statistics
-final transactionStatsProvider = FutureProvider<TransactionStats>((ref) {
-  final getTransactions = ref.watch(getTransactionsProvider);
-  // Watch the notifier to trigger refetch on changes
-  final _ = ref.watch(transactionNotifierProvider);
+final transactionStatsProvider = Provider<TransactionStats>((ref) {
+  // Watch the notifier state directly to compute stats synchronously
+  final transactionState = ref.watch(transactionNotifierProvider);
 
-  return getTransactions().then((result) => result.when(
-    success: (transactions) {
+  return transactionState.maybeWhen(
+    data: (state) {
+      final transactions = state.transactions;
       final totalIncome = transactions
           .where((t) => t.type == TransactionType.income)
           .fold<double>(0, (sum, t) => sum + t.amount);
@@ -131,7 +135,7 @@ final transactionStatsProvider = FutureProvider<TransactionStats>((ref) {
           .where((t) => t.type == TransactionType.expense)
           .fold<double>(0, (max, t) => t.amount > max ? t.amount : max);
 
-      final stats = TransactionStats(
+      return TransactionStats(
         totalIncome: totalIncome,
         totalExpenses: totalExpenses,
         netAmount: totalIncome - totalExpenses,
@@ -139,9 +143,7 @@ final transactionStatsProvider = FutureProvider<TransactionStats>((ref) {
         averageTransactionAmount: averageTransactionAmount,
         largestExpense: largestExpense,
       );
-
-      return stats;
     },
-    error: (failure) => throw Exception(failure.message),
-  ));
+    orElse: () => const TransactionStats(),
+  );
 });

@@ -1,4 +1,3 @@
-import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,10 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:mockito/mockito.dart';
 
-import 'package:budget_tracker/core/di/providers.dart' as di;
 import 'package:budget_tracker/features/accounts/domain/entities/account.dart';
 import 'package:budget_tracker/features/recurring_incomes/domain/entities/recurring_income.dart';
-import 'package:budget_tracker/features/recurring_incomes/domain/entities/recurring_income_instance.dart';
 import 'package:budget_tracker/features/recurring_incomes/presentation/notifiers/recurring_income_notifier.dart';
 import 'package:budget_tracker/features/recurring_incomes/presentation/providers/recurring_income_providers.dart' as income_providers;
 import 'package:budget_tracker/features/recurring_incomes/presentation/states/recurring_income_state.dart';
@@ -308,13 +305,13 @@ void main() {
         description: 'Income from Test Bonus',
       );
 
-      // Mock successful operations - using any matchers
+      // Mock successful operations
       when(mockRecurringIncomeNotifier.recordIncomeReceipt(
-        any,
-        any,
-        accountId: any,
+        testIncome.id,
+        testInstance,
+        accountId: testAccount.id,
       )).thenAnswer((_) async => true);
-      when(mockTransactionNotifier.addTransaction(any)).thenAnswer((_) async => true);
+      when(mockTransactionNotifier.addTransaction(expectedTransaction)).thenAnswer((_) async => true);
 
       // Mock state for this test
       when(mockRecurringIncomeNotifier.state).thenReturn(
@@ -394,9 +391,9 @@ void main() {
 
       // Mock transaction creation failure
       when(mockRecurringIncomeNotifier.recordIncomeReceipt(
-        any,
-        any,
-        accountId: any,
+        testIncome.id,
+        testInstance,
+        accountId: testAccount.id,
       )).thenAnswer((_) async => false); // Simulate failure
 
       // Mock state for error test

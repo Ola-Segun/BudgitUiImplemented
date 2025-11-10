@@ -19,8 +19,8 @@ mixin _$AppSettings {
   /// Theme mode preference
   ThemeMode get themeMode => throw _privateConstructorUsedError;
 
-  /// Currency code (e.g., 'USD', 'EUR', 'NGN')
-  String get currencyCode => throw _privateConstructorUsedError;
+  /// Currency code (e.g., 'USD', 'EUR', 'NGN') - null means use system default
+  String? get currencyCode => throw _privateConstructorUsedError;
 
   /// Date format preference
   String get dateFormat => throw _privateConstructorUsedError;
@@ -61,6 +61,10 @@ mixin _$AppSettings {
   /// App version (for display purposes)
   String get appVersion => throw _privateConstructorUsedError;
 
+  /// Custom account type themes
+  Map<String, AccountTypeTheme> get accountTypeThemes =>
+      throw _privateConstructorUsedError;
+
   @JsonKey(ignore: true)
   $AppSettingsCopyWith<AppSettings> get copyWith =>
       throw _privateConstructorUsedError;
@@ -74,7 +78,7 @@ abstract class $AppSettingsCopyWith<$Res> {
   @useResult
   $Res call(
       {ThemeMode themeMode,
-      String currencyCode,
+      String? currencyCode,
       String dateFormat,
       bool notificationsEnabled,
       bool budgetAlertsEnabled,
@@ -87,7 +91,8 @@ abstract class $AppSettingsCopyWith<$Res> {
       bool autoBackupEnabled,
       String languageCode,
       bool isFirstTime,
-      String appVersion});
+      String appVersion,
+      Map<String, AccountTypeTheme> accountTypeThemes});
 }
 
 /// @nodoc
@@ -104,7 +109,7 @@ class _$AppSettingsCopyWithImpl<$Res, $Val extends AppSettings>
   @override
   $Res call({
     Object? themeMode = null,
-    Object? currencyCode = null,
+    Object? currencyCode = freezed,
     Object? dateFormat = null,
     Object? notificationsEnabled = null,
     Object? budgetAlertsEnabled = null,
@@ -118,16 +123,17 @@ class _$AppSettingsCopyWithImpl<$Res, $Val extends AppSettings>
     Object? languageCode = null,
     Object? isFirstTime = null,
     Object? appVersion = null,
+    Object? accountTypeThemes = null,
   }) {
     return _then(_value.copyWith(
       themeMode: null == themeMode
           ? _value.themeMode
           : themeMode // ignore: cast_nullable_to_non_nullable
               as ThemeMode,
-      currencyCode: null == currencyCode
+      currencyCode: freezed == currencyCode
           ? _value.currencyCode
           : currencyCode // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       dateFormat: null == dateFormat
           ? _value.dateFormat
           : dateFormat // ignore: cast_nullable_to_non_nullable
@@ -180,6 +186,10 @@ class _$AppSettingsCopyWithImpl<$Res, $Val extends AppSettings>
           ? _value.appVersion
           : appVersion // ignore: cast_nullable_to_non_nullable
               as String,
+      accountTypeThemes: null == accountTypeThemes
+          ? _value.accountTypeThemes
+          : accountTypeThemes // ignore: cast_nullable_to_non_nullable
+              as Map<String, AccountTypeTheme>,
     ) as $Val);
   }
 }
@@ -194,7 +204,7 @@ abstract class _$$AppSettingsImplCopyWith<$Res>
   @useResult
   $Res call(
       {ThemeMode themeMode,
-      String currencyCode,
+      String? currencyCode,
       String dateFormat,
       bool notificationsEnabled,
       bool budgetAlertsEnabled,
@@ -207,7 +217,8 @@ abstract class _$$AppSettingsImplCopyWith<$Res>
       bool autoBackupEnabled,
       String languageCode,
       bool isFirstTime,
-      String appVersion});
+      String appVersion,
+      Map<String, AccountTypeTheme> accountTypeThemes});
 }
 
 /// @nodoc
@@ -222,7 +233,7 @@ class __$$AppSettingsImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? themeMode = null,
-    Object? currencyCode = null,
+    Object? currencyCode = freezed,
     Object? dateFormat = null,
     Object? notificationsEnabled = null,
     Object? budgetAlertsEnabled = null,
@@ -236,16 +247,17 @@ class __$$AppSettingsImplCopyWithImpl<$Res>
     Object? languageCode = null,
     Object? isFirstTime = null,
     Object? appVersion = null,
+    Object? accountTypeThemes = null,
   }) {
     return _then(_$AppSettingsImpl(
       themeMode: null == themeMode
           ? _value.themeMode
           : themeMode // ignore: cast_nullable_to_non_nullable
               as ThemeMode,
-      currencyCode: null == currencyCode
+      currencyCode: freezed == currencyCode
           ? _value.currencyCode
           : currencyCode // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       dateFormat: null == dateFormat
           ? _value.dateFormat
           : dateFormat // ignore: cast_nullable_to_non_nullable
@@ -298,6 +310,10 @@ class __$$AppSettingsImplCopyWithImpl<$Res>
           ? _value.appVersion
           : appVersion // ignore: cast_nullable_to_non_nullable
               as String,
+      accountTypeThemes: null == accountTypeThemes
+          ? _value._accountTypeThemes
+          : accountTypeThemes // ignore: cast_nullable_to_non_nullable
+              as Map<String, AccountTypeTheme>,
     ));
   }
 }
@@ -307,7 +323,7 @@ class __$$AppSettingsImplCopyWithImpl<$Res>
 class _$AppSettingsImpl implements _AppSettings {
   const _$AppSettingsImpl(
       {required this.themeMode,
-      required this.currencyCode,
+      this.currencyCode,
       required this.dateFormat,
       required this.notificationsEnabled,
       required this.budgetAlertsEnabled,
@@ -320,15 +336,17 @@ class _$AppSettingsImpl implements _AppSettings {
       required this.autoBackupEnabled,
       required this.languageCode,
       required this.isFirstTime,
-      required this.appVersion});
+      required this.appVersion,
+      final Map<String, AccountTypeTheme> accountTypeThemes = const {}})
+      : _accountTypeThemes = accountTypeThemes;
 
   /// Theme mode preference
   @override
   final ThemeMode themeMode;
 
-  /// Currency code (e.g., 'USD', 'EUR', 'NGN')
+  /// Currency code (e.g., 'USD', 'EUR', 'NGN') - null means use system default
   @override
-  final String currencyCode;
+  final String? currencyCode;
 
   /// Date format preference
   @override
@@ -382,9 +400,22 @@ class _$AppSettingsImpl implements _AppSettings {
   @override
   final String appVersion;
 
+  /// Custom account type themes
+  final Map<String, AccountTypeTheme> _accountTypeThemes;
+
+  /// Custom account type themes
+  @override
+  @JsonKey()
+  Map<String, AccountTypeTheme> get accountTypeThemes {
+    if (_accountTypeThemes is EqualUnmodifiableMapView)
+      return _accountTypeThemes;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_accountTypeThemes);
+  }
+
   @override
   String toString() {
-    return 'AppSettings(themeMode: $themeMode, currencyCode: $currencyCode, dateFormat: $dateFormat, notificationsEnabled: $notificationsEnabled, budgetAlertsEnabled: $budgetAlertsEnabled, billRemindersEnabled: $billRemindersEnabled, incomeRemindersEnabled: $incomeRemindersEnabled, budgetAlertThreshold: $budgetAlertThreshold, billReminderDays: $billReminderDays, incomeReminderDays: $incomeReminderDays, biometricEnabled: $biometricEnabled, autoBackupEnabled: $autoBackupEnabled, languageCode: $languageCode, isFirstTime: $isFirstTime, appVersion: $appVersion)';
+    return 'AppSettings(themeMode: $themeMode, currencyCode: $currencyCode, dateFormat: $dateFormat, notificationsEnabled: $notificationsEnabled, budgetAlertsEnabled: $budgetAlertsEnabled, billRemindersEnabled: $billRemindersEnabled, incomeRemindersEnabled: $incomeRemindersEnabled, budgetAlertThreshold: $budgetAlertThreshold, billReminderDays: $billReminderDays, incomeReminderDays: $incomeReminderDays, biometricEnabled: $biometricEnabled, autoBackupEnabled: $autoBackupEnabled, languageCode: $languageCode, isFirstTime: $isFirstTime, appVersion: $appVersion, accountTypeThemes: $accountTypeThemes)';
   }
 
   @override
@@ -421,7 +452,9 @@ class _$AppSettingsImpl implements _AppSettings {
             (identical(other.isFirstTime, isFirstTime) ||
                 other.isFirstTime == isFirstTime) &&
             (identical(other.appVersion, appVersion) ||
-                other.appVersion == appVersion));
+                other.appVersion == appVersion) &&
+            const DeepCollectionEquality()
+                .equals(other._accountTypeThemes, _accountTypeThemes));
   }
 
   @override
@@ -441,7 +474,8 @@ class _$AppSettingsImpl implements _AppSettings {
       autoBackupEnabled,
       languageCode,
       isFirstTime,
-      appVersion);
+      appVersion,
+      const DeepCollectionEquality().hash(_accountTypeThemes));
 
   @JsonKey(ignore: true)
   @override
@@ -452,21 +486,23 @@ class _$AppSettingsImpl implements _AppSettings {
 
 abstract class _AppSettings implements AppSettings {
   const factory _AppSettings(
-      {required final ThemeMode themeMode,
-      required final String currencyCode,
-      required final String dateFormat,
-      required final bool notificationsEnabled,
-      required final bool budgetAlertsEnabled,
-      required final bool billRemindersEnabled,
-      required final bool incomeRemindersEnabled,
-      required final int budgetAlertThreshold,
-      required final int billReminderDays,
-      required final int incomeReminderDays,
-      required final bool biometricEnabled,
-      required final bool autoBackupEnabled,
-      required final String languageCode,
-      required final bool isFirstTime,
-      required final String appVersion}) = _$AppSettingsImpl;
+          {required final ThemeMode themeMode,
+          final String? currencyCode,
+          required final String dateFormat,
+          required final bool notificationsEnabled,
+          required final bool budgetAlertsEnabled,
+          required final bool billRemindersEnabled,
+          required final bool incomeRemindersEnabled,
+          required final int budgetAlertThreshold,
+          required final int billReminderDays,
+          required final int incomeReminderDays,
+          required final bool biometricEnabled,
+          required final bool autoBackupEnabled,
+          required final String languageCode,
+          required final bool isFirstTime,
+          required final String appVersion,
+          final Map<String, AccountTypeTheme> accountTypeThemes}) =
+      _$AppSettingsImpl;
 
   @override
 
@@ -474,8 +510,8 @@ abstract class _AppSettings implements AppSettings {
   ThemeMode get themeMode;
   @override
 
-  /// Currency code (e.g., 'USD', 'EUR', 'NGN')
-  String get currencyCode;
+  /// Currency code (e.g., 'USD', 'EUR', 'NGN') - null means use system default
+  String? get currencyCode;
   @override
 
   /// Date format preference
@@ -528,6 +564,10 @@ abstract class _AppSettings implements AppSettings {
 
   /// App version (for display purposes)
   String get appVersion;
+  @override
+
+  /// Custom account type themes
+  Map<String, AccountTypeTheme> get accountTypeThemes;
   @override
   @JsonKey(ignore: true)
   _$$AppSettingsImplCopyWith<_$AppSettingsImpl> get copyWith =>

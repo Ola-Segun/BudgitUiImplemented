@@ -50,6 +50,73 @@ class GoalTemplate with _$GoalTemplate {
       tags: [],
     );
   }
+
+  /// Get preview data for template selection
+  Map<String, dynamic> getPreviewData() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'suggestedAmount': suggestedAmount,
+      'suggestedMonths': suggestedMonths,
+      'monthlyContribution': monthlyContribution,
+      'suggestedDeadline': suggestedDeadline,
+      'categoryId': categoryId,
+      'priority': defaultPriority.name,
+      'icon': icon,
+      'color': color,
+      'tips': tips,
+    };
+  }
+
+  /// Validate template for goal creation
+  bool validateForCreation({
+    double? customAmount,
+    DateTime? customDeadline,
+  }) {
+    final amount = customAmount ?? suggestedAmount;
+    final deadline = customDeadline ?? suggestedDeadline;
+
+    // Amount must be positive
+    if (amount <= 0) return false;
+
+    // Deadline must be in the future
+    if (deadline.isBefore(DateTime.now())) return false;
+
+    // Months must be positive
+    if (suggestedMonths <= 0) return false;
+
+    return true;
+  }
+
+  /// Create customized template with new parameters
+  GoalTemplate customize({
+    String? newName,
+    String? newDescription,
+    double? newAmount,
+    int? newMonths,
+    GoalPriority? newPriority,
+    String? newIcon,
+    int? newColor,
+  }) {
+    return GoalTemplate(
+      id: id, // Keep same ID for template identification
+      name: newName ?? name,
+      description: newDescription ?? description,
+      suggestedAmount: newAmount ?? suggestedAmount,
+      suggestedMonths: newMonths ?? suggestedMonths,
+      categoryId: categoryId,
+      defaultPriority: newPriority ?? defaultPriority,
+      icon: newIcon ?? icon,
+      color: newColor ?? color,
+      tips: tips, // Keep original tips
+    );
+  }
+
+  /// Check if template is selected (for UI state management)
+  bool isSelected(String? selectedTemplateId) {
+    return selectedTemplateId == id;
+  }
 }
 
 /// Pre-built goal templates

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/presentation/widgets/cards/app_card.dart';
 import '../../../accounts/domain/entities/account.dart';
 import '../../../accounts/presentation/providers/account_providers.dart';
 import '../../domain/entities/transaction.dart';
@@ -131,280 +134,383 @@ class _TransactionFiltersBarState extends ConsumerState<TransactionFiltersBar> {
                   ? 200.0
                   : 250.0;
 
-      return SizedBox(
-        width: expandedWidth,
-        height: AppDimensions.buttonHeightMd,
-        child: TextField(
-          controller: _searchController,
-          autofocus: true,
-          decoration: InputDecoration(
-            hintText: 'Search...',
-            hintStyle: AppTypography.bodySmall.copyWith(
-              color: AppColors.textTertiary,
-            ),
-            prefixIcon: Icon(
-              Icons.search,
-              color: AppColors.textSecondary,
-              size: AppDimensions.iconSm,
-            ),
-            suffixIcon: IconButton(
-              icon: Icon(
-                Icons.close,
-                size: AppDimensions.iconSm,
+      return AppCard(
+        elevation: AppCardElevation.none,
+        padding: EdgeInsets.zero,
+        border: Border.all(
+          color: AppColors.border,
+          width: 1.5,
+        ),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        child: SizedBox(
+          width: expandedWidth,
+          height: AppDimensions.buttonHeightMd,
+          child: TextField(
+            controller: _searchController,
+            autofocus: true,
+            decoration: InputDecoration(
+              hintText: 'Search...',
+              hintStyle: AppTypography.bodySmall.copyWith(
+                color: AppColors.textTertiary,
+              ),
+              prefixIcon: Icon(
+                Icons.search,
                 color: AppColors.textSecondary,
+                size: AppDimensions.iconSm,
               ),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-              onPressed: () {
-                setState(() {
-                  _isSearchExpanded = false;
-                  _searchController.clear();
-                });
-                ref.read(transactionNotifierProvider.notifier).clearSearch();
-              },
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-              borderSide: BorderSide(
-                color: AppColors.border,
-                width: 1.5,
+              suffixIcon: IconButton(
+                icon: Icon(
+                  Icons.close,
+                  size: AppDimensions.iconSm,
+                  color: AppColors.textSecondary,
+                ),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                onPressed: () {
+                  HapticFeedback.selectionClick();
+                  setState(() {
+                    _isSearchExpanded = false;
+                    _searchController.clear();
+                  });
+                  ref.read(transactionNotifierProvider.notifier).clearSearch();
+                },
               ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-              borderSide: BorderSide(
-                color: AppColors.border,
-                width: 1.5,
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: AppDimensions.spacing3,
+                vertical: AppDimensions.spacing2,
               ),
+              filled: false,
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-              borderSide: BorderSide(
-                color: AppColors.primary,
-                width: 2,
-              ),
+            style: AppTypography.body.copyWith(
+              color: AppColors.textPrimary,
             ),
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: AppDimensions.spacing3,
-              vertical: AppDimensions.spacing2,
-            ),
-            filled: true,
-            fillColor: AppColors.surface,
+            onChanged: (query) {
+              ref.read(transactionNotifierProvider.notifier).searchTransactions(query);
+            },
           ),
-          style: AppTypography.body.copyWith(
-            color: AppColors.textPrimary,
-          ),
-          onChanged: (query) {
-            ref.read(transactionNotifierProvider.notifier).searchTransactions(query);
-          },
         ),
-      );
+      ).animate()
+        .fadeIn(duration: 300.ms)
+        .slideX(begin: -0.1, duration: 300.ms, curve: Curves.easeOutCubic);
     } else {
-      return IconButton(
-        icon: Icon(
-          Icons.search,
-          size: AppDimensions.iconMd,
-          color: AppColors.textSecondary,
+      return AppCard(
+        elevation: AppCardElevation.none,
+        padding: EdgeInsets.zero,
+        border: Border.all(
+          color: AppColors.border,
+          width: 1.5,
         ),
-        onPressed: () {
-          setState(() {
-            _isSearchExpanded = true;
-          });
-        },
-        style: IconButton.styleFrom(
-          backgroundColor: AppColors.surface,
-          side: BorderSide(
-            color: AppColors.border,
-            width: 1.5,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        child: IconButton(
+          icon: Icon(
+            Icons.search,
+            size: AppDimensions.iconMd,
+            color: AppColors.textSecondary,
           ),
-          padding: EdgeInsets.all(AppDimensions.spacing2),
+          tooltip: 'Search transactions',
+          onPressed: () {
+            HapticFeedback.selectionClick();
+            setState(() {
+              _isSearchExpanded = true;
+            });
+          },
+          style: IconButton.styleFrom(
+            padding: EdgeInsets.all(AppDimensions.spacing2),
+          ),
         ),
-      );
+      ).animate()
+        .fadeIn(duration: 300.ms)
+        .scale(begin: const Offset(0.8, 0.8), duration: 300.ms, curve: Curves.elasticOut);
     }
   }
 
   Widget _buildAccountsDropdown(AsyncValue<List<Account>> accounts) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final dropdownWidth = screenWidth < 360 
-        ? 100.0 
-        : screenWidth < 400 
-            ? 110.0 
+    final dropdownWidth = screenWidth < 360
+        ? 100.0
+        : screenWidth < 400
+            ? 110.0
             : 130.0;
-    
-    return accounts.when(
-      data: (accountsList) => SizedBox(
-        width: dropdownWidth,
-        height: 48,
-        child: DropdownButtonFormField<String?>(
-          isDense: true,
-          isExpanded: true,
-          decoration: InputDecoration(
-            labelText: 'Account',
-            labelStyle: const TextStyle(fontSize: 12),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            isDense: true,
-          ),
-          style: const TextStyle(fontSize: 12),
-          items: [
-            const DropdownMenuItem(
-              value: null,
-              child: Text('All', style: TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis),
-            ),
-            ...accountsList.map((account) => DropdownMenuItem(
-              value: account.id,
-              child: Text(
-                account.name, 
-                style: const TextStyle(fontSize: 12),
-                overflow: TextOverflow.ellipsis,
-              ),
-            )),
-          ],
-          onChanged: (value) {
-            final currentFilter = ref.read(transactionNotifierProvider).value?.filter;
-            final newFilter = currentFilter?.copyWith(accountId: value) ??
-                TransactionFilter(accountId: value);
-            ref.read(transactionNotifierProvider.notifier).applyFilter(newFilter);
-          },
-        ),
-      ),
-      loading: () => SizedBox(
-        width: dropdownWidth, 
-        height: 48,
-        child: const Center(child: SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        )),
-      ),
-      error: (error, stack) => SizedBox(
-        width: dropdownWidth, 
-        height: 48,
-        child: const Icon(Icons.error, size: 20),
-      ),
-    );
-  }
 
-  Widget _buildDateRangePicker() {
-    return OutlinedButton.icon(
-      onPressed: () => _showDateRangePicker(),
-      icon: Icon(
-        Icons.date_range,
-        size: AppDimensions.iconSm,
-        color: AppColors.primary,
-      ),
-      label: Text(
-        'Date',
-        style: AppTypography.bodySmall.copyWith(
-          color: AppColors.primary,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      style: OutlinedButton.styleFrom(
-        padding: EdgeInsets.symmetric(
-          horizontal: AppDimensions.spacing3,
-          vertical: AppDimensions.spacing2,
-        ),
-        side: BorderSide(
+    return accounts.when(
+      data: (accountsList) => AppCard(
+        elevation: AppCardElevation.none,
+        padding: EdgeInsets.zero,
+        border: Border.all(
           color: AppColors.border,
           width: 1.5,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        child: SizedBox(
+          width: dropdownWidth,
+          height: AppDimensions.buttonHeightMd,
+          child: DropdownButtonFormField<String?>(
+            isDense: true,
+            isExpanded: true,
+            decoration: InputDecoration(
+              labelText: 'Account',
+              labelStyle: AppTypography.caption.copyWith(
+                color: AppColors.textSecondary,
+              ),
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: AppDimensions.spacing2,
+                vertical: AppDimensions.spacing2,
+              ),
+              isDense: true,
+              filled: false,
+            ),
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.textPrimary,
+            ),
+            items: [
+              DropdownMenuItem(
+                value: null,
+                child: Text(
+                  'All',
+                  style: AppTypography.bodySmall,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              ...accountsList.map((account) => DropdownMenuItem(
+                value: account.id,
+                child: Text(
+                  account.name,
+                  style: AppTypography.bodySmall,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              )),
+            ],
+            onChanged: (value) {
+              final currentFilter = ref.read(transactionNotifierProvider).value?.filter;
+              final newFilter = currentFilter?.copyWith(accountId: value) ??
+                  TransactionFilter(accountId: value);
+              ref.read(transactionNotifierProvider.notifier).applyFilter(newFilter);
+            },
+          ),
+        ),
+      ),
+      loading: () => AppCard(
+        elevation: AppCardElevation.none,
+        padding: EdgeInsets.zero,
+        border: Border.all(
+          color: AppColors.border,
+          width: 1.5,
+        ),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        child: SizedBox(
+          width: dropdownWidth,
+          height: AppDimensions.buttonHeightMd,
+          child: Center(
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+        ),
+      ),
+      error: (error, stack) => AppCard(
+        elevation: AppCardElevation.none,
+        padding: EdgeInsets.zero,
+        border: Border.all(
+          color: AppColors.border,
+          width: 1.5,
+        ),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        child: SizedBox(
+          width: dropdownWidth,
+          height: AppDimensions.buttonHeightMd,
+          child: Icon(
+            Icons.error,
+            size: 20,
+            color: AppColors.error,
+          ),
+        ),
+      ),
+    );
+  }
+  Widget _buildDateRangePicker() {
+    return AppCard(
+      elevation: AppCardElevation.none,
+      padding: EdgeInsets.zero,
+      border: Border.all(
+        color: AppColors.border,
+        width: 1.5,
+      ),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+      child: InkWell(
+        onTap: () => _showDateRangePicker(),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        child: SizedBox(
+          height: AppDimensions.minTouchTarget,
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppDimensions.spacing3,
+              vertical: AppDimensions.spacing2,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.date_range,
+                  size: AppDimensions.iconSm,
+                  color: AppColors.primary,
+                ),
+                SizedBox(width: AppDimensions.spacing1),
+                Text(
+                  'Date',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
   Widget _buildCategoriesFilter(List<TransactionCategory> categories) {
-    return OutlinedButton.icon(
-      onPressed: () => _showCategoriesMultiSelect(categories),
-      icon: Icon(
-        Icons.category,
-        size: AppDimensions.iconSm,
-        color: AppColors.primary,
+    return AppCard(
+      elevation: AppCardElevation.none,
+      padding: EdgeInsets.zero,
+      border: Border.all(
+        color: AppColors.border,
+        width: 1.5,
       ),
-      label: Text(
-        'Category',
-        style: AppTypography.bodySmall.copyWith(
-          color: AppColors.primary,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      style: OutlinedButton.styleFrom(
-        padding: EdgeInsets.symmetric(
-          horizontal: AppDimensions.spacing3,
-          vertical: AppDimensions.spacing2,
-        ),
-        side: BorderSide(
-          color: AppColors.border,
-          width: 1.5,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+      child: InkWell(
+        onTap: () => _showCategoriesMultiSelect(categories),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        child: SizedBox(
+          height: AppDimensions.minTouchTarget,
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppDimensions.spacing3,
+              vertical: AppDimensions.spacing2,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.category,
+                  size: AppDimensions.iconSm,
+                  color: AppColors.primary,
+                ),
+                SizedBox(width: AppDimensions.spacing1),
+                Text(
+                  'Category',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
   Widget _buildAmountRangeFilter() {
-    return OutlinedButton.icon(
-      onPressed: () => _showAmountRangePicker(),
-      icon: Icon(
-        Icons.attach_money,
-        size: AppDimensions.iconSm,
-        color: AppColors.primary,
+    return AppCard(
+      elevation: AppCardElevation.none,
+      padding: EdgeInsets.zero,
+      border: Border.all(
+        color: AppColors.border,
+        width: 1.5,
       ),
-      label: Text(
-        'Amount',
-        style: AppTypography.bodySmall.copyWith(
-          color: AppColors.primary,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      style: OutlinedButton.styleFrom(
-        padding: EdgeInsets.symmetric(
-          horizontal: AppDimensions.spacing3,
-          vertical: AppDimensions.spacing2,
-        ),
-        side: BorderSide(
-          color: AppColors.border,
-          width: 1.5,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+      child: InkWell(
+        onTap: () => _showAmountRangePicker(),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        child: SizedBox(
+          height: AppDimensions.minTouchTarget,
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppDimensions.spacing3,
+              vertical: AppDimensions.spacing2,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.attach_money,
+                  size: AppDimensions.iconSm,
+                  color: AppColors.primary,
+                ),
+                SizedBox(width: AppDimensions.spacing1),
+                Text(
+                  'Amount',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
   Widget _buildClearFiltersButton() {
-    return TextButton.icon(
-      onPressed: () {
-        ref.read(transactionNotifierProvider.notifier).clearFilter();
-        setState(() {
-          _isSearchExpanded = false;
-          _searchController.clear();
-        });
-      },
-      icon: Icon(
-        Icons.clear,
-        size: AppDimensions.iconSm,
+    return AppCard(
+      elevation: AppCardElevation.none,
+      padding: EdgeInsets.zero,
+      border: Border.all(
         color: AppColors.primary,
+        width: 1.5,
       ),
-      label: Text(
-        'Clear',
-        style: AppTypography.bodySmall.copyWith(
-          color: AppColors.primary,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      style: TextButton.styleFrom(
-        padding: EdgeInsets.symmetric(
-          horizontal: AppDimensions.spacing3,
-          vertical: AppDimensions.spacing2,
+      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+      child: InkWell(
+        onTap: () {
+          ref.read(transactionNotifierProvider.notifier).clearFilter();
+          setState(() {
+            _isSearchExpanded = false;
+            _searchController.clear();
+          });
+        },
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        child: SizedBox(
+          height: AppDimensions.minTouchTarget,
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppDimensions.spacing3,
+              vertical: AppDimensions.spacing2,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.clear,
+                  size: AppDimensions.iconSm,
+                  color: AppColors.primary,
+                ),
+                SizedBox(width: AppDimensions.spacing1),
+                Text(
+                  'Clear',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

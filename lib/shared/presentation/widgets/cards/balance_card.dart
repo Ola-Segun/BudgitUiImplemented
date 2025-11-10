@@ -46,10 +46,10 @@ class _BalanceCardState extends State<BalanceCard> {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      elevation: AppCardElevation.medium,
-      padding: EdgeInsets.all(AppDimensions.cardPaddingLarge),
+      elevation: AppCardElevation.low,
+      padding: EdgeInsets.all(24),
       backgroundColor: widget.showGradient ? null : AppColors.surface,
-      borderRadius: AppDimensions.cardBorderRadius,
+      borderRadius: BorderRadius.circular(20),
       onTap: widget.onTap,
       child: Container(
         padding: EdgeInsets.symmetric(
@@ -65,7 +65,7 @@ class _BalanceCardState extends State<BalanceCard> {
               widget.gradientEnd ?? AppColors.primaryDark,
             ],
           ),
-          borderRadius: AppDimensions.cardBorderRadius,
+          borderRadius: BorderRadius.circular(20),
         ) : null,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,31 +127,40 @@ class _BalanceCardState extends State<BalanceCard> {
                 ),
                 // Toggle button
                 Container(
-                  padding: const EdgeInsets.all(4),
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: widget.showGradient ? Colors.white.withOpacity(0.2) : AppColors.backgroundAlt,
+                    // color: widget.showGradient ? Colors.white.withOpacity(0.2) : AppColors.backgroundAlt,
                     borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                   ),
-                  child: InkWell(
-                    onTap: _toggleBalanceVisibility,
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _isBalanceHidden ? Icons.visibility_off : Icons.visibility,
-                          size: 16,
-                          color: widget.showGradient ? Colors.white : AppColors.textSecondary,
+                  child: Semantics(
+                    label: _isBalanceHidden ? 'Show balance amount' : 'Hide balance amount',
+                    button: true,
+                    child: InkWell(
+                      onTap: _toggleBalanceVisibility,
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                      child: SizedBox(
+                        // padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        height: 50, // Ensure minimum touch target size
+                        width: 55, // Ensure minimum touch target size
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _isBalanceHidden ? Icons.visibility_off : Icons.visibility,
+                              size: 16,
+                              color: widget.showGradient ? Colors.white : AppColors.textSecondary,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _isBalanceHidden ? 'Show' : 'Hide',
+                              style: AppTypography.caption.copyWith(
+                                color: widget.showGradient ? Colors.white.withOpacity(0.9) : AppColors.textSecondary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          _isBalanceHidden ? 'Show' : 'Hide',
-                          style: AppTypography.caption.copyWith(
-                            color: widget.showGradient ? Colors.white.withOpacity(0.9) : AppColors.textSecondary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ).animate()
@@ -174,7 +183,7 @@ class _BalanceCardState extends State<BalanceCard> {
                       fontWeight: FontWeight.w700,
                     ),
             ).animate()
-              .fadeIn(duration: 500.ms, delay: 400.ms)
+              .fadeIn(duration: 350.ms, delay: 300.ms)
               .slideY(begin: 0.2, duration: 500.ms, delay: 400.ms, curve: Curves.easeOutCubic)
               .scale(begin: const Offset(0.9, 0.9), duration: 500.ms, delay: 400.ms),
           ],

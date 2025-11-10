@@ -15,6 +15,13 @@ class CategoryState with _$CategoryState {
 
   const CategoryState._();
 
+  /// Get sorted categories by order field
+  List<TransactionCategory> get sortedCategories {
+    final sorted = List<TransactionCategory>.from(categories);
+    sorted.sort((a, b) => a.order.compareTo(b.order));
+    return sorted;
+  }
+
   /// Get categories by type
   List<TransactionCategory> getCategoriesByType(TransactionType type) {
     return categories.where((category) => category.type == type).toList();
@@ -28,6 +35,24 @@ class CategoryState with _$CategoryState {
 
   /// Get transfer categories (if any)
   List<TransactionCategory> get transferCategories => getCategoriesByType(TransactionType.transfer);
+
+  /// Get active (non-archived) categories
+  List<TransactionCategory> get activeCategories => categories.where((category) => !category.isArchived).toList();
+
+  /// Get archived categories
+  List<TransactionCategory> get archivedCategories => categories.where((category) => category.isArchived).toList();
+
+  /// Get active income categories
+  List<TransactionCategory> get activeIncomeCategories => activeCategories.where((category) => category.type == TransactionType.income).toList();
+
+  /// Get active expense categories
+  List<TransactionCategory> get activeExpenseCategories => activeCategories.where((category) => category.type == TransactionType.expense).toList();
+
+  /// Get archived income categories
+  List<TransactionCategory> get archivedIncomeCategories => archivedCategories.where((category) => category.type == TransactionType.income).toList();
+
+  /// Get archived expense categories
+  List<TransactionCategory> get archivedExpenseCategories => archivedCategories.where((category) => category.type == TransactionType.expense).toList();
 
   /// Find category by ID
   TransactionCategory? getCategoryById(String id) {

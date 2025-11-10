@@ -1,4 +1,3 @@
-import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:mockito/mockito.dart';
 
-import 'package:budget_tracker/core/di/providers.dart' as di;
 import 'package:budget_tracker/features/bills/domain/entities/bill.dart';
 import 'package:budget_tracker/features/bills/presentation/notifiers/bill_notifier.dart';
 import 'package:budget_tracker/features/bills/presentation/providers/bill_providers.dart';
@@ -15,7 +13,6 @@ import 'package:budget_tracker/features/recurring_incomes/domain/entities/recurr
 import 'package:budget_tracker/features/recurring_incomes/presentation/notifiers/recurring_income_notifier.dart';
 import 'package:budget_tracker/features/recurring_incomes/presentation/providers/recurring_income_providers.dart' as income_providers;
 import 'package:budget_tracker/features/recurring_incomes/presentation/states/recurring_income_state.dart';
-import 'package:budget_tracker/features/settings/domain/entities/settings.dart' as settings_entity;
 import 'package:budget_tracker/features/settings/presentation/notifiers/settings_notifier.dart';
 import 'package:budget_tracker/features/settings/presentation/providers/settings_providers.dart';
 import 'package:budget_tracker/features/settings/presentation/states/settings_state.dart';

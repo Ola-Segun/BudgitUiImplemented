@@ -64,7 +64,7 @@ class TransactionDto extends HiveObject {
     description = transaction.description;
     receiptUrl = transaction.receiptUrl;
     tags = transaction.tags;
-    currencyCode = transaction.currencyCode;
+    currencyCode = transaction.currencyCode ?? 'USD';
   }
 
   /// Convert to domain entity
@@ -108,6 +108,12 @@ class TransactionCategoryDto extends HiveObject {
   @HiveField(4)
   late String type; // Store as string for Hive compatibility
 
+  @HiveField(5)
+  late bool isArchived;
+
+  @HiveField(6)
+  late int usageCount;
+
   /// Default constructor
   TransactionCategoryDto();
 
@@ -118,6 +124,8 @@ class TransactionCategoryDto extends HiveObject {
     icon = category.icon;
     color = category.color;
     type = category.type.name; // Convert enum to string
+    isArchived = category.isArchived;
+    usageCount = category.usageCount;
   }
 
   /// Convert to domain entity
@@ -131,6 +139,8 @@ class TransactionCategoryDto extends HiveObject {
         (e) => e.name == type,
         orElse: () => TransactionType.expense, // Default fallback
       ),
+      isArchived: isArchived,
+      usageCount: usageCount,
     );
   }
 }

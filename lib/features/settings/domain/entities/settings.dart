@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:budget_tracker/features/accounts/domain/entities/account_type_theme.dart';
 
 part 'settings.freezed.dart';
 
@@ -10,8 +11,8 @@ class AppSettings with _$AppSettings {
     /// Theme mode preference
     required ThemeMode themeMode,
 
-    /// Currency code (e.g., 'USD', 'EUR', 'NGN')
-    required String currencyCode,
+    /// Currency code (e.g., 'USD', 'EUR', 'NGN') - null means use system default
+    String? currencyCode,
 
     /// Date format preference
     required String dateFormat,
@@ -51,11 +52,14 @@ class AppSettings with _$AppSettings {
 
     /// App version (for display purposes)
     required String appVersion,
-  }) = _AppSettings;
+  
+    /// Custom account type themes
+    @Default({}) Map<String, AccountTypeTheme> accountTypeThemes,
+    }) = _AppSettings;
 
-  factory AppSettings.defaultSettings() => const AppSettings(
+  factory AppSettings.defaultSettings() => AppSettings(
         themeMode: ThemeMode.system,
-        currencyCode: 'USD',
+        currencyCode: null, // Will be set by currency service
         dateFormat: 'MM/dd/yyyy',
         notificationsEnabled: true,
         budgetAlertsEnabled: true,

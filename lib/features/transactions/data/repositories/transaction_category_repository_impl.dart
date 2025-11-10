@@ -40,6 +40,12 @@ class TransactionCategoryRepositoryImpl implements TransactionCategoryRepository
   Future<Result<void>> delete(String id) => _dataSource.delete(id);
 
   @override
+  Future<Result<List<TransactionCategory>>> getActive() => _dataSource.getActive();
+
+  @override
+  Future<Result<List<TransactionCategory>>> getArchived() => _dataSource.getArchived();
+
+  @override
   Future<Result<bool>> isCategoryInUse(String categoryId) async {
     try {
       // Check if category is used by any transactions

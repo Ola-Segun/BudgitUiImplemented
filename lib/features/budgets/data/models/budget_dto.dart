@@ -5,7 +5,7 @@ import '../../domain/entities/budget.dart';
 part 'budget_dto.g.dart';
 
 /// Hive DTO for Budget entity
-@HiveType(typeId: 2)
+@HiveType(typeId: 13)
 class BudgetDto extends HiveObject {
   @HiveField(0)
   String id;

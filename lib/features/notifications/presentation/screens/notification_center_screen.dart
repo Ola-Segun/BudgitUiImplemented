@@ -1,12 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/design_system/design_tokens.dart';
+import '../../../../core/design_system/color_tokens.dart';
+import '../../../../core/design_system/typography_tokens.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../domain/entities/notification.dart';
 import '../providers/notification_providers.dart';
+
+// Accessibility utilities
+class AccessibilityUtils {
+  // Ensure minimum touch target size (48x48dp)
+  static const double minTouchTargetSize = 48.0;
+
+  // Check if color meets contrast requirements
+  static bool meetsContrastRatio(Color foreground, Color background) {
+    // Simple luminance calculation for contrast checking
+    double getLuminance(Color color) {
+      final r = color.r / 255.0;
+      final g = color.g / 255.0;
+      final b = color.b / 255.0;
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    }
+
+    final fgLuminance = getLuminance(foreground);
+    final bgLuminance = getLuminance(background);
+    final contrast = (fgLuminance > bgLuminance)
+        ? (fgLuminance + 0.05) / (bgLuminance + 0.05)
+        : (bgLuminance + 0.05) / (fgLuminance + 0.05);
+
+    return contrast >= 4.5;
+  }
+
+  // Get accessible text color based on background
+  static Color getAccessibleTextColor(Color background) {
+    return ColorTokens.isLight(background)
+        ? ColorTokens.textPrimary
+        : ColorTokens.textInverse;
+  }
+}
 
 /// Screen for displaying notification center with all notifications
 class NotificationCenterScreen extends ConsumerStatefulWidget {
@@ -38,41 +73,72 @@ class _NotificationCenterScreenState extends ConsumerState<NotificationCenterScr
     final unreadCount = ref.watch(unreadNotificationsCountProvider);
 
     return Scaffold(
+      backgroundColor: ColorTokens.surfaceBackground,
       appBar: AppBar(
-        title: const Text('Notifications'),
+        backgroundColor: ColorTokens.surfacePrimary,
+        elevation: 0,
+        title: Text(
+          'Notifications',
+          style: TypographyTokens.heading3,
+        ),
         actions: [
           if (unreadCount > 0)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                '$unreadCount',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
+            Semantics(
+              label: '$unreadCount unread notifications',
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: DesignTokens.spacing2,
+                  vertical: DesignTokens.spacing1,
+                ),
+                decoration: BoxDecoration(
+                  color: ColorTokens.teal500,
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                ),
+                child: Text(
+                  '$unreadCount',
+                  style: TypographyTokens.captionMd.copyWith(
+                    color: Colors.white,
+                    fontWeight: TypographyTokens.weightSemiBold,
+                  ),
+                ),
               ),
             ),
           // TODO: Add mark all as read functionality
         ],
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: 'All'),
-            Tab(text: 'Unread'),
-            Tab(text: 'Read'),
+          tabs: [
+            Tab(
+              child: Semantics(
+                label: 'All notifications tab',
+                child: Text('All', style: TypographyTokens.labelMd),
+              ),
+            ),
+            Tab(
+              child: Semantics(
+                label: 'Unread notifications tab',
+                child: Text('Unread', style: TypographyTokens.labelMd),
+              ),
+            ),
+            Tab(
+              child: Semantics(
+                label: 'Read notifications tab',
+                child: Text('Read', style: TypographyTokens.labelMd),
+              ),
+            ),
           ],
         ),
       ),
-      body: notificationsAsync.when(
-        data: (notifications) => _buildNotificationList(context, notifications),
-        loading: () => const LoadingView(),
-        error: (error, stack) => ErrorView(
-          message: error.toString(),
-          onRetry: () => ref.refresh(notificationNotifierProvider),
+      body: Semantics(
+        label: 'Notifications list',
+        hint: 'Swipe between tabs to view different notification categories',
+        child: notificationsAsync.when(
+          data: (notifications) => _buildNotificationList(context, notifications),
+          loading: () => const LoadingView(),
+          error: (error, stack) => ErrorView(
+            message: error.toString(),
+            onRetry: () => ref.refresh(notificationNotifierProvider),
+          ),
         ),
       ),
     );
@@ -107,7 +173,7 @@ class _NotificationCenterScreenState extends ConsumerState<NotificationCenterScr
         await ref.read(notificationNotifierProvider.notifier).checkForNotifications();
       },
       child: ListView.builder(
-        padding: AppTheme.screenPaddingAll,
+        padding: EdgeInsets.all(DesignTokens.screenPaddingH),
         itemCount: groupedNotifications.length,
         itemBuilder: (context, index) {
           final entry = groupedNotifications.entries.elementAt(index);
@@ -118,29 +184,35 @@ class _NotificationCenterScreenState extends ConsumerState<NotificationCenterScr
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.notifications_none_outlined,
-            size: 64,
-            color: Theme.of(context).colorScheme.outline,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No notifications',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'You\'re all caught up!',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+    return Semantics(
+      label: 'No notifications available',
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.notifications_none_outlined,
+              size: 64,
+              color: ColorTokens.neutral500,
+              semanticLabel: 'Empty notifications icon',
+            ),
+            SizedBox(height: DesignTokens.spacing4),
+            Text(
+              'No notifications',
+              style: TypographyTokens.heading4,
+              semanticsLabel: 'No notifications message',
+            ),
+            SizedBox(height: DesignTokens.spacing2),
+            Text(
+              'You\'re all caught up!',
+              style: TypographyTokens.bodyMd.copyWith(
+                color: ColorTokens.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+              semanticsLabel: 'All caught up message',
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -175,73 +247,99 @@ class _NotificationCenterScreenState extends ConsumerState<NotificationCenterScr
   }
 
   Widget _buildNotificationGroup(BuildContext context, String date, List<AppNotification> notifications) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Text(
-            date,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
+    return Semantics(
+      label: 'Notifications from $date',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: DesignTokens.spacing2),
+            child: Text(
+              date,
+              style: TypographyTokens.heading6.copyWith(
+                color: ColorTokens.teal500,
+                fontWeight: TypographyTokens.weightSemiBold,
+              ),
+              semanticsLabel: 'Date header: $date',
+            ),
           ),
-        ),
-        ...notifications.map((notification) => _buildNotificationTile(context, notification)),
-      ],
+          ...notifications.map((notification) => _buildNotificationTile(context, notification)),
+        ],
+      ),
     );
   }
 
   Widget _buildNotificationTile(BuildContext context, AppNotification notification) {
     final isUnread = !(notification.isRead ?? false);
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      color: isUnread ? Theme.of(context).primaryColor.withValues(alpha: 0.05) : null,
-      child: ListTile(
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: _getNotificationColor(notification.type).withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
-            _getNotificationIcon(notification.type),
-            color: _getNotificationColor(notification.type),
-          ),
-        ),
-        title: Text(
-          notification.title,
-          style: TextStyle(
-            fontWeight: isUnread ? FontWeight.w600 : FontWeight.normal,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(notification.message),
-            const SizedBox(height: 4),
-            Text(
-              _formatTime(notification.createdAt),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+    return Semantics(
+      label: '${isUnread ? "Unread" : "Read"} notification: ${notification.title}',
+      hint: 'Double tap to ${isUnread ? "mark as read and " : ""}view details',
+      child: Card(
+        margin: EdgeInsets.only(bottom: DesignTokens.spacing2),
+        color: isUnread ? ColorTokens.teal500.withValues(alpha: 0.05) : ColorTokens.surfacePrimary,
+        shadowColor: ColorTokens.neutral900.withValues(alpha: 0.1),
+        child: ListTile(
+          contentPadding: EdgeInsets.all(DesignTokens.spacing4),
+          leading: Container(
+            width: AccessibilityUtils.minTouchTargetSize,
+            height: AccessibilityUtils.minTouchTargetSize,
+            padding: EdgeInsets.all(DesignTokens.spacing2),
+            decoration: BoxDecoration(
+              color: _getNotificationColor(notification.type).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
             ),
-          ],
-        ),
-        trailing: isUnread
-            ? Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor,
-                  shape: BoxShape.circle,
+            child: Icon(
+              _getNotificationIcon(notification.type),
+              color: _getNotificationColor(notification.type),
+              size: DesignTokens.iconMd,
+              semanticLabel: '${notification.type.toString().split('.').last} notification icon',
+            ),
+          ),
+          title: Text(
+            notification.title,
+            style: TypographyTokens.bodyLg.copyWith(
+              fontWeight: isUnread ? TypographyTokens.weightSemiBold : TypographyTokens.weightRegular,
+              color: ColorTokens.textPrimary,
+            ),
+            semanticsLabel: 'Title: ${notification.title}',
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                notification.message,
+                style: TypographyTokens.bodyMd.copyWith(
+                  color: ColorTokens.textSecondary,
                 ),
-              )
-            : null,
-        onTap: () => _handleNotificationTap(context, notification),
-        onLongPress: () => _showNotificationActions(context, notification),
+                semanticsLabel: 'Message: ${notification.message}',
+              ),
+              SizedBox(height: DesignTokens.spacing1),
+              Text(
+                _formatTime(notification.createdAt),
+                style: TypographyTokens.captionMd.copyWith(
+                  color: ColorTokens.textTertiary,
+                ),
+                semanticsLabel: 'Received ${_formatTime(notification.createdAt)}',
+              ),
+            ],
+          ),
+          trailing: isUnread
+              ? Semantics(
+                  label: 'Unread indicator',
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: ColorTokens.teal500,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                )
+              : null,
+          onTap: () => _handleNotificationTap(context, notification),
+          onLongPress: () => _showNotificationActions(context, notification),
+        ),
       ),
     );
   }
@@ -313,19 +411,41 @@ class _NotificationCenterScreenState extends ConsumerState<NotificationCenterScr
   void _showNotificationActions(BuildContext context, AppNotification notification) {
     showModalBottomSheet(
       context: context,
-      builder: (context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            leading: const Icon(Icons.check),
-            title: const Text('Mark as read'),
-            onTap: () {
-              ref.read(notificationNotifierProvider.notifier).markAsRead(notification.id);
-              Navigator.pop(context);
-            },
-          ),
-          // TODO: Add delete functionality when implemented
-        ],
+      backgroundColor: ColorTokens.surfacePrimary,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(DesignTokens.radiusXl)),
+      ),
+      builder: (context) => Semantics(
+        label: 'Notification actions for ${notification.title}',
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Semantics(
+              button: true,
+              label: 'Mark notification as read',
+              hint: 'Double tap to mark this notification as read',
+              child: ListTile(
+                leading: Icon(
+                  Icons.check,
+                  color: ColorTokens.success500,
+                  size: DesignTokens.iconMd,
+                ),
+                title: Text(
+                  'Mark as read',
+                  style: TypographyTokens.bodyLg,
+                ),
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  ref.read(notificationNotifierProvider.notifier).markAsRead(notification.id);
+                  Navigator.pop(context);
+                },
+                contentPadding: EdgeInsets.all(DesignTokens.spacing4),
+                minLeadingWidth: AccessibilityUtils.minTouchTargetSize,
+              ),
+            ),
+            // TODO: Add delete functionality when implemented
+          ],
+        ),
       ),
     );
   }

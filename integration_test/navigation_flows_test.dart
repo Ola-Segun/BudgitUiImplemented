@@ -1,4 +1,3 @@
-import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,8 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:mockito/mockito.dart';
 
-import 'package:budget_tracker/core/di/providers.dart' as di;
-import 'package:budget_tracker/core/navigation/main_navigation_scaffold.dart';
 import 'package:budget_tracker/features/bills/domain/entities/bill.dart';
 import 'package:budget_tracker/features/bills/presentation/notifiers/bill_notifier.dart';
 import 'package:budget_tracker/features/bills/presentation/providers/bill_providers.dart';

@@ -8,8 +8,9 @@ import '../../../../core/widgets/loading_view.dart';
 import '../../domain/entities/goal.dart';
 import '../providers/goal_providers.dart';
 import '../states/goal_state.dart';
+import 'goals_list_screen_enhanced.dart';
 
-/// Goals dashboard screen
+/// Goals dashboard screen - now uses enhanced design
 class GoalsListScreen extends ConsumerWidget {
   const GoalsListScreen({super.key});
 
@@ -19,17 +20,8 @@ class GoalsListScreen extends ConsumerWidget {
     final stats = ref.watch(goalStatsProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Goals'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => context.go('/goals/add'),
-          ),
-        ],
-      ),
       body: goalState.when(
-        data: (state) => _buildDashboard(context, ref, stats, state),
+        data: (state) => const GoalsListScreenEnhanced(), // Use enhanced screen
         loading: () => const LoadingView(),
         error: (error, stack) => ErrorView(
           message: error.toString(),

@@ -665,10 +665,91 @@ Consumer(
               title: const Text('Auto Pay'),
               subtitle: const Text('Automatically pay this bill when due'),
               value: _isAutoPay,
-              onChanged: (value) {
-                setState(() {
-                  _isAutoPay = value;
-                });
+              onChanged: (value) async {
+                if (value) {
+                  // Show confirmation dialog for enabling auto-pay
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Enable Auto Pay'),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Auto Pay will automatically process payments when bills are due. This requires:',
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            '• A linked account with sufficient funds',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          Text(
+                            '• Confirmation of payment processing',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          Text(
+                            '• Ability to modify or cancel auto-pay settings',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.info_outline,
+                                  color: Theme.of(context).colorScheme.primary,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'You can disable auto-pay anytime from bill settings.',
+                                    style: TextStyle(
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Cancel'),
+                        ),
+                        FilledButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text('Enable Auto Pay'),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (confirmed == true) {
+                    setState(() {
+                      _isAutoPay = value;
+                    });
+                  }
+                } else {
+                  setState(() {
+                    _isAutoPay = value;
+                  });
+                }
               },
             ),
             const SizedBox(height: 16),

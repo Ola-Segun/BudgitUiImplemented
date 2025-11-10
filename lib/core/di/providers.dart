@@ -17,8 +17,11 @@ import '../../features/transactions/domain/usecases/update_transaction.dart';
 import '../../features/transactions/domain/usecases/delete_transaction.dart';
 import '../../features/transactions/domain/usecases/get_categories.dart';
 import '../../features/transactions/domain/usecases/add_category.dart';
+import '../../features/transactions/domain/usecases/archive_category.dart';
 import '../../features/transactions/domain/usecases/update_category.dart';
 import '../../features/transactions/domain/usecases/delete_category.dart';
+import '../../features/transactions/domain/usecases/unarchive_category.dart';
+import '../../features/transactions/domain/usecases/reorder_categories.dart';
 import '../../features/budgets/data/datasources/budget_hive_datasource.dart';
 import '../../features/budgets/data/repositories/budget_repository_impl.dart';
 import '../../features/budgets/domain/repositories/budget_repository.dart';
@@ -152,6 +155,18 @@ final updateCategoryProvider = Provider<UpdateCategory>((ref) {
 
 final deleteCategoryProvider = Provider<DeleteCategory>((ref) {
   return DeleteCategory(ref.read(transactionCategoryRepositoryProvider));
+});
+
+final archiveCategoryProvider = Provider<ArchiveCategory>((ref) {
+  return ArchiveCategory(ref.read(transactionCategoryRepositoryProvider));
+});
+
+final unarchiveCategoryProvider = Provider<UnarchiveCategory>((ref) {
+  return UnarchiveCategory(ref.read(transactionCategoryRepositoryProvider));
+});
+
+final reorderCategoriesProvider = Provider<ReorderCategories>((ref) {
+  return ReorderCategories(ref.read(transactionCategoryRepositoryProvider));
 });
 
 // Transaction use cases
@@ -443,7 +458,7 @@ final addGoalContributionProvider = Provider<AddGoalContribution>((ref) {
 
 // Insight data sources
 final insightDataSourceProvider = Provider<InsightHiveDataSource>((ref) {
-  return InsightHiveDataSource();
+  return InsightHiveDataSource(ref.read(transactionRepositoryProvider), ref.read(budgetRepositoryProvider));
 });
 
 // Insight repositories
@@ -534,6 +549,7 @@ final appInitializationProvider = FutureProvider<void>((ref) async {
     final debtDataSource = ref.read(debtDataSourceProvider);
     await debtDataSource.init();
     ref.read(errorLoggerProvider).logInfo('Debt data source initialized');
+
 
     // Initialize recurring income data source (depends on transaction data source)
     ref.read(errorLoggerProvider).logInfo('Initializing recurring income data source');

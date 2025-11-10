@@ -12,6 +12,12 @@ abstract class TransactionCategoryRepository {
   /// Get categories by type
   Future<Result<List<TransactionCategory>>> getByType(TransactionType type);
 
+  /// Get active (non-archived) categories
+  Future<Result<List<TransactionCategory>>> getActive();
+
+  /// Get archived categories
+  Future<Result<List<TransactionCategory>>> getArchived();
+
   /// Add new category
   Future<Result<TransactionCategory>> add(TransactionCategory category);
 

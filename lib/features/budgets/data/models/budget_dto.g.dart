@@ -8,7 +8,7 @@ part of 'budget_dto.dart';
 
 class BudgetDtoAdapter extends TypeAdapter<BudgetDto> {
   @override
-  final int typeId = 2;
+  final int typeId = 13;
 
   @override
   BudgetDto read(BinaryReader reader) {

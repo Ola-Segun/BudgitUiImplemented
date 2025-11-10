@@ -17,7 +17,6 @@ import 'package:budget_tracker/features/insights/domain/entities/insight.dart';
 import 'package:budget_tracker/features/notifications/domain/entities/notification.dart' as notification;
 import 'package:budget_tracker/features/onboarding/domain/entities/user_profile.dart';
 import 'package:budget_tracker/features/receipt_scanning/domain/entities/receipt_data.dart';
-import 'package:budget_tracker/features/recurring_transactions/domain/entities/recurring_transaction.dart';
 import 'package:budget_tracker/features/seasonal_analysis/domain/entities/seasonal_analysis.dart';
 import 'package:budget_tracker/features/settings/domain/entities/settings.dart';
 import 'package:budget_tracker/features/transactions/domain/entities/transaction.dart';
@@ -87,9 +86,6 @@ void setupMockitoDummies() {
   // Receipt scanning related
   provideDummy<Result<ReceiptData>>(Result.error(Failure.unknown('dummy')));
 
-  // Recurring transaction related
-  provideDummy<Result<RecurringTransaction>>(Result.error(Failure.unknown('dummy')));
-  provideDummy<Result<List<RecurringTransaction>>>(Result.error(Failure.unknown('dummy')));
 
   // Seasonal analysis related
   provideDummy<Result<SeasonalAnalysis>>(Result.error(Failure.unknown('dummy')));

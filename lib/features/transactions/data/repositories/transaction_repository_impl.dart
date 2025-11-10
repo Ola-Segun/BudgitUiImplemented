@@ -5,6 +5,7 @@ import '../../domain/entities/transaction.dart';
 import '../../domain/entities/transaction_filter.dart';
 import '../../domain/repositories/transaction_repository.dart';
 import '../datasources/transaction_hive_datasource.dart';
+import '../datasources/transaction_category_hive_datasource.dart';
 
 /// Implementation of TransactionRepository using Hive data source
 class TransactionRepositoryImpl implements TransactionRepository {
@@ -32,8 +33,14 @@ class TransactionRepositoryImpl implements TransactionRepository {
       _dataSource.getByType(type);
 
   @override
-  Future<Result<Transaction>> add(Transaction transaction) =>
-      _dataSource.add(transaction);
+  Future<Result<Transaction>> add(Transaction transaction) async {
+    final result = await _dataSource.add(transaction);
+    if (result.isSuccess) {
+      // Update category usage count
+      await _updateCategoryUsage(transaction.categoryId);
+    }
+    return result;
+  }
 
   @override
   Future<Result<Transaction>> update(Transaction transaction) =>
@@ -379,4 +386,28 @@ class TransactionRepositoryImpl implements TransactionRepository {
 
     return 0.0;
   }
+
+  /// Update category usage count when a transaction is added
+  Future<void> _updateCategoryUsage(String categoryId) async {
+    try {
+      // Get current category from category data source
+      final categoryDataSource = TransactionCategoryHiveDataSource();
+      await categoryDataSource.init();
+
+      final categoryResult = await categoryDataSource.getById(categoryId);
+      if (categoryResult.isError) return;
+
+      final currentCategory = categoryResult.dataOrNull!;
+      final updatedCategory = currentCategory.copyWith(
+        usageCount: currentCategory.usageCount + 1,
+      );
+
+      // Update category in data source
+      await categoryDataSource.update(updatedCategory);
+    } catch (e) {
+      // Silently fail - usage tracking is not critical
+      return;
+    }
+  }
+
 }

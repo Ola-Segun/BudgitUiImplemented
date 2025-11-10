@@ -13,7 +13,7 @@ void main() {
       description: 'Test description',
       institution: 'Test Bank',
       accountNumber: '123456789',
-      currency: 'USD',
+      currency: null,
       createdAt: testDate,
       updatedAt: testDate,
       creditLimit: 5000.0,
@@ -32,7 +32,7 @@ void main() {
       expect(testAccount.description, 'Test description');
       expect(testAccount.institution, 'Test Bank');
       expect(testAccount.accountNumber, '123456789');
-      expect(testAccount.currency, 'USD');
+      expect(testAccount.currency, null);
       expect(testAccount.createdAt, testDate);
       expect(testAccount.updatedAt, testDate);
       expect(testAccount.creditLimit, 5000.0);
@@ -55,7 +55,7 @@ void main() {
       expect(minimalAccount.name, 'Minimal Account');
       expect(minimalAccount.type, AccountType.manualAccount);
       expect(minimalAccount.balance, 500.0);
-      expect(minimalAccount.currency, 'USD'); // default
+      expect(minimalAccount.currency, null); // default
       expect(minimalAccount.isActive, true); // default
       expect(minimalAccount.description, null);
       expect(minimalAccount.institution, null);

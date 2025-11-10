@@ -2,8 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/transaction.dart';
 import '../../domain/usecases/add_category.dart';
+import '../../domain/usecases/archive_category.dart';
 import '../../domain/usecases/delete_category.dart';
 import '../../domain/usecases/get_categories.dart';
+import '../../domain/usecases/unarchive_category.dart';
 import '../../domain/usecases/update_category.dart';
 import '../states/category_state.dart';
 
@@ -13,16 +15,22 @@ class CategoryNotifier extends StateNotifier<AsyncValue<CategoryState>> {
   final AddCategory _addCategory;
   final UpdateCategory _updateCategory;
   final DeleteCategory _deleteCategory;
+  final ArchiveCategory _archiveCategory;
+  final UnarchiveCategory _unarchiveCategory;
 
   CategoryNotifier({
     required GetCategories getCategories,
     required AddCategory addCategory,
     required UpdateCategory updateCategory,
     required DeleteCategory deleteCategory,
+    required ArchiveCategory archiveCategory,
+    required UnarchiveCategory unarchiveCategory,
   })  : _getCategories = getCategories,
         _addCategory = addCategory,
         _updateCategory = updateCategory,
         _deleteCategory = deleteCategory,
+        _archiveCategory = archiveCategory,
+        _unarchiveCategory = unarchiveCategory,
         super(const AsyncValue.loading()) {
     loadCategories();
   }
@@ -178,6 +186,80 @@ class CategoryNotifier extends StateNotifier<AsyncValue<CategoryState>> {
   bool hasCategory(String id) {
     final currentState = state.value;
     return currentState?.hasCategory(id) ?? false;
+  }
+
+  /// Archive a category
+  Future<bool> archiveCategory(String categoryId) async {
+    final currentState = state.value;
+    if (currentState == null) return false;
+
+    // Optimistically update category in local state
+    final optimisticCategories = currentState.categories.map((c) => c.id == categoryId ? c.copyWith(isArchived: true) : c).toList();
+    state = AsyncValue.data(currentState.copyWith(
+      categories: optimisticCategories,
+      isOperationInProgress: true,
+      operationError: null,
+    ));
+
+    final result = await _archiveCategory(categoryId);
+
+    return result.when(
+      success: (archivedCategory) {
+        // Update with server response and clear operation state
+        final finalCategories = currentState.categories.map((c) => c.id == categoryId ? archivedCategory : c).toList();
+        state = AsyncValue.data(CategoryState(
+          categories: finalCategories,
+          isOperationInProgress: false,
+          operationError: null,
+        ));
+        return true;
+      },
+      error: (failure) {
+        // Revert to original state with error
+        state = AsyncValue.data(currentState.copyWith(
+          isOperationInProgress: false,
+          operationError: failure.message,
+        ));
+        return false;
+      },
+    );
+  }
+
+  /// Unarchive a category
+  Future<bool> unarchiveCategory(String categoryId) async {
+    final currentState = state.value;
+    if (currentState == null) return false;
+
+    // Optimistically update category in local state
+    final optimisticCategories = currentState.categories.map((c) => c.id == categoryId ? c.copyWith(isArchived: false) : c).toList();
+    state = AsyncValue.data(currentState.copyWith(
+      categories: optimisticCategories,
+      isOperationInProgress: true,
+      operationError: null,
+    ));
+
+    final result = await _unarchiveCategory(categoryId);
+
+    return result.when(
+      success: (unarchivedCategory) {
+        // Update with server response and clear operation state
+        final finalCategories = currentState.categories.map((c) => c.id == categoryId ? unarchivedCategory : c).toList();
+        state = AsyncValue.data(CategoryState(
+          categories: finalCategories,
+          isOperationInProgress: false,
+          operationError: null,
+        ));
+        return true;
+      },
+      error: (failure) {
+        // Revert to original state with error
+        state = AsyncValue.data(currentState.copyWith(
+          isOperationInProgress: false,
+          operationError: failure.message,
+        ));
+        return false;
+      },
+    );
   }
 
   /// Clear operation error

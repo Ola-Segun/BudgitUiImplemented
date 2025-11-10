@@ -22,7 +22,7 @@ import 'package:budget_tracker/features/transactions/domain/usecases/delete_cate
 import 'package:budget_tracker/features/transactions/domain/repositories/transaction_category_repository.dart';
 import 'package:budget_tracker/features/transactions/presentation/notifiers/transaction_notifier.dart';
 import 'package:budget_tracker/features/transactions/presentation/providers/transaction_providers.dart';
-import 'package:budget_tracker/features/transactions/presentation/widgets/add_transaction_bottom_sheet.dart';
+import 'package:budget_tracker/features/transactions/presentation/widgets/enhanced_add_transaction_bottom_sheet.dart';
 import 'package:budget_tracker/features/transactions/presentation/notifiers/category_notifier.dart';
 import 'package:budget_tracker/features/transactions/domain/services/category_icon_color_service.dart';
 
@@ -59,7 +59,7 @@ void main() {
     when(mockCategoryIconColorService.getColorForCategory(any)).thenReturn(Colors.blue);
   });
 
-  group('AddTransactionBottomSheet Dismissal Behavior', () {
+  group('EnhancedEnhancedAddTransactionBottomSheet Dismissal Behavior', () {
     const testAccount = Account(
       id: 'test-account',
       name: 'Test Account',
@@ -116,7 +116,7 @@ void main() {
                 onPressed: () => showModalBottomSheet(
                   context: context,
                   isScrollControlled: true,
-                  builder: (context) => AddTransactionBottomSheet(
+                  builder: (context) => EnhancedAddTransactionBottomSheet(
                     onSubmit: onSubmit,
                     initialType: initialType,
                   ),
@@ -157,7 +157,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify bottom sheet is visible
-        expect(find.byType(AddTransactionBottomSheet), findsOneWidget);
+        expect(find.byType(EnhancedAddTransactionBottomSheet), findsOneWidget);
         expect(find.text('Add Transaction'), findsOneWidget);
 
         // Fill form with valid expense data
@@ -187,7 +187,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify bottom sheet is dismissed
-        expect(find.byType(AddTransactionBottomSheet), findsNothing);
+        expect(find.byType(EnhancedAddTransactionBottomSheet), findsNothing);
 
         // Verify home screen is still visible
         expect(find.text('Open Bottom Sheet'), findsOneWidget);
@@ -225,7 +225,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify bottom sheet is visible and pre-selected to income
-        expect(find.byType(AddTransactionBottomSheet), findsOneWidget);
+        expect(find.byType(EnhancedAddTransactionBottomSheet), findsOneWidget);
         expect(find.text('Add Transaction'), findsOneWidget);
 
         // Fill form with valid income data
@@ -255,7 +255,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify bottom sheet is dismissed
-        expect(find.byType(AddTransactionBottomSheet), findsNothing);
+        expect(find.byType(EnhancedAddTransactionBottomSheet), findsNothing);
 
         // Verify home screen is still visible
         expect(find.text('Open Bottom Sheet'), findsOneWidget);
@@ -295,7 +295,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify bottom sheet opens with default expense type
-        expect(find.byType(AddTransactionBottomSheet), findsOneWidget);
+        expect(find.byType(EnhancedAddTransactionBottomSheet), findsOneWidget);
 
         // Fill and submit form
         await tester.enterText(find.byType(TextFormField).first, '100.00');
@@ -318,7 +318,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify dismissal occurred
-        expect(find.byType(AddTransactionBottomSheet), findsNothing);
+        expect(find.byType(EnhancedAddTransactionBottomSheet), findsNothing);
         expect(submittedTransaction?.amount, 100.00);
       });
 
@@ -350,7 +350,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify bottom sheet opens with income type pre-selected
-        expect(find.byType(AddTransactionBottomSheet), findsOneWidget);
+        expect(find.byType(EnhancedAddTransactionBottomSheet), findsOneWidget);
 
         // Fill and submit form
         await tester.enterText(find.byType(TextFormField).first, '200.00');
@@ -373,7 +373,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify dismissal occurred
-        expect(find.byType(AddTransactionBottomSheet), findsNothing);
+        expect(find.byType(EnhancedAddTransactionBottomSheet), findsNothing);
         expect(submittedTransaction?.amount, 200.00);
         expect(submittedTransaction?.type, TransactionType.income);
       });
@@ -406,7 +406,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify bottom sheet opens with expense type pre-selected
-        expect(find.byType(AddTransactionBottomSheet), findsOneWidget);
+        expect(find.byType(EnhancedAddTransactionBottomSheet), findsOneWidget);
 
         // Fill and submit form
         await tester.enterText(find.byType(TextFormField).first, '75.00');
@@ -429,7 +429,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify dismissal occurred
-        expect(find.byType(AddTransactionBottomSheet), findsNothing);
+        expect(find.byType(EnhancedAddTransactionBottomSheet), findsNothing);
         expect(submittedTransaction?.amount, 75.00);
         expect(submittedTransaction?.type, TransactionType.expense);
       });
@@ -486,7 +486,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify bottom sheet is dismissed
-        expect(find.byType(AddTransactionBottomSheet), findsNothing);
+        expect(find.byType(EnhancedAddTransactionBottomSheet), findsNothing);
 
         // Verify data persistence
         expect(persistedTransactions.length, 1);
@@ -546,7 +546,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify bottom sheet is dismissed
-        expect(find.byType(AddTransactionBottomSheet), findsNothing);
+        expect(find.byType(EnhancedAddTransactionBottomSheet), findsNothing);
 
         // Verify success message appears
         expect(find.text('Transaction added successfully'), findsOneWidget);

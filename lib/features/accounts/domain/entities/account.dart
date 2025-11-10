@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:budget_tracker/features/accounts/domain/entities/account_type_theme.dart';
 
 part 'account.freezed.dart';
 
@@ -20,7 +22,7 @@ class Account with _$Account {
     String? description,
     String? institution,
     String? accountNumber,
-    @Default('USD') String currency,
+    String? currency,
     DateTime? createdAt,
     DateTime? updatedAt,
     // Type-specific fields
@@ -86,10 +88,10 @@ class Account with _$Account {
   String get displayName => institution != null ? '$name ($institution)' : name;
 
   /// Get formatted balance with currency
-  String get formattedBalance => '${isLiability ? '-' : ''}$currency ${currentBalance.abs().toStringAsFixed(2)}';
+  String get formattedBalance => '${isLiability ? '-' : ''}${currency ?? 'USD'} ${currentBalance.abs().toStringAsFixed(2)}';
 
   /// Get formatted available balance
-  String get formattedAvailableBalance => '$currency ${availableBalance.toStringAsFixed(2)}';
+  String get formattedAvailableBalance => '${currency ?? 'USD'} ${availableBalance.toStringAsFixed(2)}';
 
   /// Validate balance fields
   bool get isValidBalance {
@@ -110,7 +112,7 @@ class Account with _$Account {
   }
 }
 
-/// Account type enum
+/// Account type enum with configurable theming
 enum AccountType {
   bankAccount,
   creditCard,
@@ -133,6 +135,23 @@ enum AccountType {
     }
   }
 
+  /// Get theme for this account type, using custom theme if available, otherwise default
+  AccountTypeTheme getTheme(Map<String, AccountTypeTheme> customThemes) {
+    final accountTypeName = name;
+    return customThemes[accountTypeName] ?? AccountTypeTheme.defaultThemeFor(accountTypeName);
+  }
+
+  /// Get icon for this account type using theme system
+  IconData getIcon(Map<String, AccountTypeTheme> customThemes) {
+    return getTheme(customThemes).iconData;
+  }
+
+  /// Get color for this account type using theme system
+  Color getColor(Map<String, AccountTypeTheme> customThemes) {
+    return getTheme(customThemes).color;
+  }
+
+  /// Legacy icon getter for backward compatibility
   String get icon {
     switch (this) {
       case AccountType.bankAccount:
@@ -148,6 +167,7 @@ enum AccountType {
     }
   }
 
+  /// Legacy color getter for backward compatibility
   int get color {
     switch (this) {
       case AccountType.bankAccount:

@@ -66,11 +66,9 @@ final budgetNotifierProvider =
   ref.listen<AsyncValue<TransactionState>>(
     transactionNotifierProvider,
     (previous, next) {
-      // Only refresh if we have budgets loaded and transaction state changed
-      if (next.value?.transactions.isNotEmpty == true) {
-        // Refresh budget statuses when transactions change
-        notifier.loadActiveBudgets();
-      }
+      // Refresh budget statuses when transactions change (more responsive)
+      // This ensures real-time updates to total active budget costs
+      notifier.loadActiveBudgets();
     },
     fireImmediately: false,
   );
@@ -156,6 +154,11 @@ final budgetStatsProvider = Provider<AsyncValue<BudgetStats>>((ref) {
       final totalBudgetAmount = budgets.fold<double>(0.0, (sum, budget) => sum + budget.totalBudget);
       final activeBudgetAmount = activeBudgets.fold<double>(0.0, (sum, budget) => sum + budget.totalBudget);
 
+      // Calculate total active budget costs (actual spent amounts)
+      final totalActiveCosts = state.budgetStatuses
+          .where((status) => activeBudgets.any((budget) => budget.id == status.budget.id))
+          .fold<double>(0.0, (sum, status) => sum + status.totalSpent);
+
       final healthyBudgets = state.budgetStatuses.where((status) => status.overallHealth == BudgetHealth.healthy).length;
       final warningBudgets = state.budgetStatuses.where((status) => status.overallHealth == BudgetHealth.warning).length;
       final criticalBudgets = state.budgetStatuses.where((status) => status.overallHealth == BudgetHealth.critical).length;
@@ -166,6 +169,7 @@ final budgetStatsProvider = Provider<AsyncValue<BudgetStats>>((ref) {
         activeBudgets: activeBudgets.length,
         totalBudgetAmount: totalBudgetAmount,
         activeBudgetAmount: activeBudgetAmount,
+        totalActiveCosts: totalActiveCosts,
         healthyBudgets: healthyBudgets,
         warningBudgets: warningBudgets,
         criticalBudgets: criticalBudgets,
@@ -233,6 +237,7 @@ class BudgetStats {
     required this.activeBudgets,
     required this.totalBudgetAmount,
     required this.activeBudgetAmount,
+    required this.totalActiveCosts,
     required this.healthyBudgets,
     required this.warningBudgets,
     required this.criticalBudgets,
@@ -243,6 +248,7 @@ class BudgetStats {
   final int activeBudgets;
   final double totalBudgetAmount;
   final double activeBudgetAmount;
+  final double totalActiveCosts;
   final int healthyBudgets;
   final int warningBudgets;
   final int criticalBudgets;
@@ -259,4 +265,7 @@ class BudgetStats {
 
   /// Get percentage of over-budget budgets
   double get overBudgetPercentage => activeBudgets > 0 ? (overBudgetCount / activeBudgets) * 100 : 0.0;
+
+  /// Get total active budget costs as percentage of active budget amount
+  double get activeCostsPercentage => activeBudgetAmount > 0 ? (totalActiveCosts / activeBudgetAmount) * 100 : 0.0;
 }

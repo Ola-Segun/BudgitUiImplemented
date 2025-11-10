@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/design_system/design_tokens.dart';
+import '../../../../core/design_system/color_tokens.dart';
+import '../../../../core/design_system/typography_tokens.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
 
 /// Help Center screen with FAQs, contact support, and feedback
@@ -12,7 +15,29 @@ class HelpCenterScreen extends StatefulWidget {
   State<HelpCenterScreen> createState() => _HelpCenterScreenState();
 }
 
-class _HelpCenterScreenState extends State<HelpCenterScreen> {
+class _HelpCenterScreenState extends State<HelpCenterScreen>
+    with TickerProviderStateMixin {
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _fadeController = AnimationController(
+      duration: DesignTokens.durationNormal,
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: DesignTokens.curveEaseOut),
+    );
+    _fadeController.forward();
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    super.dispose();
+  }
   final List<FAQItem> _faqs = [
     FAQItem(
       question: 'How do I add a new transaction?',
@@ -51,81 +76,125 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: ColorTokens.surfaceBackground,
       appBar: AppBar(
-        title: const Text('Help & Support'),
+        backgroundColor: ColorTokens.surfacePrimary,
+        elevation: 0,
+        title: Text(
+          'Help & Support',
+          style: TypographyTokens.heading3,
+        ),
       ),
-      body: ListView(
-        padding: AppTheme.screenPaddingAll,
-        children: [
-          // Quick Actions
-          _buildQuickActions(context),
-          const SizedBox(height: 24),
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: RefreshIndicator(
+          onRefresh: () async {
+            // Simulate refresh
+            await Future.delayed(const Duration(seconds: 1));
+          },
+          color: ColorTokens.teal500,
+          child: ListView(
+            padding: EdgeInsets.all(DesignTokens.screenPaddingH),
+            children: [
+              // Quick Actions
+              _buildQuickActions(context).animate()
+                .fadeIn(duration: DesignTokens.durationNormal)
+                .slideY(begin: 0.1, duration: DesignTokens.durationNormal),
 
-          // Frequently Asked Questions
-          _buildFAQSection(context),
-          const SizedBox(height: 24),
+              SizedBox(height: DesignTokens.sectionGapLg),
 
-          // Contact Support
-          _buildContactSupport(context),
-          const SizedBox(height: 24),
+              // Frequently Asked Questions
+              _buildFAQSection(context).animate()
+                .fadeIn(duration: DesignTokens.durationNormal, delay: 100.ms)
+                .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 100.ms),
 
-          // App Information
-          _buildAppInfo(context),
-        ],
+              SizedBox(height: DesignTokens.sectionGapLg),
+
+              // Contact Support
+              _buildContactSupport(context).animate()
+                .fadeIn(duration: DesignTokens.durationNormal, delay: 200.ms)
+                .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 200.ms),
+
+              SizedBox(height: DesignTokens.sectionGapLg),
+
+              // App Information
+              _buildAppInfo(context).animate()
+                .fadeIn(duration: DesignTokens.durationNormal, delay: 300.ms)
+                .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 300.ms),
+
+              SizedBox(height: DesignTokens.spacing8),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildQuickActions(BuildContext context) {
-    return Card(
+    return Container(
+      decoration: BoxDecoration(
+        color: ColorTokens.surfacePrimary,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+        boxShadow: DesignTokens.elevationLow,
+      ),
       child: Padding(
-        padding: AppSpacing.cardPaddingAll,
+        padding: EdgeInsets.all(DesignTokens.cardPaddingLg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Quick Help',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+              style: TypographyTokens.heading5,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: DesignTokens.spacing4),
             Row(
               children: [
                 Expanded(
                   child: _QuickActionButton(
                     icon: Icons.help_outline,
                     label: 'User Guide',
+                    color: ColorTokens.info500,
                     onPressed: () => _showUserGuide(context),
-                  ),
+                  ).animate()
+                    .fadeIn(duration: DesignTokens.durationNormal)
+                    .slideY(begin: 0.1, duration: DesignTokens.durationNormal),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: DesignTokens.spacing3),
                 Expanded(
                   child: _QuickActionButton(
                     icon: Icons.feedback,
                     label: 'Send Feedback',
+                    color: ColorTokens.success500,
                     onPressed: () => _showFeedbackSheet(context),
-                  ),
+                  ).animate()
+                    .fadeIn(duration: DesignTokens.durationNormal, delay: 50.ms)
+                    .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 50.ms),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: DesignTokens.spacing3),
             Row(
               children: [
                 Expanded(
                   child: _QuickActionButton(
                     icon: Icons.bug_report,
                     label: 'Report Issue',
+                    color: ColorTokens.warning500,
                     onPressed: () => _showReportIssueSheet(context),
-                  ),
+                  ).animate()
+                    .fadeIn(duration: DesignTokens.durationNormal, delay: 100.ms)
+                    .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 100.ms),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: DesignTokens.spacing3),
                 Expanded(
                   child: _QuickActionButton(
                     icon: Icons.chat,
                     label: 'Live Chat',
+                    color: ColorTokens.teal500,
                     onPressed: () => _startLiveChat(context),
-                  ),
+                  ).animate()
+                    .fadeIn(duration: DesignTokens.durationNormal, delay: 150.ms)
+                    .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 150.ms),
                 ),
               ],
             ),
@@ -136,20 +205,39 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
   }
 
   Widget _buildFAQSection(BuildContext context) {
-    return Card(
+    return Container(
+      decoration: BoxDecoration(
+        color: ColorTokens.surfacePrimary,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+        boxShadow: DesignTokens.elevationLow,
+      ),
       child: Padding(
-        padding: AppSpacing.cardPaddingAll,
+        padding: EdgeInsets.all(DesignTokens.cardPaddingLg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Frequently Asked Questions',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+              style: TypographyTokens.heading5,
             ),
-            const SizedBox(height: 16),
-            ..._faqs.map((faq) => _buildFAQItem(context, faq)),
+            SizedBox(height: DesignTokens.spacing4),
+            ..._faqs.asMap().entries.map((entry) {
+              final index = entry.key;
+              final faq = entry.value;
+              return Padding(
+                padding: EdgeInsets.only(bottom: DesignTokens.spacing2),
+                child: _buildFAQItem(context, faq).animate()
+                  .fadeIn(
+                    duration: DesignTokens.durationNormal,
+                    delay: Duration(milliseconds: 50 * index),
+                  )
+                  .slideY(
+                    begin: 0.1,
+                    duration: DesignTokens.durationNormal,
+                    delay: Duration(milliseconds: 50 * index),
+                  ),
+              );
+            }),
           ],
         ),
       ),
@@ -157,62 +245,111 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
   }
 
   Widget _buildFAQItem(BuildContext context, FAQItem faq) {
-    return ExpansionTile(
-      title: Text(
-        faq.question,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
-      ),
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Text(
-            faq.answer,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
+    return Container(
+      decoration: BoxDecoration(
+        color: ColorTokens.surfaceSecondary,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+        border: Border.all(
+          color: ColorTokens.neutral200,
+          width: 1,
         ),
-      ],
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dividerColor: Colors.transparent,
+        ),
+        child: ExpansionTile(
+          title: Text(
+            faq.question,
+            style: TypographyTokens.bodyLg.copyWith(
+              fontWeight: TypographyTokens.weightSemiBold,
+            ),
+          ),
+          trailing: Icon(
+            Icons.expand_more,
+            color: ColorTokens.textSecondary,
+            size: DesignTokens.iconMd,
+          ),
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: DesignTokens.spacing4,
+                vertical: DesignTokens.spacing3,
+              ),
+              child: Text(
+                faq.answer,
+                style: TypographyTokens.bodyMd.copyWith(
+                  color: ColorTokens.textSecondary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   Widget _buildContactSupport(BuildContext context) {
-    return Card(
+    return Container(
+      decoration: BoxDecoration(
+        color: ColorTokens.surfacePrimary,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+        boxShadow: DesignTokens.elevationLow,
+      ),
       child: Padding(
-        padding: AppSpacing.cardPaddingAll,
+        padding: EdgeInsets.all(DesignTokens.cardPaddingLg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Contact Support',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+              style: TypographyTokens.heading5,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: DesignTokens.spacing4),
             _buildContactOption(
               context,
               icon: Icons.email,
               title: 'Email Support',
               subtitle: 'support@budgettracker.com',
+              color: ColorTokens.info500,
               onTap: () => _sendEmail(),
+            ).animate()
+              .fadeIn(duration: DesignTokens.durationNormal)
+              .slideX(begin: -0.1, duration: DesignTokens.durationNormal),
+
+            Divider(
+              height: DesignTokens.spacing4,
+              thickness: 1,
+              color: ColorTokens.neutral200,
             ),
-            const Divider(),
+
             _buildContactOption(
               context,
               icon: Icons.phone,
               title: 'Phone Support',
               subtitle: '+1 (555) 123-4567',
+              color: ColorTokens.success500,
               onTap: () => _makePhoneCall(),
+            ).animate()
+              .fadeIn(duration: DesignTokens.durationNormal, delay: 50.ms)
+              .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 50.ms),
+
+            Divider(
+              height: DesignTokens.spacing4,
+              thickness: 1,
+              color: ColorTokens.neutral200,
             ),
-            const Divider(),
+
             _buildContactOption(
               context,
               icon: Icons.forum,
               title: 'Community Forum',
               subtitle: 'Get help from other users',
+              color: ColorTokens.warning500,
               onTap: () => _openForum(),
-            ),
+            ).animate()
+              .fadeIn(duration: DesignTokens.durationNormal, delay: 100.ms)
+              .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 100.ms),
           ],
         ),
       ),
@@ -224,58 +361,117 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
     required IconData icon,
     required String title,
     required String subtitle,
+    required Color color,
     required VoidCallback onTap,
   }) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(
-          icon,
-          color: Theme.of(context).primaryColor,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: DesignTokens.spacing2),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(DesignTokens.spacing2),
+                decoration: BoxDecoration(
+                  color: ColorTokens.withOpacity(color, 0.1),
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                ),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: DesignTokens.iconMd,
+                ),
+              ),
+              SizedBox(width: DesignTokens.spacing3),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TypographyTokens.bodyLg.copyWith(
+                        fontWeight: TypographyTokens.weightSemiBold,
+                      ),
+                    ),
+                    SizedBox(height: DesignTokens.spacing1),
+                    Text(
+                      subtitle,
+                      style: TypographyTokens.captionMd.copyWith(
+                        color: ColorTokens.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                color: ColorTokens.textSecondary,
+                size: DesignTokens.iconMd,
+              ),
+            ],
+          ),
         ),
       ),
-      title: Text(title),
-      subtitle: Text(subtitle),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: onTap,
     );
   }
 
   Widget _buildAppInfo(BuildContext context) {
-    return Card(
+    return Container(
+      decoration: BoxDecoration(
+        color: ColorTokens.surfacePrimary,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+        boxShadow: DesignTokens.elevationLow,
+      ),
       child: Padding(
-        padding: AppSpacing.cardPaddingAll,
+        padding: EdgeInsets.all(DesignTokens.cardPaddingLg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'About Budget Tracker',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+              style: TypographyTokens.heading5,
             ),
-            const SizedBox(height: 16),
-            _buildInfoRow('Version', '1.0.0'),
-            _buildInfoRow('Last Updated', 'October 2024'),
-            const SizedBox(height: 16),
-            Text(
-              'Terms of Service',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).primaryColor,
-                    fontWeight: FontWeight.w500,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Privacy Policy',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).primaryColor,
-                    fontWeight: FontWeight.w500,
-                  ),
+            SizedBox(height: DesignTokens.spacing4),
+            _buildInfoRow('Version', '1.0.0').animate()
+              .fadeIn(duration: DesignTokens.durationNormal)
+              .slideX(begin: -0.1, duration: DesignTokens.durationNormal),
+
+            _buildInfoRow('Last Updated', 'October 2024').animate()
+              .fadeIn(duration: DesignTokens.durationNormal, delay: 50.ms)
+              .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 50.ms),
+
+            SizedBox(height: DesignTokens.spacing4),
+
+            Row(
+              children: [
+                Expanded(
+                  child: _buildLinkButton(
+                    context,
+                    'Terms of Service',
+                    ColorTokens.info500,
+                    () {},
+                  ).animate()
+                    .fadeIn(duration: DesignTokens.durationNormal, delay: 100.ms)
+                    .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 100.ms),
+                ),
+                SizedBox(width: DesignTokens.spacing3),
+                Expanded(
+                  child: _buildLinkButton(
+                    context,
+                    'Privacy Policy',
+                    ColorTokens.success500,
+                    () {},
+                  ).animate()
+                    .fadeIn(duration: DesignTokens.durationNormal, delay: 150.ms)
+                    .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 150.ms),
+                ),
+              ],
             ),
           ],
         ),
@@ -285,23 +481,63 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
 
   Widget _buildInfoRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: EdgeInsets.symmetric(vertical: DesignTokens.spacing2),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+            style: TypographyTokens.bodyMd.copyWith(
+              color: ColorTokens.textSecondary,
+            ),
           ),
           Text(
             value,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
+            style: TypographyTokens.bodyMd.copyWith(
+              fontWeight: TypographyTokens.weightSemiBold,
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLinkButton(
+    BuildContext context,
+    String label,
+    Color color,
+    VoidCallback onPressed,
+  ) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onPressed();
+        },
+        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            vertical: DesignTokens.spacing3,
+            horizontal: DesignTokens.spacing2,
+          ),
+          decoration: BoxDecoration(
+            color: ColorTokens.withOpacity(color, 0.1),
+            borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+            border: Border.all(
+              color: ColorTokens.withOpacity(color, 0.2),
+              width: 1,
+            ),
+          ),
+          child: Text(
+            label,
+            style: TypographyTokens.labelMd.copyWith(
+              color: color,
+              fontWeight: TypographyTokens.weightSemiBold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
       ),
     );
   }
@@ -416,41 +652,63 @@ class _QuickActionButton extends StatelessWidget {
   const _QuickActionButton({
     required this.icon,
     required this.label,
+    required this.color,
     required this.onPressed,
   });
 
   final IconData icon;
   final String label;
+  final Color color;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onPressed,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-        decoration: BoxDecoration(
-          color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              color: Theme.of(context).primaryColor,
-              size: 24,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onPressed();
+        },
+        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            vertical: DesignTokens.spacing4,
+            horizontal: DesignTokens.spacing3,
+          ),
+          decoration: BoxDecoration(
+            color: ColorTokens.withOpacity(color, 0.1),
+            borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+            border: Border.all(
+              color: ColorTokens.withOpacity(color, 0.2),
+              width: 1,
             ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w500,
-                    color: Theme.of(context).primaryColor,
-                  ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: EdgeInsets.all(DesignTokens.spacing2),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                ),
+                child: Icon(
+                  icon,
+                  color: Colors.white,
+                  size: DesignTokens.iconMd,
+                ),
+              ),
+              SizedBox(height: DesignTokens.spacing2),
+              Text(
+                label,
+                style: TypographyTokens.labelSm.copyWith(
+                  color: color,
+                  fontWeight: TypographyTokens.weightSemiBold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );

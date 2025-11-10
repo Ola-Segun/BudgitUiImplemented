@@ -19,6 +19,21 @@ import '../../../transactions/domain/repositories/transaction_repository.dart';
 import '../../domain/entities/dashboard_data.dart';
 import '../../domain/repositories/dashboard_repository.dart';
 
+/// Helper class for aggregating category data across multiple budgets
+class AggregatedCategoryData {
+  final String categoryId;
+  double spent;
+  double budget;
+  BudgetHealth status;
+
+  AggregatedCategoryData({
+    required this.categoryId,
+    required this.spent,
+    required this.budget,
+    required this.status,
+  });
+}
+
 /// Implementation of dashboard repository that aggregates data from multiple sources
 class DashboardRepositoryImpl implements DashboardRepository {
   const DashboardRepositoryImpl(
@@ -158,7 +173,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
   @override
   Future<Result<List<BudgetCategoryOverview>>> getBudgetOverview({int limit = 5}) async {
     try {
-      // Get current budgets
+      // Get all budgets
       final budgetsResult = await _budgetRepository.getAll();
       if (budgetsResult.isError) {
         return Result.error(budgetsResult.failureOrNull!);
@@ -169,32 +184,64 @@ class DashboardRepositoryImpl implements DashboardRepository {
         return Result.success([]);
       }
 
-      // Use the first active budget (in a real app, you'd have logic to select current budget)
-      final currentBudget = budgets.first;
-
-      // Calculate budget status
-      final statusResult = await _calculateBudgetStatus(currentBudget);
-      if (statusResult.isError) {
-        return Result.error(statusResult.failureOrNull!);
+      // Filter for active budgets only
+      final activeBudgets = budgets.where((budget) => budget.isCurrentlyActive).toList();
+      if (activeBudgets.isEmpty) {
+        return Result.success([]);
       }
 
-      final budgetStatus = statusResult.dataOrNull!;
-      // Get category names asynchronously
+      // Aggregate category data across all active budgets
+      final categoryAggregation = <String, AggregatedCategoryData>{};
+
+      for (final budget in activeBudgets) {
+        // Calculate budget status for each active budget
+        final statusResult = await _calculateBudgetStatus(budget);
+        if (statusResult.isError) {
+          continue; // Skip this budget if calculation fails
+        }
+
+        final budgetStatus = statusResult.dataOrNull!;
+        for (final categoryStatus in budgetStatus.categoryStatuses) {
+          final categoryId = categoryStatus.categoryId;
+
+          if (categoryAggregation.containsKey(categoryId)) {
+            // Aggregate with existing data
+            categoryAggregation[categoryId]!.spent += categoryStatus.spent;
+            categoryAggregation[categoryId]!.budget += categoryStatus.budget;
+          } else {
+            // Add new category
+            categoryAggregation[categoryId] = AggregatedCategoryData(
+              categoryId: categoryId,
+              spent: categoryStatus.spent,
+              budget: categoryStatus.budget,
+              status: categoryStatus.status,
+            );
+          }
+        }
+      }
+
+      // Convert aggregated data to BudgetCategoryOverview
       final categoryOverviews = <BudgetCategoryOverview>[];
-      for (final status in budgetStatus.categoryStatuses) {
-        final categoryName = await _getCategoryName(status.categoryId);
+      for (final entry in categoryAggregation.entries) {
+        final data = entry.value;
+        final categoryName = await _getCategoryName(data.categoryId);
+
+        // Calculate aggregated percentage and status
+        final percentage = data.budget > 0 ? (data.spent / data.budget) * 100 : 0.0;
+        final status = _determineAggregatedStatus(data.spent, data.budget);
+
         categoryOverviews.add(BudgetCategoryOverview(
-          categoryId: status.categoryId,
+          categoryId: data.categoryId,
           categoryName: categoryName,
-          spent: status.spent,
-          budget: status.budget,
-          percentage: status.percentage,
-          status: _mapBudgetHealthToStatus(status.status),
+          spent: data.spent,
+          budget: data.budget,
+          percentage: percentage,
+          status: status,
         ));
       }
 
-      categoryOverviews
-          .sort((a, b) => b.spent.compareTo(a.spent)); // Sort by spending amount
+      // Sort by spending amount (highest first) and limit results
+      categoryOverviews.sort((a, b) => b.spent.compareTo(a.spent));
       final limitedOverviews = categoryOverviews.take(limit).toList();
 
       return Result.success(limitedOverviews);
@@ -324,18 +371,16 @@ class DashboardRepositoryImpl implements DashboardRepository {
   }
 
 
-  /// Map BudgetHealth to BudgetHealthStatus
-  BudgetHealthStatus _mapBudgetHealthToStatus(BudgetHealth health) {
-    switch (health) {
-      case BudgetHealth.healthy:
-        return BudgetHealthStatus.healthy;
-      case BudgetHealth.warning:
-        return BudgetHealthStatus.warning;
-      case BudgetHealth.critical:
-        return BudgetHealthStatus.critical;
-      case BudgetHealth.overBudget:
-        return BudgetHealthStatus.overBudget;
-    }
+
+  /// Determine aggregated budget health status based on total spent vs total budget
+  BudgetHealthStatus _determineAggregatedStatus(double totalSpent, double totalBudget) {
+    if (totalBudget <= 0) return BudgetHealthStatus.healthy;
+
+    final percentage = totalSpent / totalBudget;
+    if (percentage > 1.0) return BudgetHealthStatus.overBudget;
+    if (percentage > 0.9) return BudgetHealthStatus.critical;
+    if (percentage > 0.75) return BudgetHealthStatus.warning;
+    return BudgetHealthStatus.healthy;
   }
 
   /// Get category name by ID using repository lookup

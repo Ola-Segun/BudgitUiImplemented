@@ -1,17 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:developer' as developer;
 
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../accounts/presentation/providers/account_providers.dart';
 import '../../../recurring_incomes/domain/entities/recurring_income.dart';
 import '../../domain/entities/bill.dart';
 import '../providers/bill_providers.dart';
-import '../widgets/bill_card.dart';
+import '../widgets/enhanced_bills_dashboard_header.dart';
+import '../widgets/enhanced_bills_calendar_view.dart';
+import '../widgets/enhanced_bill_status_banner.dart';
+import '../widgets/enhanced_bills_stats_row.dart';
+import '../widgets/enhanced_bills_bar_chart.dart';
+import '../widgets/enhanced_account_filters.dart';
+import '../widgets/enhanced_bill_card.dart';
+import '../widgets/subscription_spotlight.dart';
+import '../theme/bills_theme_extended.dart';
 
 /// Dashboard screen for bills and subscriptions management
 class BillsDashboardScreen extends ConsumerStatefulWidget {
@@ -22,10 +33,12 @@ class BillsDashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _BillsDashboardScreenState extends ConsumerState<BillsDashboardScreen> {
+  DateTime _selectedDate = DateTime.now();
   String? _selectedAccountFilterId;
   bool _showLinkedOnly = false;
   String? _selectedIncomeAccountFilterId;
   bool _showIncomeLinkedOnly = false;
+  BillsViewMode _viewMode = BillsViewMode.timeline;
 
   @override
   Widget build(BuildContext context) {
@@ -43,42 +56,58 @@ class _BillsDashboardScreenState extends ConsumerState<BillsDashboardScreen> {
     final receivedIncomesThisMonth = ref.watch(receivedIncomesThisMonthProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Bills & Subscriptions'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {
-              developer.log('Navigating to add bill screen', name: 'Navigation');
-              context.go('/more/bills/add');
-            },
-          ),
-        ],
-      ),
-      body: billState.when(
-        initial: () => const LoadingView(),
-        loading: () => const LoadingView(),
-        loaded: (bills, loadedSummary) => _buildDashboard(
-          context,
-          ref,
-          loadedSummary,
-          upcomingBills,
-          overdueCount,
-          totalMonthly,
-          recurringIncomeSummary,
-          upcomingIncomes,
-          expectedIncomesThisMonth,
-          totalMonthlyIncomes,
-          receivedIncomesThisMonth,
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Enhanced Header
+            EnhancedBillsDashboardHeader(
+              selectedDate: _selectedDate,
+              onDateChanged: (date) => setState(() => _selectedDate = date),
+              onAddBillPressed: () {
+                developer.log('Navigating to add bill screen', name: 'Navigation');
+                context.go('/more/bills/add');
+              },
+              onFilterPressed: () {
+                // TODO: Implement filter sheet
+              },
+              viewMode: _viewMode,
+              onViewModeChanged: (mode) => setState(() => _viewMode = mode),
+              overdueCount: overdueCount,
+            ).animate()
+              .fadeIn(duration: BillsThemeExtended.billAnimationFast)
+              .slideY(begin: -0.1, duration: BillsThemeExtended.billAnimationFast, curve: BillsThemeExtended.billAnimationCurve),
+
+            // Main Content
+            Expanded(
+              child: billState.when(
+                initial: () => const LoadingView(),
+                loading: () => const LoadingView(),
+                loaded: (bills, loadedSummary) => _buildDashboard(
+                  context,
+                  ref,
+                  loadedSummary,
+                  upcomingBills,
+                  overdueCount,
+                  totalMonthly,
+                  recurringIncomeSummary,
+                  upcomingIncomes,
+                  expectedIncomesThisMonth,
+                  totalMonthlyIncomes,
+                  receivedIncomesThisMonth,
+                ),
+                error: (message, bills, errorSummary) => ErrorView(
+                  message: message,
+                  onRetry: () => ref.refresh(billNotifierProvider),
+                ),
+                billLoaded: (bill, status) => const SizedBox.shrink(), // Not used in dashboard
+                billSaved: (bill) => const SizedBox.shrink(), // Not used in dashboard
+                billDeleted: () => const SizedBox.shrink(), // Not used in dashboard
+                paymentMarked: (bill) => const SizedBox.shrink(), // Not used in dashboard
+              ),
+            ),
+          ],
         ),
-        error: (message, bills, errorSummary) => ErrorView(
-          message: message,
-          onRetry: () => ref.refresh(billNotifierProvider),
-        ),
-        billLoaded: (bill, status) => const SizedBox.shrink(), // Not used in dashboard
-        billSaved: (bill) => const SizedBox.shrink(), // Not used in dashboard
-        billDeleted: () => const SizedBox.shrink(), // Not used in dashboard
-        paymentMarked: (bill) => const SizedBox.shrink(), // Not used in dashboard
       ),
     );
   }
@@ -100,36 +129,110 @@ class _BillsDashboardScreenState extends ConsumerState<BillsDashboardScreen> {
       onRefresh: () async {
         await ref.read(billNotifierProvider.notifier).refresh();
       },
-      child: ListView(
-        padding: AppTheme.screenPaddingAll,
-        children: [
-          // Summary Cards
-          _buildSummaryCards(context, summary, overdueCount, totalMonthly, recurringIncomeSummary, expectedIncomesThisMonth, totalMonthlyIncomes, receivedIncomesThisMonth),
-          const SizedBox(height: 24),
+      child: _viewMode == BillsViewMode.calendar
+          ? _buildCalendarView(context, ref, summary, upcomingBills, overdueCount, totalMonthly)
+          : _buildTimelineView(context, ref, summary, upcomingBills, overdueCount, totalMonthly, recurringIncomeSummary, upcomingIncomes, expectedIncomesThisMonth, totalMonthlyIncomes, receivedIncomesThisMonth),
+    );
+  }
 
-          // Account Filters
-          _buildAccountFilters(context),
+  Widget _buildTimelineView(
+    BuildContext context,
+    WidgetRef ref,
+    BillsSummary summary,
+    List<BillStatus> upcomingBills,
+    int overdueCount,
+    double totalMonthly,
+    RecurringIncomesSummary? recurringIncomeSummary,
+    List<RecurringIncomeStatus> upcomingIncomes,
+    int expectedIncomesThisMonth,
+    double totalMonthlyIncomes,
+    double receivedIncomesThisMonth,
+  ) {
+    return ListView(
+      padding: EdgeInsets.symmetric(horizontal: AppDimensions.screenPaddingH, vertical: AppDimensions.screenPaddingV),
+      children: [
+          // Bill Status Banner
+          EnhancedBillStatusBanner(
+            overdueCount: overdueCount,
+            dueThisMonth: summary.dueThisMonth,
+            paidThisMonth: summary.paidThisMonth,
+            totalMonthly: totalMonthly,
+            unpaidAmount: totalMonthly - (totalMonthly * (summary.paidThisMonth / summary.dueThisMonth.clamp(1, double.infinity))),
+          ).animate()
+            .fadeIn(duration: BillsThemeExtended.billAnimationFast)
+            .slideY(begin: 0.1, duration: BillsThemeExtended.billAnimationFast, curve: BillsThemeExtended.billAnimationCurve),
+
           const SizedBox(height: 16),
 
-          // Upcoming Bills
+          // Bills Stats Row
+          EnhancedBillsStatsRow(
+            totalBills: summary.totalBills,
+            paidThisMonth: summary.paidThisMonth,
+            dueThisMonth: summary.dueThisMonth,
+            totalMonthly: totalMonthly,
+            overdueCount: overdueCount,
+          ),
+
+          const SizedBox(height: 16),
+
+          // Subscription Spotlight
+          const SubscriptionSpotlight(),
+
+          const SizedBox(height: 16),
+
+          // Monthly Spending Chart
+          EnhancedBillsBarChart(
+            monthlyData: [totalMonthly * 0.8, totalMonthly * 0.9, totalMonthly, totalMonthly * 1.1, totalMonthly * 0.95, totalMonthly * 1.05], // Sample data
+            title: 'Monthly Bill Trends',
+          ),
+
+          const SizedBox(height: 16),
+
+          // Enhanced Account Filters
+          EnhancedAccountFilters(
+            selectedAccountFilterId: _selectedAccountFilterId,
+            showLinkedOnly: _showLinkedOnly,
+            onAccountFilterChanged: (id) => setState(() => _selectedAccountFilterId = id),
+            onLinkedOnlyChanged: (linked) => setState(() => _showLinkedOnly = linked),
+          ).animate()
+            .fadeIn(duration: BillsThemeExtended.billAnimationNormal, delay: BillsThemeExtended.billAnimationNormal)
+            .slideY(begin: 0.1, duration: BillsThemeExtended.billAnimationNormal, delay: BillsThemeExtended.billAnimationNormal, curve: BillsThemeExtended.billAnimationCurve),
+
+          const SizedBox(height: 12),
+
+          // Upcoming Bills Section
           _buildUpcomingBillsSection(context, upcomingBills),
-          const SizedBox(height: 24),
 
-          // Upcoming Incomes
-          _buildUpcomingIncomesSection(context, upcomingIncomes),
-          const SizedBox(height: 24),
-
-          // Income Account Filters
-          _buildIncomeAccountFilters(context),
           const SizedBox(height: 16),
 
-          // All Bills
+          // All Bills Section
           _buildAllBillsSection(context, ref),
 
           // Quick Actions
           _buildQuickActions(context),
         ],
+      );
+  }
+
+  Widget _buildCalendarView(
+    BuildContext context,
+    WidgetRef ref,
+    BillsSummary summary,
+    List<BillStatus> upcomingBills,
+    int overdueCount,
+    double totalMonthly,
+  ) {
+    return EnhancedBillsCalendarView(
+      bills: ref.watch(billNotifierProvider).maybeWhen(
+        loaded: (bills, summary) => bills,
+        orElse: () => <Bill>[],
       ),
+      selectedDate: _selectedDate,
+      onDateSelected: (date) => setState(() => _selectedDate = date),
+      onBillTap: (bill) {
+        developer.log('Navigating to bill detail: ${bill.id}', name: 'Navigation');
+        context.go('/more/bills/${bill.id}');
+      },
     );
   }
 
@@ -481,7 +584,36 @@ class _BillsDashboardScreenState extends ConsumerState<BillsDashboardScreen> {
   }
 
   Widget _buildAllBillCard(BuildContext context, Bill bill) {
-    return BillCard(bill: bill);
+    return Slidable(
+      key: ValueKey(bill.id),
+      endActionPane: ActionPane(
+        motion: const ScrollMotion(),
+        children: [
+          SlidableAction(
+            onPressed: (_) => _showEditSheet(context, bill),
+            backgroundColor: BillsThemeExtended.billStatsPrimary,
+            foregroundColor: Colors.white,
+            icon: Icons.edit,
+            label: 'Edit',
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ],
+      ),
+      startActionPane: ActionPane(
+        motion: const ScrollMotion(),
+        children: [
+          SlidableAction(
+            onPressed: (_) => _confirmDelete(context, ref, bill),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            foregroundColor: Colors.white,
+            icon: Icons.delete,
+            label: 'Delete',
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ],
+      ),
+      child: EnhancedBillCard(bill: bill),
+    );
   }
 
   Widget _buildEmptyUpcomingBills(BuildContext context) {
@@ -948,5 +1080,50 @@ class _BillsDashboardScreenState extends ConsumerState<BillsDashboardScreen> {
         ),
       ),
     );
+  }
+
+  void _showEditSheet(BuildContext context, Bill bill) {
+    HapticFeedback.lightImpact();
+    // Navigate to edit screen
+    context.go('/more/bills/${bill.id}/edit');
+  }
+
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref, Bill bill) async {
+    HapticFeedback.mediumImpact();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Bill'),
+        content: Text(
+          'Are you sure you want to delete "${bill.name}"? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      final success = await ref
+          .read(billNotifierProvider.notifier)
+          .deleteBill(bill.id);
+
+      if (success && context.mounted) {
+        HapticFeedback.mediumImpact();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Bill deleted successfully')),
+        );
+      }
+    }
   }
 }

@@ -33,7 +33,7 @@ void main() {
       balance: 1000.0,
       description: 'Test description',
       institution: 'Test Bank',
-      currency: 'USD',
+      currency: null,
     );
 
     test('should create account successfully', () async {

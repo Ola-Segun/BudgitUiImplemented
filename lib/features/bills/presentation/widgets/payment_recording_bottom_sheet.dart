@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_spacing.dart';
@@ -9,6 +10,7 @@ import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/di/providers.dart' as core_providers;
 import '../../../accounts/domain/entities/account.dart';
 import '../../../accounts/presentation/providers/account_providers.dart';
+import '../../../receipt_scanning/presentation/widgets/receipt_image_preview.dart';
 import '../../domain/entities/bill.dart';
 import '../../domain/usecases/validate_bill_account.dart';
 import '../providers/bill_providers.dart';
@@ -54,6 +56,7 @@ class _PaymentRecordingBottomSheetState
   String? _selectedAccountId;
   bool _isLoading = false;
   String? _balanceWarning;
+  String? _attachedReceiptPath;
 
   @override
   void initState() {
@@ -413,6 +416,91 @@ class _PaymentRecordingBottomSheetState
             ),
             const SizedBox(height: 16),
 
+            // Attach Payment Confirmation
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border.all(color: Theme.of(context).colorScheme.outline),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.attach_file,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Payment Confirmation',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (_attachedReceiptPath != null) ...[
+                    ReceiptImagePreview(imagePath: _attachedReceiptPath!),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _removeAttachment,
+                            icon: const Icon(Icons.delete, size: 18),
+                            label: const Text('Remove'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Theme.of(context).colorScheme.error,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _attachReceipt,
+                            icon: const Icon(Icons.refresh, size: 18),
+                            label: const Text('Change'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else ...[
+                    Text(
+                      'Attach a receipt or payment confirmation image',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _attachReceipt,
+                            icon: const Icon(Icons.camera_alt, size: 18),
+                            label: const Text('Take Photo'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _pickFromGallery,
+                            icon: const Icon(Icons.photo_library, size: 18),
+                            label: const Text('From Gallery'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
             // Notes (Optional)
             TextFormField(
               controller: _notesController,
@@ -468,6 +556,28 @@ class _PaymentRecordingBottomSheetState
     }
   }
 
+  Future<void> _attachReceipt() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.camera);
+
+    if (pickedFile != null) {
+      setState(() => _attachedReceiptPath = pickedFile.path);
+    }
+  }
+
+  Future<void> _pickFromGallery() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() => _attachedReceiptPath = pickedFile.path);
+    }
+  }
+
+  void _removeAttachment() {
+    setState(() => _attachedReceiptPath = null);
+  }
+
   Future<void> _recordPayment() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -516,9 +626,16 @@ class _PaymentRecordingBottomSheetState
         notes: _notesController.text.isNotEmpty ? _notesController.text : null,
       );
 
+      // Store attached receipt path in payment notes if available
+      final paymentWithReceipt = _attachedReceiptPath != null
+          ? payment.copyWith(
+              notes: '${payment.notes ?? ''}\n[Receipt: $_attachedReceiptPath]'.trim(),
+            )
+          : payment;
+
       final success = await ref
           .read(billNotifierProvider.notifier)
-          .markBillAsPaid(widget.bill.id, payment,
+          .markBillAsPaid(widget.bill.id, paymentWithReceipt,
               accountId: _selectedAccountId);
 
       if (success && mounted) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 
 import '../../domain/entities/settings.dart';
+import 'package:budget_tracker/features/accounts/domain/entities/account_type_theme.dart';
 
 part 'settings_dto.g.dart';
 
@@ -53,6 +54,9 @@ class SettingsDto {
   @HiveField(14)
   final String appVersion;
 
+  @HiveField(15)
+  final Map<String, Map<String, dynamic>> accountTypeThemes;
+
   const SettingsDto({
     required this.themeMode,
     required this.currencyCode,
@@ -69,13 +73,14 @@ class SettingsDto {
     required this.languageCode,
     required this.isFirstTime,
     required this.appVersion,
+    required this.accountTypeThemes,
   });
 
   /// Create DTO from domain entity
   factory SettingsDto.fromDomain(AppSettings settings) {
     return SettingsDto(
       themeMode: settings.themeMode.name,
-      currencyCode: settings.currencyCode,
+      currencyCode: settings.currencyCode ?? '',
       dateFormat: settings.dateFormat,
       notificationsEnabled: settings.notificationsEnabled,
       budgetAlertsEnabled: settings.budgetAlertsEnabled,
@@ -89,6 +94,14 @@ class SettingsDto {
       languageCode: settings.languageCode,
       isFirstTime: settings.isFirstTime,
       appVersion: settings.appVersion,
+      accountTypeThemes: settings.accountTypeThemes.map(
+        (key, theme) => MapEntry(key, {
+          'accountType': theme.accountType,
+          'displayName': theme.displayName,
+          'iconName': theme.iconName,
+          'colorValue': theme.colorValue,
+        }),
+      ),
     );
   }
 
@@ -99,7 +112,7 @@ class SettingsDto {
         (mode) => mode.name == themeMode,
         orElse: () => ThemeMode.system,
       ),
-      currencyCode: currencyCode,
+      currencyCode: currencyCode.isEmpty ? null : currencyCode,
       dateFormat: dateFormat,
       notificationsEnabled: notificationsEnabled,
       budgetAlertsEnabled: budgetAlertsEnabled,
@@ -113,11 +126,23 @@ class SettingsDto {
       languageCode: languageCode,
       isFirstTime: isFirstTime,
       appVersion: appVersion,
+      accountTypeThemes: accountTypeThemes.map(
+        (key, themeMap) => MapEntry(
+          key,
+          AccountTypeTheme(
+            accountType: themeMap['accountType'] as String? ?? '',
+            displayName: themeMap['displayName'] as String? ?? '',
+            iconName: themeMap['iconName'] as String? ?? '',
+            colorValue: themeMap['colorValue'] as int? ?? 0,
+          ),
+        ),
+      ),
     );
   }
 
   /// Create default settings DTO
   factory SettingsDto.defaultSettings() {
-    return SettingsDto.fromDomain(AppSettings.defaultSettings());
+    final defaultSettings = AppSettings.defaultSettings();
+    return SettingsDto.fromDomain(defaultSettings);
   }
 }

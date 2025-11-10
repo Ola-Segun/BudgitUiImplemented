@@ -195,6 +195,8 @@ class _RecurringIncomeDetailScreenState extends ConsumerState<RecurringIncomeDet
             const SizedBox(height: 16),
             _buildDetailRow('Frequency', income.frequency.displayName),
             _buildDetailRow('Start Date', DateFormat('MMM dd, yyyy').format(income.startDate)),
+            if (income.nextExpectedDate != null)
+              _buildDetailRow('Next Expected Date', DateFormat('MMM dd, yyyy').format(income.nextExpectedDate!)),
             if (income.endDate != null)
               _buildDetailRow('End Date', DateFormat('MMM dd, yyyy').format(income.endDate!)),
             if (income.payer != null)

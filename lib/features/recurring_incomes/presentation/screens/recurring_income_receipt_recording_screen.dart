@@ -6,12 +6,8 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../accounts/domain/entities/account.dart';
 import '../../../accounts/presentation/providers/account_providers.dart';
-import '../../../receipt_scanning/domain/usecases/process_receipt_image.dart';
-import '../../../receipt_scanning/presentation/providers/receipt_scanning_providers.dart';
 import '../../domain/entities/recurring_income.dart';
-import '../../domain/entities/recurring_income_instance.dart';
 import '../providers/recurring_income_providers.dart';
-import '../states/recurring_income_state.dart';
 
 /// Screen for recording income receipts with account selection and amount input
 class RecurringIncomeReceiptRecordingScreen extends ConsumerStatefulWidget {

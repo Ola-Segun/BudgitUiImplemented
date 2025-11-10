@@ -29,8 +29,10 @@ void main() {
         notificationsEnabled: notificationsEnabled,
         budgetAlertsEnabled: budgetAlertsEnabled,
         billRemindersEnabled: billRemindersEnabled,
+        incomeRemindersEnabled: true,
         budgetAlertThreshold: budgetAlertThreshold,
         billReminderDays: billReminderDays,
+        incomeReminderDays: 1,
         biometricEnabled: biometricEnabled,
         autoBackupEnabled: autoBackupEnabled,
         languageCode: languageCode,
@@ -60,7 +62,7 @@ void main() {
 
       // Assert
       expect(settings.themeMode, ThemeMode.system);
-      expect(settings.currencyCode, 'USD');
+      expect(settings.currencyCode, null);
       expect(settings.dateFormat, 'MM/dd/yyyy');
       expect(settings.notificationsEnabled, true);
       expect(settings.budgetAlertsEnabled, true);

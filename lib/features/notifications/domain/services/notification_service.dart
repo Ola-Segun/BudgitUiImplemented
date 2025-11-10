@@ -1,5 +1,8 @@
 import 'dart:async';
 
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
+
 import '../../../../core/error/result.dart';
 import '../entities/notification.dart';
 import '../usecases/check_all_notifications.dart';
@@ -18,8 +21,29 @@ class NotificationService {
 
   Timer? _periodicCheckTimer;
 
+  /// Flutter Local Notifications plugin instance
+  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
   /// Initialize the notification service
   Future<void> initialize() async {
+    // Initialize flutter local notifications
+    const AndroidInitializationSettings androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    const DarwinInitializationSettings iosSettings = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+
+    const InitializationSettings settings = InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
+    );
+
+    await _flutterLocalNotificationsPlugin.initialize(settings);
+
     // Check for notifications immediately
     await checkForNotifications();
 
@@ -81,8 +105,11 @@ class NotificationService {
 
     for (final notification in highPriorityNotifications) {
       if (notification.isRead != true) {
-        // TODO: Show in-app notification using a snackbar or overlay
-        // For now, this is just a placeholder
+        // Schedule local notification for bill reminders
+        if (notification.type == NotificationType.billReminder) {
+          scheduleLocalNotification(notification);
+        }
+        // Show in-app notification using a snackbar or overlay
         _showInAppNotification(notification);
       }
     }
@@ -96,22 +123,78 @@ class NotificationService {
     print('   ${notification.message}');
   }
 
-  /// Schedule local notification (placeholder for future implementation)
+  /// Schedule local notification
   Future<void> scheduleLocalNotification(AppNotification notification) async {
-    // TODO: Implement local notification scheduling using flutter_local_notifications
-    // This would require additional packages and platform-specific setup
-    print('📅 Scheduling local notification: ${notification.title}');
+    // Only schedule if the notification has a scheduled time
+    if (notification.scheduledFor == null) return;
+
+    final scheduledTime = notification.scheduledFor!;
+    final now = DateTime.now();
+
+    // Don't schedule notifications for past times
+    if (scheduledTime.isBefore(now)) return;
+
+    final androidDetails = AndroidNotificationDetails(
+      'bill_reminders',
+      'Bill Reminders',
+      channelDescription: 'Reminders for upcoming and overdue bills',
+      importance: Importance.high,
+      priority: Priority.high,
+      showWhen: true,
+    );
+
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    final details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    // Use notification ID hash for uniqueness
+    final notificationId = notification.id.hashCode.abs();
+
+    await _flutterLocalNotificationsPlugin.zonedSchedule(
+      notificationId,
+      notification.title,
+      notification.message,
+      tz.TZDateTime.from(scheduledTime, tz.local),
+      details,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+    );
   }
 
-  /// Cancel scheduled notification (placeholder for future implementation)
+  /// Cancel scheduled notification
   Future<void> cancelScheduledNotification(String notificationId) async {
-    // TODO: Implement canceling scheduled notifications
-    print('❌ Canceling scheduled notification: $notificationId');
+    final notificationIdInt = notificationId.hashCode.abs();
+    await _flutterLocalNotificationsPlugin.cancel(notificationIdInt);
   }
 
   /// Dispose of the service
   void dispose() {
     _periodicCheckTimer?.cancel();
     _notificationsController.close();
+  }
+
+  /// Request notification permissions (call this from UI when needed)
+  Future<bool> requestPermissions() async {
+    final androidGranted = await _flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
+
+    final iosGranted = await _flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
+        ?.requestPermissions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+
+    return (androidGranted ?? false) || (iosGranted ?? false);
   }
 }

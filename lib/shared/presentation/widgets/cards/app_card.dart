@@ -64,14 +64,18 @@ class AppCard extends StatelessWidget {
       card = Material(
         color: Colors.transparent,
         borderRadius: effectiveBorderRadius,
-        child: InkWell(
-          onTap: () {
-            // Add haptic feedback
-            Feedback.forTap(context);
-            onTap!();
-          },
-          borderRadius: effectiveBorderRadius,
-          child: card,
+        child: Semantics(
+          label: 'Tap to interact with card',
+          button: true,
+          child: InkWell(
+            onTap: () {
+              // Add haptic feedback
+              Feedback.forTap(context);
+              onTap!();
+            },
+            borderRadius: effectiveBorderRadius,
+            child: card,
+          ),
         ),
       ).animate()
         .scale(begin: const Offset(1.0, 1.0), end: const Offset(0.98, 0.98), duration: 100.ms, curve: Curves.easeInOut)

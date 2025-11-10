@@ -106,20 +106,24 @@ class _BillDetailScreenState extends ConsumerState<BillDetailScreen> {
       onRefresh: () async {
         await ref.read(billNotifierProvider.notifier).refresh();
       },
-      child: ListView(
+      child: SingleChildScrollView(
         padding: AppTheme.screenPaddingAll,
-        children: [
-          // Bill Status Card
-          _buildBillStatusCard(context, bill),
-          const SizedBox(height: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Bill Status Card
+            _buildBillStatusCard(context, bill),
+            const SizedBox(height: 24),
 
-          // Bill Information
-          _buildBillInfo(context, bill),
-          const SizedBox(height: 24),
+            // Bill Information
+            _buildBillInfo(context, bill),
+            const SizedBox(height: 24),
 
-          // Payment History
-          _buildPaymentHistory(context, bill),
-        ],
+            // Payment History
+            _buildPaymentHistory(context, bill),
+            const SizedBox(height: 16), // Add bottom padding
+          ],
+        ),
       ),
     );
   }
@@ -243,6 +247,9 @@ class _BillDetailScreenState extends ConsumerState<BillDetailScreen> {
 
             // Due Date
             _buildInfoRow('Due Date', DateFormat('MMM dd, yyyy').format(bill.dueDate)),
+
+            // Next Due Date
+            _buildInfoRow('Next Due Date', DateFormat('MMM dd, yyyy').format(bill.calculatedNextDueDate)),
 
             // Account Information
             if (bill.accountId != null) ...[
@@ -432,8 +439,103 @@ class _BillDetailScreenState extends ConsumerState<BillDetailScreen> {
             if (bill.payee != null && bill.payee!.isNotEmpty)
               _buildInfoRow('Payee', bill.payee!),
 
-            // Auto Pay
-            _buildInfoRow('Auto Pay', bill.isAutoPay ? 'Enabled' : 'Disabled'),
+            // Auto Pay - Prominent display
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: bill.isAutoPay
+                    ? Theme.of(context).colorScheme.primaryContainer
+                    : Theme.of(context).colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: bill.isAutoPay
+                      ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)
+                      : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: bill.isAutoPay
+                          ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
+                          : Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      bill.isAutoPay ? Icons.autorenew : Icons.autorenew_outlined,
+                      color: bill.isAutoPay
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Auto Pay',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: bill.isAutoPay
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Theme.of(context).colorScheme.onSurface,
+                              ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          bill.isAutoPay
+                              ? 'This bill will be paid automatically when due'
+                              : 'Auto pay is disabled for this bill',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              ),
+                        ),
+                        if (bill.isAutoPay && bill.accountId != null) ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              'Linked to account for automatic payments',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context).colorScheme.primary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (bill.isAutoPay) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'Active',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.green,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
 
             // Description
             if (bill.description != null && bill.description!.isNotEmpty) ...[

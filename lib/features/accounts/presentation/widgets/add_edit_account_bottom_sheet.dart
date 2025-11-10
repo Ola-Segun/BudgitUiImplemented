@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
+import '../../../../core/design_system/design_tokens.dart';
+import '../../../../core/design_system/color_tokens.dart';
+import '../../../../core/design_system/typography_tokens.dart';
+import '../../../../core/design_system/form_tokens.dart';
+import '../../../../core/design_system/components/enhanced_text_field.dart';
+import '../../../../core/design_system/components/enhanced_dropdown_field.dart';
+import '../../../../core/design_system/components/enhanced_switch_field.dart';
 import '../../domain/entities/account.dart';
+import '../../domain/entities/account_type_theme.dart';
 
-/// Bottom sheet for adding or editing accounts
+/// Enhanced add/edit account bottom sheet with modern design
 class AddEditAccountBottomSheet extends StatefulWidget {
   const AddEditAccountBottomSheet({
     super.key,
-    this.account, // null for creation, provided for editing
+    this.account,
     required this.onSubmit,
   });
 
@@ -15,10 +24,12 @@ class AddEditAccountBottomSheet extends StatefulWidget {
   final void Function(Account) onSubmit;
 
   @override
-  State<AddEditAccountBottomSheet> createState() => _AddEditAccountBottomSheetState();
+  State<AddEditAccountBottomSheet> createState() =>
+      _AddEditAccountBottomSheetState();
 }
 
-class _AddEditAccountBottomSheetState extends State<AddEditAccountBottomSheet> {
+class _AddEditAccountBottomSheetState
+    extends State<AddEditAccountBottomSheet> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _balanceController = TextEditingController();
@@ -28,10 +39,9 @@ class _AddEditAccountBottomSheetState extends State<AddEditAccountBottomSheet> {
   final _creditLimitController = TextEditingController();
   final _interestRateController = TextEditingController();
   final _minimumPaymentController = TextEditingController();
-  final _scrollController = ScrollController();
 
   AccountType _selectedType = AccountType.bankAccount;
-  String _selectedCurrency = 'USD';
+  String? _selectedCurrency;
   bool _isActive = true;
   bool _isSubmitting = false;
 
@@ -41,7 +51,6 @@ class _AddEditAccountBottomSheetState extends State<AddEditAccountBottomSheet> {
   void initState() {
     super.initState();
     if (widget.account != null) {
-      // Editing mode - populate fields
       final account = widget.account!;
       _nameController.text = account.name;
       _balanceController.text = account.currentBalance.toStringAsFixed(2);
@@ -49,10 +58,9 @@ class _AddEditAccountBottomSheetState extends State<AddEditAccountBottomSheet> {
       _institutionController.text = account.institution ?? '';
       _accountNumberController.text = account.accountNumber ?? '';
       _selectedType = account.type;
-      _selectedCurrency = account.currency;
+      _selectedCurrency = account.currency ?? 'USD';
       _isActive = account.isActive;
 
-      // Type-specific fields
       if (account.creditLimit != null) {
         _creditLimitController.text = account.creditLimit!.toStringAsFixed(2);
       }
@@ -75,92 +83,153 @@ class _AddEditAccountBottomSheetState extends State<AddEditAccountBottomSheet> {
     _creditLimitController.dispose();
     _interestRateController.dispose();
     _minimumPaymentController.dispose();
-    _scrollController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.account != null;
-    final screenHeight = MediaQuery.of(context).size.height;
-    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-    final availableHeight = screenHeight - keyboardHeight - 100; // 100 for safe area
 
     return Container(
       constraints: BoxConstraints(
-        maxHeight: availableHeight,
+        maxHeight: MediaQuery.of(context).size.height * 0.9,
       ),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        color: ColorTokens.surfacePrimary,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(DesignTokens.radiusXxl),
+        ),
+        boxShadow: DesignTokens.elevationXl,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Fixed Header
+          // Drag Handle
+          Center(
+            child: Container(
+              margin: EdgeInsets.only(top: DesignTokens.spacing2),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: ColorTokens.neutral300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+
+          // Header
           Container(
-            padding: const EdgeInsets.fromLTRB(24, 16, 16, 16),
+            padding: EdgeInsets.all(DesignTokens.screenPaddingH),
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
-                  color: Theme.of(context).colorScheme.outlineVariant,
+                  color: ColorTokens.borderSecondary,
                   width: 1,
                 ),
               ),
             ),
             child: Row(
               children: [
-                Text(
-                  isEditing ? 'Edit Account' : 'Add Account',
-                  style: Theme.of(context).textTheme.headlineSmall,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        isEditing ? 'Edit Account' : 'Add Account',
+                        style: TypographyTokens.heading4.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ).animate()
+                        .fadeIn(duration: DesignTokens.durationNormal, delay: 100.ms)
+                        .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 100.ms),
+                      if (isEditing) ...[
+                        SizedBox(height: DesignTokens.spacing1),
+                        Text(
+                          'Update ${widget.account!.name}',
+                          style: TypographyTokens.bodyMd.copyWith(
+                            color: ColorTokens.textSecondary,
+                          ),
+                        ).animate()
+                          .fadeIn(duration: DesignTokens.durationNormal, delay: 150.ms)
+                          .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 150.ms),
+                      ] else ...[
+                        SizedBox(height: DesignTokens.spacing1),
+                        Text(
+                          'Create a new account to track',
+                          style: TypographyTokens.bodyMd.copyWith(
+                            color: ColorTokens.textSecondary,
+                          ),
+                        ).animate()
+                          .fadeIn(duration: DesignTokens.durationNormal, delay: 150.ms)
+                          .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 150.ms),
+                      ],
+                    ],
+                  ),
                 ),
-                const Spacer(),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
-                  tooltip: 'Close',
-                ),
+                SizedBox(width: DesignTokens.spacing2),
+                Container(
+                  decoration: BoxDecoration(
+                    color: ColorTokens.surfaceSecondary,
+                    borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                  ),
+                  child: IconButton(
+                    icon: Icon(Icons.close, size: DesignTokens.iconMd),
+                    onPressed: () => Navigator.pop(context),
+                    color: ColorTokens.textSecondary,
+                    tooltip: 'Close',
+                  ),
+                ).animate()
+                  .fadeIn(duration: DesignTokens.durationNormal, delay: 200.ms)
+                  .scale(begin: const Offset(0.8, 0.8), duration: DesignTokens.durationNormal, delay: 200.ms, curve: Curves.elasticOut),
               ],
             ),
           ),
 
-          // Scrollable Content
+          // Content
           Flexible(
             child: SingleChildScrollView(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.all(DesignTokens.screenPaddingH),
               child: Form(
                 key: _formKey,
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Account Type Selection
-                    Text(
+                    // Section: Account Type
+                    _buildSectionHeader(
                       'Account Type',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildAccountTypeGrid(),
-                    const SizedBox(height: 24),
+                      'Choose the type that best describes this account',
+                    ).animate()
+                      .fadeIn(duration: DesignTokens.durationNormal)
+                      .slideX(begin: -0.1, duration: DesignTokens.durationNormal),
 
-                    // Basic Information
-                    Text(
+                    SizedBox(height: FormTokens.groupGap),
+
+                    _buildAccountTypeGrid().animate()
+                      .fadeIn(duration: DesignTokens.durationNormal, delay: 100.ms)
+                      .scale(begin: const Offset(0.95, 0.95), duration: DesignTokens.durationNormal, delay: 100.ms),
+
+                    SizedBox(height: FormTokens.sectionGap),
+
+                    // Section: Basic Information
+                    _buildSectionHeader(
                       'Basic Information',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                    const SizedBox(height: 16),
+                      'Essential details about your account',
+                    ).animate()
+                      .fadeIn(duration: DesignTokens.durationNormal, delay: 200.ms)
+                      .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 200.ms),
+
+                    SizedBox(height: FormTokens.groupGap),
 
                     // Account Name
-                    TextFormField(
+                    EnhancedTextField(
                       controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Account Name',
-                        hintText: 'e.g., Main Checking',
+                      label: 'Account Name',
+                      hint: 'e.g., Main Checking',
+                      prefix: Icon(
+                        Icons.account_balance_wallet,
+                        color: FormTokens.iconColor,
+                        size: DesignTokens.iconMd,
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
@@ -169,17 +238,21 @@ class _AddEditAccountBottomSheetState extends State<AddEditAccountBottomSheet> {
                         return null;
                       },
                       autofocus: !isEditing,
-                      textInputAction: TextInputAction.next,
-                    ),
-                    const SizedBox(height: 16),
+                    ).animate()
+                      .fadeIn(duration: DesignTokens.durationNormal, delay: 300.ms)
+                      .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 300.ms),
+
+                    SizedBox(height: FormTokens.fieldGapMd),
 
                     // Balance
-                    TextFormField(
+                    EnhancedTextField(
                       controller: _balanceController,
-                      decoration: InputDecoration(
-                        labelText: 'Current Balance',
-                        prefixText: _getCurrencySymbol(_selectedCurrency),
-                        hintText: '0.00',
+                      label: 'Current Balance',
+                      hint: '0.00',
+                      prefix: Icon(
+                        Icons.attach_money,
+                        color: FormTokens.iconColor,
+                        size: DesignTokens.iconMd,
                       ),
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       inputFormatters: [
@@ -195,22 +268,24 @@ class _AddEditAccountBottomSheetState extends State<AddEditAccountBottomSheet> {
                         }
                         return null;
                       },
-                      textInputAction: TextInputAction.next,
-                    ),
-                    const SizedBox(height: 16),
+                    ).animate()
+                      .fadeIn(duration: DesignTokens.durationNormal, delay: 400.ms)
+                      .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 400.ms),
+
+                    SizedBox(height: FormTokens.fieldGapMd),
 
                     // Currency
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedCurrency,
-                      decoration: const InputDecoration(
-                        labelText: 'Currency',
-                      ),
+                    EnhancedDropdownField<String>(
+                      label: 'Currency',
                       items: _currencies.map((currency) {
-                        return DropdownMenuItem(
+                        return DropdownItem<String>(
                           value: currency,
-                          child: Text(currency),
+                          label: currency,
+                          icon: Icons.currency_exchange,
+                          iconColor: ColorTokens.teal500,
                         );
                       }).toList(),
+                      value: _selectedCurrency ?? 'USD',
                       onChanged: (value) {
                         if (value != null) {
                           setState(() {
@@ -218,181 +293,229 @@ class _AddEditAccountBottomSheetState extends State<AddEditAccountBottomSheet> {
                           });
                         }
                       },
-                    ),
-                    const SizedBox(height: 16),
+                    ).animate()
+                      .fadeIn(duration: DesignTokens.durationNormal, delay: 500.ms)
+                      .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 500.ms),
 
-                    // Institution (optional)
-                    TextFormField(
+                    SizedBox(height: FormTokens.sectionGap),
+
+                    // Section: Optional Details
+                    _buildSectionHeader(
+                      'Optional Details',
+                      'Additional information (can be added later)',
+                    ).animate()
+                      .fadeIn(duration: DesignTokens.durationNormal, delay: 600.ms)
+                      .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 600.ms),
+
+                    SizedBox(height: FormTokens.groupGap),
+
+                    // Institution
+                    EnhancedTextField(
                       controller: _institutionController,
-                      decoration: const InputDecoration(
-                        labelText: 'Institution (optional)',
-                        hintText: 'e.g., Bank of America',
+                      label: 'Institution (optional)',
+                      hint: 'e.g., Bank of America',
+                      prefix: Icon(
+                        Icons.business,
+                        color: FormTokens.iconColor,
+                        size: DesignTokens.iconMd,
                       ),
-                      textInputAction: TextInputAction.next,
-                    ),
-                    const SizedBox(height: 16),
+                    ).animate()
+                      .fadeIn(duration: DesignTokens.durationNormal, delay: 700.ms)
+                      .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 700.ms),
 
-                    // Account Number (optional)
-                    TextFormField(
+                    SizedBox(height: FormTokens.fieldGapMd),
+
+                    // Account Number
+                    EnhancedTextField(
                       controller: _accountNumberController,
-                      decoration: const InputDecoration(
-                        labelText: 'Account Number (optional)',
-                        hintText: 'e.g., ****1234',
+                      label: 'Account Number (optional)',
+                      hint: 'e.g., ****1234',
+                      prefix: Icon(
+                        Icons.numbers,
+                        color: FormTokens.iconColor,
+                        size: DesignTokens.iconMd,
                       ),
-                      textInputAction: TextInputAction.next,
-                    ),
-                    const SizedBox(height: 16),
+                    ).animate()
+                      .fadeIn(duration: DesignTokens.durationNormal, delay: 800.ms)
+                      .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 800.ms),
 
-                    // Description (optional)
-                    TextFormField(
+                    SizedBox(height: FormTokens.fieldGapMd),
+
+                    // Description
+                    EnhancedTextField(
                       controller: _descriptionController,
-                      decoration: const InputDecoration(
-                        labelText: 'Description (optional)',
-                        hintText: 'Additional notes about this account',
-                      ),
+                      label: 'Description (optional)',
+                      hint: 'Additional notes about this account',
                       maxLines: 2,
-                      textInputAction: TextInputAction.done,
-                    ),
+                    ).animate()
+                      .fadeIn(duration: DesignTokens.durationNormal, delay: 900.ms)
+                      .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 900.ms),
 
                     // Type-specific fields
                     ..._buildTypeSpecificFields(),
 
-                    const SizedBox(height: 16),
+                    SizedBox(height: FormTokens.sectionGap),
 
                     // Active Status
-                    Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.outline,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: SwitchListTile(
-                        title: const Text('Account is Active'),
-                        subtitle: const Text('Inactive accounts are hidden from calculations'),
-                        value: _isActive,
-                        onChanged: (value) {
-                          setState(() {
-                            _isActive = value;
-                          });
-                        },
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Action Buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: _isSubmitting ? null : () => Navigator.pop(context),
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size(0, 48),
-                            ),
-                            child: const Text('Cancel'),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: FilledButton(
-                            onPressed: _isSubmitting ? null : _submitAccount,
-                            style: FilledButton.styleFrom(
-                              minimumSize: const Size(0, 48),
-                            ),
-                            child: _isSubmitting
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                    ),
-                                  )
-                                : Text(isEditing ? 'Update Account' : 'Add Account'),
-                          ),
-                        ),
-                      ],
-                    ),
-                    
-                    // Extra padding for keyboard
-                    SizedBox(height: keyboardHeight > 0 ? 16 : 0),
+                    EnhancedSwitchField(
+                      title: 'Account is Active',
+                      subtitle: 'Inactive accounts are hidden from calculations',
+                      value: _isActive,
+                      onChanged: (value) {
+                        setState(() {
+                          _isActive = value;
+                        });
+                      },
+                      icon: Icons.visibility,
+                      iconColor: ColorTokens.teal500,
+                    ).animate()
+                      .fadeIn(duration: DesignTokens.durationNormal, delay: 1000.ms)
+                      .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 1000.ms),
                   ],
                 ),
               ),
             ),
           ),
+
+          // Actions
+          Container(
+            padding: EdgeInsets.all(DesignTokens.screenPaddingH),
+            decoration: BoxDecoration(
+              color: ColorTokens.surfaceSecondary,
+              border: Border(
+                top: BorderSide(
+                  color: ColorTokens.borderSecondary,
+                  width: 1,
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(child: _buildCancelButton()),
+                SizedBox(width: DesignTokens.spacing3),
+                Expanded(child: _buildSubmitButton(isEditing)),
+              ],
+            ),
+          ),
+
+          // Keyboard padding
+          SizedBox(height: MediaQuery.of(context).viewInsets.bottom > 0 ? DesignTokens.spacing2 : 0),
         ],
       ),
     );
   }
 
+  Widget _buildSectionHeader(String title, String subtitle) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          title,
+          style: TypographyTokens.heading6.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        SizedBox(height: DesignTokens.spacing1),
+        Text(
+          subtitle,
+          style: TypographyTokens.captionMd.copyWith(
+            color: ColorTokens.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildAccountTypeGrid() {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final crossAxisCount = screenWidth < 360 ? 2 : 3;
-    
     return LayoutBuilder(
       builder: (context, constraints) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        final crossAxisCount = screenWidth < 360 ? 2 : 3;
+
         return GridView.count(
           crossAxisCount: crossAxisCount,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 8,
-          crossAxisSpacing: 8,
-          childAspectRatio: screenWidth < 360 ? 1.2 : 1.0,
+          mainAxisSpacing: DesignTokens.spacing2,
+          crossAxisSpacing: DesignTokens.spacing2,
+          childAspectRatio: 1.1,
           children: AccountType.values.map((type) {
             final isSelected = _selectedType == type;
-            return InkWell(
-              onTap: () {
-                setState(() {
-                  _selectedType = type;
-                });
-              },
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? Color(type.color).withValues(alpha: 0.1)
-                      : Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                  border: Border.all(
+            // Use themed color - for now use default since we don't have settings access here
+            final theme = AccountTypeTheme.defaultThemeFor(type.name);
+            final typeColor = theme.color;
+
+            return Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  setState(() {
+                    _selectedType = type;
+                  });
+                },
+                borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+                child: AnimatedContainer(
+                  duration: DesignTokens.durationSm,
+                  curve: DesignTokens.curveEaseOut,
+                  padding: EdgeInsets.all(DesignTokens.spacing3),
+                  decoration: BoxDecoration(
                     color: isSelected
-                        ? Color(type.color)
-                        : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
-                    width: isSelected ? 2 : 1,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      _getIconData(type.icon),
+                        ? typeColor.withValues(alpha: 0.1)
+                        : ColorTokens.surfaceSecondary,
+                    border: Border.all(
                       color: isSelected
-                          ? Color(type.color)
-                          : Theme.of(context).colorScheme.onSurfaceVariant,
-                      size: screenWidth < 360 ? 20 : 24,
+                          ? typeColor
+                          : ColorTokens.borderSecondary,
+                      width: isSelected ? 2 : 1.5,
                     ),
-                    const SizedBox(height: 4),
-                    Flexible(
-                      child: Text(
-                        type.displayName,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: isSelected
-                                  ? Color(type.color)
-                                  : Theme.of(context).colorScheme.onSurfaceVariant,
-                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                              fontSize: screenWidth < 360 ? 10 : 12,
-                            ),
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                    borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+                    boxShadow: isSelected
+                        ? DesignTokens.elevationGlow(
+                            typeColor,
+                            alpha: 0.2,
+                            spread: 0,
+                          )
+                        : null,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(DesignTokens.spacing2),
+                        decoration: BoxDecoration(
+                          color: typeColor.withValues(alpha: isSelected ? 0.2 : 0.1),
+                          borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                        ),
+                        child: Icon(
+                          theme.iconData,
+                          color: typeColor,
+                          size: DesignTokens.iconLg,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                      SizedBox(height: DesignTokens.spacing2),
+                      Flexible(
+                        child: Text(
+                          type.displayName,
+                          style: TypographyTokens.labelSm.copyWith(
+                            color: isSelected ? typeColor : ColorTokens.textPrimary,
+                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ).animate(target: isSelected ? 1 : 0)
+                  .scaleXY(
+                    begin: 1.0,
+                    end: 1.05,
+                    duration: DesignTokens.durationSm,
+                  ),
               ),
             );
           }).toList(),
@@ -405,20 +528,22 @@ class _AddEditAccountBottomSheetState extends State<AddEditAccountBottomSheet> {
     switch (_selectedType) {
       case AccountType.creditCard:
         return [
-          const SizedBox(height: 24),
-          Text(
+          SizedBox(height: FormTokens.sectionGap),
+          _buildSectionHeader(
             'Credit Card Details',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
+            'Specific information for credit cards',
+          ).animate()
+            .fadeIn(duration: DesignTokens.durationNormal, delay: 1100.ms)
+            .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 1100.ms),
+          SizedBox(height: FormTokens.groupGap),
+          EnhancedTextField(
             controller: _creditLimitController,
-            decoration: InputDecoration(
-              labelText: 'Credit Limit',
-              prefixText: _getCurrencySymbol(_selectedCurrency),
-              hintText: '5000.00',
+            label: 'Credit Limit',
+            hint: '5000.00',
+            prefix: Icon(
+              Icons.credit_card,
+              color: FormTokens.iconColor,
+              size: DesignTokens.iconMd,
             ),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: [
@@ -437,40 +562,50 @@ class _AddEditAccountBottomSheetState extends State<AddEditAccountBottomSheet> {
               }
               return null;
             },
-            textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
+          ).animate()
+            .fadeIn(duration: DesignTokens.durationNormal, delay: 1200.ms)
+            .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 1200.ms),
+          SizedBox(height: FormTokens.fieldGapMd),
+          EnhancedTextField(
             controller: _minimumPaymentController,
-            decoration: InputDecoration(
-              labelText: 'Minimum Payment (optional)',
-              prefixText: _getCurrencySymbol(_selectedCurrency),
-              hintText: '25.00',
+            label: 'Minimum Payment (optional)',
+            hint: '25.00',
+            prefix: Icon(
+              Icons.payment,
+              color: FormTokens.iconColor,
+              size: DesignTokens.iconMd,
             ),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
             ],
-            textInputAction: TextInputAction.done,
-          ),
+          ).animate()
+            .fadeIn(duration: DesignTokens.durationNormal, delay: 1300.ms)
+            .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 1300.ms),
         ];
 
       case AccountType.loan:
         return [
-          const SizedBox(height: 24),
-          Text(
+          SizedBox(height: FormTokens.sectionGap),
+          _buildSectionHeader(
             'Loan Details',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
+            'Specific information for loans',
+          ).animate()
+            .fadeIn(duration: DesignTokens.durationNormal, delay: 1100.ms)
+            .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 1100.ms),
+          SizedBox(height: FormTokens.groupGap),
+          EnhancedTextField(
             controller: _interestRateController,
-            decoration: const InputDecoration(
-              labelText: 'Interest Rate (%)',
-              hintText: '5.5',
-              suffixText: '%',
+            label: 'Interest Rate (%)',
+            hint: '5.5',
+            suffix: Padding(
+              padding: EdgeInsets.only(right: DesignTokens.spacing2),
+              child: Text(
+                '%',
+                style: TypographyTokens.labelMd.copyWith(
+                  color: ColorTokens.textSecondary,
+                ),
+              ),
             ),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: [
@@ -485,22 +620,26 @@ class _AddEditAccountBottomSheetState extends State<AddEditAccountBottomSheet> {
               }
               return null;
             },
-            textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
+          ).animate()
+            .fadeIn(duration: DesignTokens.durationNormal, delay: 1200.ms)
+            .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 1200.ms),
+          SizedBox(height: FormTokens.fieldGapMd),
+          EnhancedTextField(
             controller: _minimumPaymentController,
-            decoration: InputDecoration(
-              labelText: 'Monthly Payment (optional)',
-              prefixText: _getCurrencySymbol(_selectedCurrency),
-              hintText: '150.00',
+            label: 'Monthly Payment (optional)',
+            hint: '150.00',
+            prefix: Icon(
+              Icons.payment,
+              color: FormTokens.iconColor,
+              size: DesignTokens.iconMd,
             ),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
             ],
-            textInputAction: TextInputAction.done,
-          ),
+          ).animate()
+            .fadeIn(duration: DesignTokens.durationNormal, delay: 1300.ms)
+            .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 1300.ms),
         ];
 
       default:
@@ -508,21 +647,65 @@ class _AddEditAccountBottomSheetState extends State<AddEditAccountBottomSheet> {
     }
   }
 
-  String _getCurrencySymbol(String currency) {
-    switch (currency) {
-      case 'USD':
-      case 'CAD':
-      case 'AUD':
-        return '\$';
-      case 'EUR':
-        return '€';
-      case 'GBP':
-        return '£';
-      case 'JPY':
-        return '¥';
-      default:
-        return '\$';
-    }
+  Widget _buildCancelButton() {
+    return OutlinedButton(
+      onPressed: _isSubmitting ? null : () => Navigator.pop(context),
+      style: OutlinedButton.styleFrom(
+        minimumSize: Size(0, FormTokens.fieldHeightMd),
+        side: BorderSide(
+          color: ColorTokens.borderPrimary,
+          width: 1.5,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
+        ),
+      ),
+      child: Text('Cancel', style: TypographyTokens.labelMd),
+    ).animate()
+      .fadeIn(duration: DesignTokens.durationNormal, delay: 1400.ms)
+      .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 1400.ms);
+  }
+
+  Widget _buildSubmitButton(bool isEditing) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: ColorTokens.gradientPrimary,
+        borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
+        boxShadow: _isSubmitting
+            ? []
+            : DesignTokens.elevationColored(ColorTokens.teal500, alpha: 0.3),
+      ),
+      child: ElevatedButton(
+        onPressed: _isSubmitting ? null : _submitAccount,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          minimumSize: Size(0, FormTokens.fieldHeightMd),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
+          ),
+        ),
+        child: _isSubmitting
+            ? SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : Text(
+                isEditing ? 'Update Account' : 'Add Account',
+                style: TypographyTokens.labelMd.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+      ),
+    ).animate()
+      .fadeIn(duration: DesignTokens.durationNormal, delay: 1500.ms)
+      .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 1500.ms)
+      .scale(begin: const Offset(0.95, 0.95), duration: DesignTokens.durationSm, delay: 1500.ms);
   }
 
   IconData _getIconData(String iconName) {
@@ -547,18 +730,10 @@ class _AddEditAccountBottomSheetState extends State<AddEditAccountBottomSheet> {
       return;
     }
 
-    debugPrint('AddEditAccountBottomSheet: _submitAccount called, _isSubmitting: $_isSubmitting');
-    if (_isSubmitting) {
-      debugPrint('AddEditAccountBottomSheet: Already submitting, ignoring duplicate call');
-      return;
-    }
-
     setState(() => _isSubmitting = true);
-    debugPrint('AddEditAccountBottomSheet: Set _isSubmitting to true');
 
     try {
       final balance = double.parse(_balanceController.text);
-      debugPrint('AddEditAccountBottomSheet: Parsed balance: $balance');
       final creditLimit = _creditLimitController.text.isNotEmpty
           ? double.tryParse(_creditLimitController.text)
           : null;
@@ -570,7 +745,8 @@ class _AddEditAccountBottomSheetState extends State<AddEditAccountBottomSheet> {
           : null;
 
       final account = Account(
-        id: widget.account?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        id: widget.account?.id ??
+            DateTime.now().millisecondsSinceEpoch.toString(),
         name: _nameController.text.trim(),
         type: _selectedType,
         balance: balance,
@@ -583,7 +759,7 @@ class _AddEditAccountBottomSheetState extends State<AddEditAccountBottomSheet> {
         accountNumber: _accountNumberController.text.isNotEmpty
             ? _accountNumberController.text.trim()
             : null,
-        currency: _selectedCurrency,
+        currency: _selectedCurrency ?? 'USD',
         createdAt: widget.account?.createdAt,
         updatedAt: DateTime.now(),
         creditLimit: creditLimit,
@@ -592,14 +768,19 @@ class _AddEditAccountBottomSheetState extends State<AddEditAccountBottomSheet> {
         isActive: _isActive,
       );
 
-      debugPrint('AddEditAccountBottomSheet: Created account with balance: ${account.balance}, currentBalance: ${account.currentBalance}, formattedBalance: ${account.formattedBalance}');
       widget.onSubmit(account);
+
+      if (mounted) {
+        Navigator.pop(context);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to ${widget.account != null ? 'update' : 'create'} account: ${e.toString()}'),
-            backgroundColor: Theme.of(context).colorScheme.error,
+            content: Text(
+              'Failed to ${widget.account != null ? 'update' : 'create'} account: ${e.toString()}',
+            ),
+            backgroundColor: ColorTokens.critical500,
           ),
         );
       }

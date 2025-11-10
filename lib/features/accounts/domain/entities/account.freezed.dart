@@ -31,7 +31,7 @@ mixin _$Account {
   String? get description => throw _privateConstructorUsedError;
   String? get institution => throw _privateConstructorUsedError;
   String? get accountNumber => throw _privateConstructorUsedError;
-  String get currency => throw _privateConstructorUsedError;
+  String? get currency => throw _privateConstructorUsedError;
   DateTime? get createdAt => throw _privateConstructorUsedError;
   DateTime? get updatedAt =>
       throw _privateConstructorUsedError; // Type-specific fields
@@ -74,7 +74,7 @@ abstract class $AccountCopyWith<$Res> {
       String? description,
       String? institution,
       String? accountNumber,
-      String currency,
+      String? currency,
       DateTime? createdAt,
       DateTime? updatedAt,
       double? creditLimit,
@@ -113,7 +113,7 @@ class _$AccountCopyWithImpl<$Res, $Val extends Account>
     Object? description = freezed,
     Object? institution = freezed,
     Object? accountNumber = freezed,
-    Object? currency = null,
+    Object? currency = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
     Object? creditLimit = freezed,
@@ -172,10 +172,10 @@ class _$AccountCopyWithImpl<$Res, $Val extends Account>
           ? _value.accountNumber
           : accountNumber // ignore: cast_nullable_to_non_nullable
               as String?,
-      currency: null == currency
+      currency: freezed == currency
           ? _value.currency
           : currency // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -247,7 +247,7 @@ abstract class _$$AccountImplCopyWith<$Res> implements $AccountCopyWith<$Res> {
       String? description,
       String? institution,
       String? accountNumber,
-      String currency,
+      String? currency,
       DateTime? createdAt,
       DateTime? updatedAt,
       double? creditLimit,
@@ -284,7 +284,7 @@ class __$$AccountImplCopyWithImpl<$Res>
     Object? description = freezed,
     Object? institution = freezed,
     Object? accountNumber = freezed,
-    Object? currency = null,
+    Object? currency = freezed,
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
     Object? creditLimit = freezed,
@@ -343,10 +343,10 @@ class __$$AccountImplCopyWithImpl<$Res>
           ? _value.accountNumber
           : accountNumber // ignore: cast_nullable_to_non_nullable
               as String?,
-      currency: null == currency
+      currency: freezed == currency
           ? _value.currency
           : currency // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -414,7 +414,7 @@ class _$AccountImpl extends _Account {
       this.description,
       this.institution,
       this.accountNumber,
-      this.currency = 'USD',
+      this.currency,
       this.createdAt,
       this.updatedAt,
       this.creditLimit,
@@ -456,8 +456,7 @@ class _$AccountImpl extends _Account {
   @override
   final String? accountNumber;
   @override
-  @JsonKey()
-  final String currency;
+  final String? currency;
   @override
   final DateTime? createdAt;
   @override
@@ -596,7 +595,7 @@ abstract class _Account extends Account {
       final String? description,
       final String? institution,
       final String? accountNumber,
-      final String currency,
+      final String? currency,
       final DateTime? createdAt,
       final DateTime? updatedAt,
       final double? creditLimit,
@@ -634,7 +633,7 @@ abstract class _Account extends Account {
   @override
   String? get accountNumber;
   @override
-  String get currency;
+  String? get currency;
   @override
   DateTime? get createdAt;
   @override

@@ -8,11 +8,14 @@ import '../../../dashboard/presentation/providers/dashboard_providers.dart';
 import '../../../transactions/domain/services/category_icon_color_service.dart';
 import '../../../transactions/presentation/providers/transaction_providers.dart';
 import '../../domain/entities/goal.dart';
+import '../../domain/entities/goal_template.dart';
 import '../providers/goal_providers.dart';
 
 /// Screen for creating a new goal
 class GoalCreationScreen extends ConsumerStatefulWidget {
-  const GoalCreationScreen({super.key});
+  const GoalCreationScreen({super.key, this.selectedTemplate});
+
+  final GoalTemplate? selectedTemplate;
 
   @override
   ConsumerState<GoalCreationScreen> createState() => _GoalCreationScreenState();
@@ -32,6 +35,24 @@ class _GoalCreationScreenState extends ConsumerState<GoalCreationScreen> {
   bool _isSubmitting = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Pre-populate fields if template is provided
+    debugPrint('GoalCreationScreen: initState called with template: ${widget.selectedTemplate?.name ?? 'null'}');
+    if (widget.selectedTemplate != null) {
+      debugPrint('GoalCreationScreen: Pre-populating fields with template data');
+      _titleController.text = widget.selectedTemplate!.name;
+      _descriptionController.text = widget.selectedTemplate!.description;
+      _targetAmountController.text = widget.selectedTemplate!.suggestedAmount.toString();
+      _selectedPriority = widget.selectedTemplate!.defaultPriority;
+      _selectedCategoryId = widget.selectedTemplate!.categoryId;
+      _selectedDeadline = widget.selectedTemplate!.suggestedDeadline;
+    } else {
+      debugPrint('GoalCreationScreen: No template provided, using default values');
+    }
+  }
+
+  @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
@@ -46,11 +67,14 @@ class _GoalCreationScreenState extends ConsumerState<GoalCreationScreen> {
       appBar: AppBar(
         title: const Text('Create Goal'),
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
+      body: SafeArea(
+        child: SingleChildScrollView(
           padding: AppTheme.screenPaddingAll,
-          children: [
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
             // Goal Title
             TextFormField(
               controller: _titleController,
@@ -235,33 +259,36 @@ class _GoalCreationScreenState extends ConsumerState<GoalCreationScreen> {
               ),
             ),
 
-            const SizedBox(height: 32),
+                const SizedBox(height: 32),
 
-            // Action Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _isSubmitting ? null : () => Navigator.pop(context),
-                    child: const Text('Cancel'),
-                  ),
+                // Action Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _isSubmitting ? null : () => Navigator.pop(context),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _isSubmitting ? null : _submitGoal,
+                        child: _isSubmitting
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Text('Create Goal'),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _isSubmitting ? null : _submitGoal,
-                    child: _isSubmitting
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Create Goal'),
-                  ),
-                ),
+                const SizedBox(height: 16), // Add bottom padding for keyboard
               ],
             ),
-          ],
+          ),
         ),
       ),
     );

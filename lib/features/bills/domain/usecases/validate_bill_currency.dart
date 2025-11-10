@@ -26,7 +26,7 @@ class ValidateBillCurrency {
 
     // Get bill currency (default to USD if not specified)
     final billCurrency = bill.currencyCode ?? 'USD';
-    final accountCurrency = account.currency;
+    final accountCurrency = account.currency ?? 'USD';
 
     // Check if currencies match
     final currenciesMatch = billCurrency == accountCurrency;
@@ -140,7 +140,7 @@ class ValidateBillCurrency {
       ));
     }
 
-    // Common currency codes (not exhaustive)
+    // Common currency codes (not exhaustive) - should be moved to currency service
     const supportedCurrencies = {
       'USD', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY', 'CHF', 'CNY', 'SEK', 'NZD',
       'MXN', 'SGD', 'HKD', 'NOK', 'KRW', 'TRY', 'RUB', 'INR', 'BRL', 'ZAR'
@@ -155,6 +155,7 @@ class ValidateBillCurrency {
   }
 
   /// Get supported currencies for the application
+  /// TODO: This should be moved to currency service for centralized management
   List<String> getSupportedCurrencies() {
     return [
       'USD', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY', 'CHF', 'CNY', 'SEK', 'NZD',

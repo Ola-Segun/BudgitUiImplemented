@@ -310,6 +310,7 @@ class TransactionHiveDataSource {
     }
   }
 
+
   /// Clear all transactions
   Future<Result<void>> clear() async {
     try {

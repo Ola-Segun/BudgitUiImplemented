@@ -31,7 +31,7 @@ mixin _$Transaction {
   String? get description => throw _privateConstructorUsedError;
   String? get receiptUrl => throw _privateConstructorUsedError;
   List<String> get tags => throw _privateConstructorUsedError;
-  String get currencyCode => throw _privateConstructorUsedError;
+  String? get currencyCode => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $TransactionCopyWith<Transaction> get copyWith =>
@@ -57,7 +57,7 @@ abstract class $TransactionCopyWith<$Res> {
       String? description,
       String? receiptUrl,
       List<String> tags,
-      String currencyCode});
+      String? currencyCode});
 }
 
 /// @nodoc
@@ -85,7 +85,7 @@ class _$TransactionCopyWithImpl<$Res, $Val extends Transaction>
     Object? description = freezed,
     Object? receiptUrl = freezed,
     Object? tags = null,
-    Object? currencyCode = null,
+    Object? currencyCode = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -136,10 +136,10 @@ class _$TransactionCopyWithImpl<$Res, $Val extends Transaction>
           ? _value.tags
           : tags // ignore: cast_nullable_to_non_nullable
               as List<String>,
-      currencyCode: null == currencyCode
+      currencyCode: freezed == currencyCode
           ? _value.currencyCode
           : currencyCode // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
     ) as $Val);
   }
 }
@@ -165,7 +165,7 @@ abstract class _$$TransactionImplCopyWith<$Res>
       String? description,
       String? receiptUrl,
       List<String> tags,
-      String currencyCode});
+      String? currencyCode});
 }
 
 /// @nodoc
@@ -191,7 +191,7 @@ class __$$TransactionImplCopyWithImpl<$Res>
     Object? description = freezed,
     Object? receiptUrl = freezed,
     Object? tags = null,
-    Object? currencyCode = null,
+    Object? currencyCode = freezed,
   }) {
     return _then(_$TransactionImpl(
       id: null == id
@@ -242,10 +242,10 @@ class __$$TransactionImplCopyWithImpl<$Res>
           ? _value._tags
           : tags // ignore: cast_nullable_to_non_nullable
               as List<String>,
-      currencyCode: null == currencyCode
+      currencyCode: freezed == currencyCode
           ? _value.currencyCode
           : currencyCode // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
     ));
   }
 }
@@ -266,7 +266,7 @@ class _$TransactionImpl extends _Transaction {
       this.description,
       this.receiptUrl,
       final List<String> tags = const [],
-      this.currencyCode = 'USD'})
+      this.currencyCode})
       : _tags = tags,
         super._();
 
@@ -305,8 +305,7 @@ class _$TransactionImpl extends _Transaction {
   }
 
   @override
-  @JsonKey()
-  final String currencyCode;
+  final String? currencyCode;
 
   @override
   String toString() {
@@ -378,7 +377,7 @@ abstract class _Transaction extends Transaction {
       final String? description,
       final String? receiptUrl,
       final List<String> tags,
-      final String currencyCode}) = _$TransactionImpl;
+      final String? currencyCode}) = _$TransactionImpl;
   const _Transaction._() : super._();
 
   @override
@@ -406,7 +405,7 @@ abstract class _Transaction extends Transaction {
   @override
   List<String> get tags;
   @override
-  String get currencyCode;
+  String? get currencyCode;
   @override
   @JsonKey(ignore: true)
   _$$TransactionImplCopyWith<_$TransactionImpl> get copyWith =>
@@ -420,6 +419,9 @@ mixin _$TransactionCategory {
   String get icon => throw _privateConstructorUsedError;
   int get color => throw _privateConstructorUsedError;
   TransactionType get type => throw _privateConstructorUsedError;
+  int get order => throw _privateConstructorUsedError;
+  bool get isArchived => throw _privateConstructorUsedError;
+  int get usageCount => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $TransactionCategoryCopyWith<TransactionCategory> get copyWith =>
@@ -433,7 +435,14 @@ abstract class $TransactionCategoryCopyWith<$Res> {
       _$TransactionCategoryCopyWithImpl<$Res, TransactionCategory>;
   @useResult
   $Res call(
-      {String id, String name, String icon, int color, TransactionType type});
+      {String id,
+      String name,
+      String icon,
+      int color,
+      TransactionType type,
+      int order,
+      bool isArchived,
+      int usageCount});
 }
 
 /// @nodoc
@@ -454,6 +463,9 @@ class _$TransactionCategoryCopyWithImpl<$Res, $Val extends TransactionCategory>
     Object? icon = null,
     Object? color = null,
     Object? type = null,
+    Object? order = null,
+    Object? isArchived = null,
+    Object? usageCount = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -476,6 +488,18 @@ class _$TransactionCategoryCopyWithImpl<$Res, $Val extends TransactionCategory>
           ? _value.type
           : type // ignore: cast_nullable_to_non_nullable
               as TransactionType,
+      order: null == order
+          ? _value.order
+          : order // ignore: cast_nullable_to_non_nullable
+              as int,
+      isArchived: null == isArchived
+          ? _value.isArchived
+          : isArchived // ignore: cast_nullable_to_non_nullable
+              as bool,
+      usageCount: null == usageCount
+          ? _value.usageCount
+          : usageCount // ignore: cast_nullable_to_non_nullable
+              as int,
     ) as $Val);
   }
 }
@@ -489,7 +513,14 @@ abstract class _$$TransactionCategoryImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String id, String name, String icon, int color, TransactionType type});
+      {String id,
+      String name,
+      String icon,
+      int color,
+      TransactionType type,
+      int order,
+      bool isArchived,
+      int usageCount});
 }
 
 /// @nodoc
@@ -508,6 +539,9 @@ class __$$TransactionCategoryImplCopyWithImpl<$Res>
     Object? icon = null,
     Object? color = null,
     Object? type = null,
+    Object? order = null,
+    Object? isArchived = null,
+    Object? usageCount = null,
   }) {
     return _then(_$TransactionCategoryImpl(
       id: null == id
@@ -530,6 +564,18 @@ class __$$TransactionCategoryImplCopyWithImpl<$Res>
           ? _value.type
           : type // ignore: cast_nullable_to_non_nullable
               as TransactionType,
+      order: null == order
+          ? _value.order
+          : order // ignore: cast_nullable_to_non_nullable
+              as int,
+      isArchived: null == isArchived
+          ? _value.isArchived
+          : isArchived // ignore: cast_nullable_to_non_nullable
+              as bool,
+      usageCount: null == usageCount
+          ? _value.usageCount
+          : usageCount // ignore: cast_nullable_to_non_nullable
+              as int,
     ));
   }
 }
@@ -542,7 +588,10 @@ class _$TransactionCategoryImpl extends _TransactionCategory {
       required this.name,
       required this.icon,
       required this.color,
-      required this.type})
+      required this.type,
+      this.order = 0,
+      this.isArchived = false,
+      this.usageCount = 0})
       : super._();
 
   @override
@@ -555,10 +604,19 @@ class _$TransactionCategoryImpl extends _TransactionCategory {
   final int color;
   @override
   final TransactionType type;
+  @override
+  @JsonKey()
+  final int order;
+  @override
+  @JsonKey()
+  final bool isArchived;
+  @override
+  @JsonKey()
+  final int usageCount;
 
   @override
   String toString() {
-    return 'TransactionCategory(id: $id, name: $name, icon: $icon, color: $color, type: $type)';
+    return 'TransactionCategory(id: $id, name: $name, icon: $icon, color: $color, type: $type, order: $order, isArchived: $isArchived, usageCount: $usageCount)';
   }
 
   @override
@@ -570,11 +628,17 @@ class _$TransactionCategoryImpl extends _TransactionCategory {
             (identical(other.name, name) || other.name == name) &&
             (identical(other.icon, icon) || other.icon == icon) &&
             (identical(other.color, color) || other.color == color) &&
-            (identical(other.type, type) || other.type == type));
+            (identical(other.type, type) || other.type == type) &&
+            (identical(other.order, order) || other.order == order) &&
+            (identical(other.isArchived, isArchived) ||
+                other.isArchived == isArchived) &&
+            (identical(other.usageCount, usageCount) ||
+                other.usageCount == usageCount));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, id, name, icon, color, type);
+  int get hashCode => Object.hash(
+      runtimeType, id, name, icon, color, type, order, isArchived, usageCount);
 
   @JsonKey(ignore: true)
   @override
@@ -590,7 +654,10 @@ abstract class _TransactionCategory extends TransactionCategory {
       required final String name,
       required final String icon,
       required final int color,
-      required final TransactionType type}) = _$TransactionCategoryImpl;
+      required final TransactionType type,
+      final int order,
+      final bool isArchived,
+      final int usageCount}) = _$TransactionCategoryImpl;
   const _TransactionCategory._() : super._();
 
   @override
@@ -603,6 +670,12 @@ abstract class _TransactionCategory extends TransactionCategory {
   int get color;
   @override
   TransactionType get type;
+  @override
+  int get order;
+  @override
+  bool get isArchived;
+  @override
+  int get usageCount;
   @override
   @JsonKey(ignore: true)
   _$$TransactionCategoryImplCopyWith<_$TransactionCategoryImpl> get copyWith =>

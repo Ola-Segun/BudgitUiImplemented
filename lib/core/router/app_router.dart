@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/transactions/presentation/screens/transaction_list_screen.dart';
+import '../../features/transactions/presentation/screens/transaction_list_screen_enhanced.dart';
 import '../../features/transactions/presentation/screens/transaction_detail_screen.dart';
 import '../../features/transactions/presentation/screens/category_management_screen.dart';
-import '../../features/transactions/presentation/widgets/add_transaction_bottom_sheet.dart';
+import '../../features/transactions/presentation/widgets/enhanced_add_transaction_bottom_sheet.dart';
 import '../../features/transactions/presentation/providers/transaction_providers.dart';
 import '../../features/budgets/presentation/screens/budget_list_screen.dart';
 import '../../features/budgets/presentation/screens/budget_creation_screen.dart';
@@ -16,23 +16,26 @@ import '../../features/bills/presentation/screens/bill_detail_screen.dart';
 import '../../features/goals/presentation/screens/goals_list_screen.dart';
 import '../../features/goals/presentation/screens/goal_creation_screen.dart';
 import '../../features/goals/presentation/screens/goal_detail_screen.dart';
+import '../../features/goals/presentation/screens/goal_template_selection_screen.dart';
+import '../../features/goals/domain/entities/goal_template.dart';
 import '../../features/insights/presentation/screens/insights_dashboard_screen.dart';
 import '../../features/receipt_scanning/presentation/screens/receipt_scanning_screen.dart';
 import '../../features/receipt_scanning/presentation/screens/receipt_review_screen.dart';
 import '../../features/receipt_scanning/domain/entities/receipt_data.dart';
-import '../../features/settings/presentation/screens/settings_screen.dart';
+import '../../features/settings/presentation/screens/settings_screen_enhanced.dart';
 import '../../features/accounts/presentation/screens/accounts_overview_screen.dart';
 import '../../features/accounts/presentation/screens/account_detail_screen.dart';
 import '../../features/accounts/presentation/screens/bank_connection_screen.dart';
-import '../../features/notifications/presentation/screens/notification_center_screen.dart';
-import '../../features/settings/presentation/screens/help_center_screen.dart';
+import '../../features/accounts/presentation/screens/transfer_screen.dart';
+import '../../features/accounts/presentation/screens/reconciliation_screen.dart';
+import '../../features/notifications/presentation/screens/notification_center_screen_enhanced.dart';
+import '../../features/more/presentation/screens/help_center_screen_enhanced.dart';
 import '../../features/debt/presentation/screens/debt_dashboard_screen.dart';
-import '../../features/recurring_incomes/presentation/screens/recurring_income_dashboard_screen.dart';
+import '../../features/recurring_incomes/presentation/screens/recurring_income_dashboard_enhanced.dart';
 import '../../features/recurring_incomes/presentation/screens/recurring_income_detail_screen.dart';
 import '../../features/recurring_incomes/presentation/screens/recurring_income_editing_screen.dart';
 import '../../features/recurring_incomes/presentation/screens/recurring_income_creation_screen.dart';
 import '../../features/recurring_incomes/presentation/screens/recurring_income_receipt_recording_screen.dart';
-import '../widgets/app_bottom_sheet.dart';
 import '../navigation/main_navigation_scaffold.dart';
 import '../navigation/screens/home_dashboard_screen.dart';
 import '../navigation/screens/more_menu_screen.dart';
@@ -71,7 +74,7 @@ class AppRouter {
           // Transaction routes
           GoRoute(
             path: '/transactions',
-            builder: (context, state) => const TransactionListScreen(),
+            builder: (context, state) => const TransactionListScreenEnhanced(),
             routes: [
               GoRoute(
                 path: 'add',
@@ -112,6 +115,10 @@ class AppRouter {
             builder: (context, state) => const GoalsListScreen(),
             routes: [
               GoRoute(
+                path: 'templates',
+                builder: (context, state) => const _GoalTemplateSelectionScreen(),
+              ),
+              GoRoute(
                 path: 'add',
                 builder: (context, state) => const _AddGoalScreen(),
               ),
@@ -135,15 +142,33 @@ class AppRouter {
                 builder: (context, state) => const _AccountsScreen(),
                 routes: [
                   GoRoute(
-                    path: ':id',
+                    path: 'transfer',
                     builder: (context, state) {
-                      final id = state.pathParameters['id']!;
-                      return _AccountDetailScreen(id: id);
+                      final sourceAccountId = state.extra as String?;
+                      debugPrint('DEBUG: Navigating to transfer screen with sourceAccountId: $sourceAccountId');
+                      return _TransferScreen(sourceAccountId: sourceAccountId);
                     },
                   ),
                   GoRoute(
                     path: 'bank-connection',
                     builder: (context, state) => const _BankConnectionScreen(),
+                  ),
+                  GoRoute(
+                    path: ':id',
+                    builder: (context, state) {
+                      final id = state.pathParameters['id']!;
+                      debugPrint('DEBUG: Navigating to account detail screen with id: $id');
+                      return _AccountDetailScreen(id: id);
+                    },
+                    routes: [
+                      GoRoute(
+                        path: 'reconcile',
+                        builder: (context, state) {
+                          final id = state.pathParameters['id']!;
+                          return _ReconciliationScreen(accountId: id);
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -228,6 +253,7 @@ class AppRouter {
     ],
     errorBuilder: (context, state) => _ErrorScreen(
       error: state.error,
+      route: state.uri.toString(),
     ),
   );
 }
@@ -242,20 +268,19 @@ class _AddTransactionScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Show the add transaction bottom sheet immediately
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      AppBottomSheet.show(
+      EnhancedAddTransactionBottomSheet.show(
         context: context,
-        child: AddTransactionBottomSheet(
-          onSubmit: (transaction) async {
-            await ref
-                .read(transactionNotifierProvider.notifier)
-                .addTransaction(transaction);
+        onSubmit: (transaction) async {
+          await ref
+              .read(transactionNotifierProvider.notifier)
+              .addTransaction(transaction);
 
-            if (context.mounted) {
-              Navigator.pop(context); // Close bottom sheet
-              context.go('/'); // Go back to home
-            }
-          },
-        ),
+          if (context.mounted) {
+            // Close bottom sheet and navigate back to home
+            Navigator.of(context).pop(); // Close bottom sheet
+            context.go('/'); // Navigate back to home
+          }
+        },
       );
     });
 
@@ -302,7 +327,10 @@ class _AddGoalScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return const GoalCreationScreen();
+    // Check if there's a template passed via extra
+    final template = GoRouterState.of(context).extra as GoalTemplate?;
+    debugPrint('_AddGoalScreen: Building with template: ${template?.name ?? 'null'}');
+    return GoalCreationScreen(selectedTemplate: template);
   }
 }
 
@@ -360,7 +388,7 @@ class _SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SettingsScreen();
+    return const SettingsScreenEnhanced();
   }
 }
 
@@ -389,7 +417,7 @@ class _NotificationCenterScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const NotificationCenterScreen();
+    return const NotificationCenterScreenEnhanced();
   }
 }
 
@@ -398,7 +426,7 @@ class _HelpCenterScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const HelpCenterScreen();
+    return const HelpCenterScreenEnhanced();
   }
 }
 
@@ -434,7 +462,7 @@ class _IncomesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return const RecurringIncomeDashboardScreen();
+    return const RecurringIncomeDashboardEnhanced();
   }
 }
 
@@ -480,27 +508,112 @@ class _RecordIncomeReceiptScreen extends StatelessWidget {
   }
 }
 
+class _ReconciliationScreen extends StatelessWidget {
+  const _ReconciliationScreen({required this.accountId});
+
+  final String accountId;
+
+  @override
+  Widget build(BuildContext context) {
+    return ReconciliationScreen(accountId: accountId);
+  }
+}
+
+class _TransferScreen extends StatelessWidget {
+  const _TransferScreen({required this.sourceAccountId});
+
+  final String? sourceAccountId;
+
+  @override
+  Widget build(BuildContext context) {
+    return TransferScreen(sourceAccountId: sourceAccountId);
+  }
+}
+
+class _GoalTemplateSelectionScreen extends StatelessWidget {
+  const _GoalTemplateSelectionScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return const GoalTemplateSelectionScreen();
+  }
+}
+
 
 class _ErrorScreen extends StatelessWidget {
-  const _ErrorScreen({required this.error});
+  const _ErrorScreen({required this.error, this.route});
 
   final Exception? error;
+  final String? route;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Error')),
+      appBar: AppBar(title: const Text('Navigation Error')),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('Something went wrong'),
-            if (error != null) Text('Error: $error'),
-            ElevatedButton(
-              onPressed: () => context.go('/'),
-              child: const Text('Go Home'),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                size: 64,
+                color: Colors.red,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Page Not Found',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'The page you are looking for does not exist.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey,
+                ),
+              ),
+              if (route != null) ...[
+                const SizedBox(height: 16),
+                Text(
+                  'Route: $route',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+              ],
+              if (error != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Error: $error',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.red,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+              ],
+              const SizedBox(height: 32),
+              ElevatedButton.icon(
+                onPressed: () => context.go('/'),
+                icon: const Icon(Icons.home),
+                label: const Text('Go Home'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

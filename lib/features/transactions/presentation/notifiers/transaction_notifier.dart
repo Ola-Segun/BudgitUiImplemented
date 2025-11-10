@@ -35,6 +35,9 @@ class TransactionNotifier extends StateNotifier<AsyncValue<TransactionState>> {
 
   /// Load all transactions (legacy method for backward compatibility)
   Future<void> loadTransactions() async {
+    final currentState = state.value;
+    if (currentState?.isLoading == true) return; // Prevent concurrent loads
+
     state = const AsyncValue.loading();
 
     final result = await _getTransactions();
@@ -149,7 +152,8 @@ class TransactionNotifier extends StateNotifier<AsyncValue<TransactionState>> {
       success: (addedTransaction) {
         debugPrint('TransactionNotifier: Transaction added successfully, reloading transactions');
         // Reload transactions to ensure consistency with pagination and filters
-        loadTransactions();
+        // Use initializeWithPagination to maintain pagination state
+        initializeWithPagination();
         debugPrint('TransactionNotifier: Transactions reloaded after successful addition');
         return true;
       },

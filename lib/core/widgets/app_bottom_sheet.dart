@@ -25,10 +25,6 @@ class AppBottomSheet {
           const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
           ),
-      transitionAnimationController: AnimationController(
-        vsync: Navigator.of(context),
-        duration: transitionDuration ?? AppAnimations.normal,
-      ),
       builder: (context) => _AnimatedBottomSheetContent(child: child),
     );
   }
@@ -76,7 +72,9 @@ class _AnimatedBottomSheetContentState extends State<_AnimatedBottomSheetContent
 
     // Start animation after a short delay to ensure bottom sheet is rendered
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _animationController.forward();
+      if (mounted) {
+        _animationController.forward();
+      }
     });
   }
 

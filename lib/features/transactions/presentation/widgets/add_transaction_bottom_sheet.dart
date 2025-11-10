@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -10,6 +11,7 @@ import '../../domain/entities/transaction.dart';
 import '../providers/transaction_providers.dart';
 
 /// Bottom sheet for adding new transactions
+/// @deprecated Use EnhancedAddTransactionBottomSheet instead
 class AddTransactionBottomSheet extends ConsumerStatefulWidget {
   const AddTransactionBottomSheet({
     super.key,
@@ -89,23 +91,33 @@ class _AddTransactionBottomSheetState extends ConsumerState<AddTransactionBottom
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-            // Header
+            // Header with animation
             Row(
               children: [
                 Text(
                   'Add Transaction',
                   style: Theme.of(context).textTheme.headlineSmall,
-                ),
+                ).animate()
+                  .fadeIn(duration: 300.ms)
+                  .slideX(begin: 0.2, duration: 300.ms, curve: Curves.easeOutCubic),
                 const Spacer(),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
+                Semantics(
+                  label: 'Close add transaction form',
+                  button: true,
+                  child: IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                  ).animate()
+                    .fadeIn(duration: 300.ms, delay: 100.ms)
+                    .scale(begin: const Offset(0.8, 0.8), duration: 300.ms, delay: 100.ms, curve: Curves.elasticOut),
                 ),
               ],
-            ),
+            ).animate()
+              .fadeIn(duration: 200.ms)
+              .slideY(begin: 0.1, duration: 200.ms, curve: Curves.easeOutCubic),
             const SizedBox(height: 24),
 
-            // Transaction Type Toggle
+            // Transaction Type Toggle with animation
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: SegmentedButton<TransactionType>(
@@ -129,11 +141,13 @@ class _AddTransactionBottomSheetState extends ConsumerState<AddTransactionBottom
                     _selectedCategoryId = null;
                   });
                 },
-              ),
+              ).animate()
+                .fadeIn(duration: 400.ms, delay: 200.ms)
+                .slideY(begin: 0.1, duration: 400.ms, delay: 200.ms, curve: Curves.easeOutCubic),
             ),
             const SizedBox(height: 24),
 
-            // Amount Field
+            // Amount Field with animation
             TextFormField(
               controller: _amountController,
               decoration: const InputDecoration(
@@ -156,10 +170,12 @@ class _AddTransactionBottomSheetState extends ConsumerState<AddTransactionBottom
                 return null;
               },
               autofocus: true,
-            ),
+            ).animate()
+              .fadeIn(duration: 400.ms, delay: 300.ms)
+              .slideX(begin: 0.1, duration: 400.ms, delay: 300.ms, curve: Curves.easeOutCubic),
             const SizedBox(height: 16),
 
-            // Category Selection
+            // Category Selection with animation
             ConstrainedBox(
               constraints: BoxConstraints(
                 maxWidth: constraints.maxWidth - (AppTheme.screenPaddingAll.horizontal * 2),
@@ -215,15 +231,21 @@ class _AddTransactionBottomSheetState extends ConsumerState<AddTransactionBottom
                       }
                       return null;
                     },
-                  );
+                  ).animate()
+                    .fadeIn(duration: 400.ms, delay: 400.ms)
+                    .slideX(begin: 0.1, duration: 400.ms, delay: 400.ms, curve: Curves.easeOutCubic);
                 },
-                loading: () => const CircularProgressIndicator(),
-                error: (error, stack) => Text('Error loading categories: $error'),
+                loading: () => const CircularProgressIndicator().animate()
+                  .fadeIn(duration: 300.ms)
+                  .scale(begin: const Offset(0.8, 0.8), duration: 300.ms, curve: Curves.elasticOut),
+                error: (error, stack) => Text('Error loading categories: $error').animate()
+                  .fadeIn(duration: 300.ms)
+                  .shake(duration: 500.ms),
               ),
             ),
             const SizedBox(height: 16),
 
-            // Account Selection
+            // Account Selection with animation
             ConstrainedBox(
               constraints: BoxConstraints(
                 maxWidth: constraints.maxWidth - (AppTheme.screenPaddingAll.horizontal * 2),
@@ -265,15 +287,21 @@ class _AddTransactionBottomSheetState extends ConsumerState<AddTransactionBottom
                       }
                       return null;
                     },
-                  );
+                  ).animate()
+                    .fadeIn(duration: 400.ms, delay: 500.ms)
+                    .slideX(begin: 0.1, duration: 400.ms, delay: 500.ms, curve: Curves.easeOutCubic);
                 },
-                loading: () => const CircularProgressIndicator(),
-                error: (error, stack) => Text('Error loading accounts: $error'),
+                loading: () => const CircularProgressIndicator().animate()
+                  .fadeIn(duration: 300.ms)
+                  .scale(begin: const Offset(0.8, 0.8), duration: 300.ms, curve: Curves.elasticInOut),
+                error: (error, stack) => Text('Error loading accounts: $error').animate()
+                  .fadeIn(duration: 300.ms)
+                  .shake(duration: 500.ms),
               ),
             ),
             const SizedBox(height: 16),
 
-            // Date Picker
+            // Date Picker with animation
             InkWell(
               onTap: () async {
                 final date = await showDatePicker(
@@ -300,10 +328,12 @@ class _AddTransactionBottomSheetState extends ConsumerState<AddTransactionBottom
                   ],
                 ),
               ),
-            ),
+            ).animate()
+              .fadeIn(duration: 400.ms, delay: 600.ms)
+              .slideX(begin: 0.1, duration: 400.ms, delay: 600.ms, curve: Curves.easeOutCubic),
             const SizedBox(height: 16),
 
-            // Description Field
+            // Description Field with animation
             TextFormField(
               controller: _descriptionController,
               decoration: const InputDecoration(
@@ -311,10 +341,12 @@ class _AddTransactionBottomSheetState extends ConsumerState<AddTransactionBottom
                 hintText: 'e.g., Grocery shopping at Walmart',
               ),
               maxLength: 100,
-            ),
+            ).animate()
+              .fadeIn(duration: 400.ms, delay: 700.ms)
+              .slideX(begin: 0.1, duration: 400.ms, delay: 700.ms, curve: Curves.easeOutCubic),
             const SizedBox(height: 16),
 
-            // Receipt Scanning
+            // Receipt Scanning with animation
             OutlinedButton.icon(
               onPressed: _scanReceipt,
               icon: const Icon(Icons.camera_alt),
@@ -322,10 +354,12 @@ class _AddTransactionBottomSheetState extends ConsumerState<AddTransactionBottom
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 48),
               ),
-            ),
+            ).animate()
+              .fadeIn(duration: 400.ms, delay: 800.ms)
+              .slideY(begin: 0.1, duration: 400.ms, delay: 800.ms, curve: Curves.easeOutCubic),
             const SizedBox(height: 16),
 
-            // Note Field
+            // Note Field with animation
             TextFormField(
               controller: _noteController,
               decoration: const InputDecoration(
@@ -334,18 +368,22 @@ class _AddTransactionBottomSheetState extends ConsumerState<AddTransactionBottom
               ),
               maxLength: 200,
               maxLines: 2,
-            ),
+            ).animate()
+              .fadeIn(duration: 400.ms, delay: 900.ms)
+              .slideX(begin: 0.1, duration: 400.ms, delay: 900.ms, curve: Curves.easeOutCubic),
 
             const SizedBox(height: 32),
 
-            // Action Buttons
+            // Action Buttons with animation
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: _isSubmitting ? null : () => Navigator.pop(context),
+                    onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
                     child: const Text('Cancel'),
-                  ),
+                  ).animate()
+                    .fadeIn(duration: 400.ms, delay: 1000.ms)
+                    .slideY(begin: 0.1, duration: 400.ms, delay: 1000.ms, curve: Curves.easeOutCubic),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -354,7 +392,10 @@ class _AddTransactionBottomSheetState extends ConsumerState<AddTransactionBottom
                       _submitTransaction();
                     },
                     child: buttonChild,
-                  ),
+                  ).animate()
+                    .fadeIn(duration: 400.ms, delay: 1100.ms)
+                    .slideY(begin: 0.1, duration: 400.ms, delay: 1100.ms, curve: Curves.easeOutCubic)
+                    .scale(begin: const Offset(0.95, 0.95), duration: 200.ms, delay: 1100.ms),
                 ),
               ],
             ),
@@ -362,7 +403,9 @@ class _AddTransactionBottomSheetState extends ConsumerState<AddTransactionBottom
         ),
       ),
         ),
-      );
+      ).animate()
+        .fadeIn(duration: 300.ms)
+        .slideY(begin: 0.05, duration: 300.ms, curve: Curves.easeOutCubic);
       },
     );
   }
@@ -462,6 +505,20 @@ class _AddTransactionBottomSheetState extends ConsumerState<AddTransactionBottom
     try {
       final amount = double.parse(_amountController.text);
 
+      // Get account currency for the transaction
+      final accountsAsync = ref.read(filteredAccountsProvider);
+      String? accountCurrency;
+      if (accountsAsync.hasValue) {
+        try {
+          final account = accountsAsync.value!.firstWhere(
+            (acc) => acc.id == _selectedAccountId,
+          );
+          accountCurrency = account.currency ?? 'USD';
+        } catch (e) {
+          accountCurrency = 'USD'; // Fallback if account not found
+        }
+      }
+
       final transaction = Transaction(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         title: _descriptionController.text.isNotEmpty
@@ -475,15 +532,32 @@ class _AddTransactionBottomSheetState extends ConsumerState<AddTransactionBottom
         description: _noteController.text.isNotEmpty
             ? _noteController.text
             : null,
+        currencyCode: accountCurrency,
       );
 
       debugPrint('AddTransactionBottomSheet: Created transaction - ID: ${transaction.id}, Title: ${transaction.title}, Amount: ${transaction.amount}, Type: ${transaction.type}, Category: ${transaction.categoryId}, Account: ${transaction.accountId}, Date: ${transaction.date}');
       debugPrint('AddTransactionBottomSheet: Calling onSubmit with transaction');
       await widget.onSubmit(transaction);
       debugPrint('AddTransactionBottomSheet: onSubmit completed - dismissing bottom sheet');
-      if (mounted) {
-        Navigator.pop(context);
-      }
+
+      // Safely dismiss the bottom sheet after successful submission
+      // Use post-frame callback to ensure the widget tree is stable
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          try {
+            // Check if we can safely pop (not the last page)
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+              debugPrint('AddTransactionBottomSheet: Bottom sheet dismissed successfully');
+            } else {
+              debugPrint('AddTransactionBottomSheet: Cannot pop - would leave empty navigation stack');
+            }
+          } catch (e) {
+            debugPrint('AddTransactionBottomSheet: Error during dismissal: $e');
+            // If popping fails, the bottom sheet will remain open, which is safer than crashing
+          }
+        }
+      });
     } catch (e) {
       debugPrint('AddTransactionBottomSheet: Error during transaction creation: $e');
       if (mounted) {

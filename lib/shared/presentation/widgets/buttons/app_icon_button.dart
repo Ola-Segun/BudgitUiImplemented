@@ -148,11 +148,11 @@ class AppIconButton extends StatelessWidget {
   double _getSize() {
     switch (size) {
       case AppIconButtonSize.small:
-        return 36;
+        return 48; // Meets accessibility requirements (48x48dp minimum)
       case AppIconButtonSize.medium:
-        return AppDimensions.buttonHeightMd;
+        return AppDimensions.buttonHeightMd > 48 ? AppDimensions.buttonHeightMd : 48;
       case AppIconButtonSize.large:
-        return AppDimensions.buttonHeightLg;
+        return AppDimensions.buttonHeightLg > 48 ? AppDimensions.buttonHeightLg : 48;
     }
   }
 

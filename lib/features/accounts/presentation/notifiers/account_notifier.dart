@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/account.dart';
@@ -46,6 +47,7 @@ class AccountNotifier extends StateNotifier<AsyncValue<AccountState>> {
   Future<void> loadAccounts() async {
     if (_isDisposed) return;
 
+    debugPrint('AccountNotifier: Loading accounts...');
     state = const AsyncValue.loading();
 
     // Load accounts
@@ -59,6 +61,10 @@ class AccountNotifier extends StateNotifier<AsyncValue<AccountState>> {
 
     accountsResult.when(
       success: (accounts) {
+        debugPrint('AccountNotifier: Loaded ${accounts.length} accounts');
+        for (var acc in accounts) {
+          debugPrint('  - ${acc.id}: ${acc.name}');
+        }
         final totalBalance = totalBalanceResult.getOrDefault(0.0);
         final netWorth = netWorthResult.getOrDefault(0.0);
 
@@ -71,6 +77,7 @@ class AccountNotifier extends StateNotifier<AsyncValue<AccountState>> {
         }
       },
       error: (failure) {
+        debugPrint('AccountNotifier: Failed to load accounts: ${failure.message}');
         if (!_isDisposed) {
           state = AsyncValue.error(failure.message, StackTrace.current);
         }
@@ -98,6 +105,8 @@ class AccountNotifier extends StateNotifier<AsyncValue<AccountState>> {
       success: (createdAccount) {
         if (_isDisposed) return false;
 
+        debugPrint('AccountNotifier: Created account: ${createdAccount.id} - ${createdAccount.name}');
+
         // Update with server response
         final updatedAccounts = [createdAccount, ...currentState.accounts];
         final newTotalBalance = currentState.totalBalance + createdAccount.currentBalance;
@@ -116,6 +125,7 @@ class AccountNotifier extends StateNotifier<AsyncValue<AccountState>> {
         return true;
       },
       error: (failure) {
+        debugPrint('AccountNotifier: Failed to create account: ${failure.message}');
         if (_isDisposed) return false;
 
         // Revert to original state with error

@@ -768,6 +768,42 @@ class MockTransactionCategoryRepository extends _i1.Mock
       ) as _i5.Future<_i6.Result<List<_i7.TransactionCategory>>>);
 
   @override
+  _i5.Future<_i6.Result<List<_i7.TransactionCategory>>> getActive() =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getActive,
+          [],
+        ),
+        returnValue:
+            _i5.Future<_i6.Result<List<_i7.TransactionCategory>>>.value(
+                _i8.dummyValue<_i6.Result<List<_i7.TransactionCategory>>>(
+          this,
+          Invocation.method(
+            #getActive,
+            [],
+          ),
+        )),
+      ) as _i5.Future<_i6.Result<List<_i7.TransactionCategory>>>);
+
+  @override
+  _i5.Future<_i6.Result<List<_i7.TransactionCategory>>> getArchived() =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getArchived,
+          [],
+        ),
+        returnValue:
+            _i5.Future<_i6.Result<List<_i7.TransactionCategory>>>.value(
+                _i8.dummyValue<_i6.Result<List<_i7.TransactionCategory>>>(
+          this,
+          Invocation.method(
+            #getArchived,
+            [],
+          ),
+        )),
+      ) as _i5.Future<_i6.Result<List<_i7.TransactionCategory>>>);
+
+  @override
   _i5.Future<_i6.Result<_i7.TransactionCategory>> add(
           _i7.TransactionCategory? category) =>
       (super.noSuchMethod(

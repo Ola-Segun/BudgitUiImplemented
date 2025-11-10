@@ -19,7 +19,7 @@ class Transaction with _$Transaction {
      String? description,
      String? receiptUrl,
      @Default([]) List<String> tags,
-     @Default('USD') String currencyCode, // Currency code (USD, EUR, etc.)
+     String? currencyCode, // Currency code (USD, EUR, etc.)
    }) = _Transaction;
 
   const Transaction._();
@@ -32,6 +32,7 @@ class Transaction with _$Transaction {
 
   /// Check if transaction is a transfer
   bool get isTransfer => type == TransactionType.transfer && toAccountId != null;
+
 
   /// Get effective amount for balance calculations
   /// For the account referenced by accountId
@@ -48,7 +49,7 @@ class Transaction with _$Transaction {
   }
 
   /// Get formatted amount with sign
-  String get signedAmount => isIncome ? '+\$${amount.toStringAsFixed(2)}' : '-\$${amount.toStringAsFixed(2)}';
+  String get signedAmount => isIncome ? '+${currencyCode ?? 'USD'} ${amount.toStringAsFixed(2)}' : '-${currencyCode ?? 'USD'} ${amount.toStringAsFixed(2)}';
 
   /// Get absolute amount
   double get absoluteAmount => amount.abs();
@@ -85,6 +86,9 @@ class TransactionCategory with _$TransactionCategory {
     required String icon,
     required int color,
     required TransactionType type,
+    @Default(0) int order,
+    @Default(false) bool isArchived,
+    @Default(0) int usageCount,
   }) = _TransactionCategory;
 
   const TransactionCategory._();
@@ -98,6 +102,7 @@ class TransactionCategory with _$TransactionCategory {
       icon: 'work',
       color: 0xFF10B981, // Green
       type: TransactionType.income,
+      order: 0,
     ),
     const TransactionCategory(
       id: 'freelance',
@@ -105,6 +110,7 @@ class TransactionCategory with _$TransactionCategory {
       icon: 'computer',
       color: 0xFF3B82F6, // Blue
       type: TransactionType.income,
+      order: 1,
     ),
     const TransactionCategory(
       id: 'investment',
@@ -112,6 +118,7 @@ class TransactionCategory with _$TransactionCategory {
       icon: 'trending_up',
       color: 0xFF8B5CF6, // Purple
       type: TransactionType.income,
+      order: 2,
     ),
 
     // Expense categories
@@ -121,6 +128,7 @@ class TransactionCategory with _$TransactionCategory {
       icon: 'restaurant',
       color: 0xFFF59E0B, // Yellow
       type: TransactionType.expense,
+      order: 0,
     ),
     const TransactionCategory(
       id: 'transport',
@@ -128,6 +136,7 @@ class TransactionCategory with _$TransactionCategory {
       icon: 'directions_car',
       color: 0xFFEF4444, // Red
       type: TransactionType.expense,
+      order: 1,
     ),
     const TransactionCategory(
       id: 'shopping',
@@ -135,6 +144,7 @@ class TransactionCategory with _$TransactionCategory {
       icon: 'shopping_bag',
       color: 0xFFEC4899, // Pink
       type: TransactionType.expense,
+      order: 2,
     ),
     const TransactionCategory(
       id: 'entertainment',
@@ -142,6 +152,7 @@ class TransactionCategory with _$TransactionCategory {
       icon: 'movie',
       color: 0xFFF97316, // Orange
       type: TransactionType.expense,
+      order: 3,
     ),
     const TransactionCategory(
       id: 'utilities',
@@ -149,6 +160,7 @@ class TransactionCategory with _$TransactionCategory {
       icon: 'bolt',
       color: 0xFF06B6D4, // Cyan
       type: TransactionType.expense,
+      order: 4,
     ),
     const TransactionCategory(
       id: 'healthcare',
@@ -156,6 +168,7 @@ class TransactionCategory with _$TransactionCategory {
       icon: 'local_hospital',
       color: 0xFFDC2626, // Dark red
       type: TransactionType.expense,
+      order: 5,
     ),
     const TransactionCategory(
       id: 'other',
@@ -163,6 +176,7 @@ class TransactionCategory with _$TransactionCategory {
       icon: 'category',
       color: 0xFF64748B, // Gray
       type: TransactionType.expense,
+      order: 6,
     ),
 
     // Goal-related expense categories
@@ -172,6 +186,7 @@ class TransactionCategory with _$TransactionCategory {
       icon: 'security',
       color: 0xFFDC2626, // Red
       type: TransactionType.expense,
+      order: 7,
     ),
     const TransactionCategory(
       id: 'vacation',
@@ -179,6 +194,7 @@ class TransactionCategory with _$TransactionCategory {
       icon: 'beach_access',
       color: 0xFF059669, // Green
       type: TransactionType.expense,
+      order: 8,
     ),
     const TransactionCategory(
       id: 'home_down_payment',
@@ -186,6 +202,7 @@ class TransactionCategory with _$TransactionCategory {
       icon: 'home',
       color: 0xFF7C3AED, // Purple
       type: TransactionType.expense,
+      order: 9,
     ),
     const TransactionCategory(
       id: 'debt_payoff',
@@ -193,6 +210,7 @@ class TransactionCategory with _$TransactionCategory {
       icon: 'credit_card_off',
       color: 0xFFEA580C, // Orange
       type: TransactionType.expense,
+      order: 10,
     ),
     const TransactionCategory(
       id: 'car_purchase',
@@ -200,6 +218,7 @@ class TransactionCategory with _$TransactionCategory {
       icon: 'directions_car',
       color: 0xFF2563EB, // Blue
       type: TransactionType.expense,
+      order: 11,
     ),
     const TransactionCategory(
       id: 'education',
@@ -207,6 +226,7 @@ class TransactionCategory with _$TransactionCategory {
       icon: 'school',
       color: 0xFF7C2D12, // Brown
       type: TransactionType.expense,
+      order: 12,
     ),
     const TransactionCategory(
       id: 'retirement',
@@ -214,6 +234,7 @@ class TransactionCategory with _$TransactionCategory {
       icon: 'account_balance',
       color: 0xFF0D9488, // Teal
       type: TransactionType.expense,
+      order: 13,
     ),
     const TransactionCategory(
       id: 'investment',
@@ -221,6 +242,7 @@ class TransactionCategory with _$TransactionCategory {
       icon: 'trending_up',
       color: 0xFF16A34A, // Green
       type: TransactionType.expense,
+      order: 14,
     ),
     const TransactionCategory(
       id: 'wedding',
@@ -228,6 +250,7 @@ class TransactionCategory with _$TransactionCategory {
       icon: 'favorite',
       color: 0xFFBE185D, // Pink
       type: TransactionType.expense,
+      order: 15,
     ),
   ];
 }

@@ -32,13 +32,15 @@ class SettingsDtoAdapter extends TypeAdapter<SettingsDto> {
       languageCode: fields[12] as String,
       isFirstTime: fields[13] as bool,
       appVersion: fields[14] as String,
+      accountTypeThemes: (fields[15] as Map).map((dynamic k, dynamic v) =>
+          MapEntry(k as String, (v as Map).cast<String, dynamic>())),
     );
   }
 
   @override
   void write(BinaryWriter writer, SettingsDto obj) {
     writer
-      ..writeByte(15)
+      ..writeByte(16)
       ..writeByte(0)
       ..write(obj.themeMode)
       ..writeByte(1)
@@ -68,7 +70,9 @@ class SettingsDtoAdapter extends TypeAdapter<SettingsDto> {
       ..writeByte(13)
       ..write(obj.isFirstTime)
       ..writeByte(14)
-      ..write(obj.appVersion);
+      ..write(obj.appVersion)
+      ..writeByte(15)
+      ..write(obj.accountTypeThemes);
   }
 
   @override
