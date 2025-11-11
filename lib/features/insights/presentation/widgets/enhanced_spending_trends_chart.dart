@@ -6,7 +6,6 @@ import 'package:gap/gap.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../domain/entities/insight.dart';
 
 /// Enhanced spending trends chart widget with actual data visualization
 class EnhancedSpendingTrendsChart extends ConsumerWidget {

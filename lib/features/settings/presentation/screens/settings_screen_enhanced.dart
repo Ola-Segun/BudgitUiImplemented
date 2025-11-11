@@ -19,6 +19,8 @@ import '../widgets/date_format_selector_sheet.dart';
 import '../widgets/export_data_dialog.dart';
 import '../widgets/import_data_dialog.dart';
 import '../widgets/clear_data_dialog.dart';
+import 'two_factor_setup_screen.dart';
+import '../../domain/entities/settings.dart';
 
 // Accessibility utilities
 class AccessibilityUtils {
@@ -127,7 +129,7 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
     );
   }
 
-  Widget _buildSettingsContent(BuildContext context, dynamic settings) {
+  Widget _buildSettingsContent(BuildContext context, AppSettings settings) {
     return RefreshIndicator(
       onRefresh: () async {
         await ref.read(settingsNotifierProvider.notifier).loadSettings();
@@ -184,6 +186,16 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
               child: _buildSecuritySection(context, settings).animate()
                 .fadeIn(duration: DesignTokens.durationNormal, delay: 300.ms)
                 .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 300.ms),
+            ),
+
+            SizedBox(height: DesignTokens.sectionGapLg),
+
+            // Privacy Mode Section
+            Semantics(
+              label: 'Privacy mode settings section',
+              child: _buildPrivacySection(context, settings).animate()
+                .fadeIn(duration: DesignTokens.durationNormal, delay: 350.ms)
+                .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 350.ms),
             ),
 
             SizedBox(height: DesignTokens.sectionGapLg),
@@ -319,7 +331,7 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
     );
   }
 
-  Widget _buildAppearanceSection(BuildContext context, dynamic settings) {
+  Widget _buildAppearanceSection(BuildContext context, AppSettings settings) {
     return InfoCardPattern(
       title: 'Appearance',
       icon: Icons.palette,
@@ -345,9 +357,9 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
           hint: 'Double tap to change currency',
           child: SettingsSelectionTile(
             title: 'Currency',
-            subtitle: settings.currencyCode,
+            subtitle: settings.currencyCode ?? 'USD',
             icon: Icons.attach_money,
-            onTap: () => _showCurrencySelector(context, settings.currencyCode),
+            onTap: () => _showCurrencySelector(context, settings.currencyCode ?? 'USD'),
           ).animate()
             .fadeIn(duration: DesignTokens.durationNormal, delay: 50.ms)
             .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 50.ms),
@@ -371,7 +383,7 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
     );
   }
 
-  Widget _buildAccountThemesSection(BuildContext context, dynamic settings) {
+  Widget _buildAccountThemesSection(BuildContext context, AppSettings settings) {
     return InfoCardPattern(
       title: 'Account Themes',
       icon: Icons.account_balance_wallet,
@@ -393,7 +405,7 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
     );
   }
 
-  Widget _buildNotificationsSection(BuildContext context, dynamic settings) {
+  Widget _buildNotificationsSection(BuildContext context, AppSettings settings) {
     return InfoCardPattern(
       title: 'Notifications',
       icon: Icons.notifications,
@@ -534,7 +546,7 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
     );
   }
 
-  Widget _buildSecuritySection(BuildContext context, dynamic settings) {
+  Widget _buildSecuritySection(BuildContext context, AppSettings settings) {
     return InfoCardPattern(
       title: 'Security & Privacy',
       icon: Icons.security,
@@ -574,6 +586,67 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
         ).animate()
           .fadeIn(duration: DesignTokens.durationNormal, delay: 50.ms)
           .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 50.ms),
+
+        SizedBox(height: DesignTokens.spacing2),
+
+        Semantics(
+          button: true,
+          label: 'Two-factor authentication setup button',
+          hint: 'Double tap to setup two-factor authentication',
+          child: SettingsSelectionTile(
+            title: 'Two-Factor Authentication',
+            subtitle: settings.twoFactorEnabled
+                ? 'Enabled (${_getMethodDisplayName(settings.twoFactorMethod)})'
+                : 'Add an extra layer of security',
+            icon: Icons.security,
+            onTap: () => _navigateToTwoFactorSetup(context),
+          ).animate()
+            .fadeIn(duration: DesignTokens.durationNormal, delay: 100.ms)
+            .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 100.ms),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPrivacySection(BuildContext context, AppSettings settings) {
+    return InfoCardPattern(
+      title: 'Privacy Mode',
+      icon: Icons.visibility_off,
+      iconColor: ColorTokens.purple600,
+      children: [
+        Semantics(
+          label: 'Privacy mode toggle',
+          hint: 'Double tap to enable or disable privacy mode',
+          child: SettingsToggleTile(
+            title: 'Privacy Mode',
+            subtitle: 'Hide sensitive information like balances and account numbers',
+            value: settings.privacyModeEnabled,
+            onChanged: (value) {
+              ref.read(settingsNotifierProvider.notifier)
+                  .updateSetting('privacyModeEnabled', value);
+            },
+          ).animate()
+            .fadeIn(duration: DesignTokens.durationNormal)
+            .slideX(begin: -0.1, duration: DesignTokens.durationNormal),
+        ),
+
+        SizedBox(height: DesignTokens.spacing2),
+
+        Semantics(
+          label: 'Privacy mode gesture toggle',
+          hint: 'Double tap to enable or disable three-finger double tap gesture',
+          child: SettingsToggleTile(
+            title: 'Gesture Activation',
+            subtitle: 'Activate privacy mode with three-finger double tap',
+            value: settings.privacyModeGestureEnabled,
+            onChanged: (value) {
+              ref.read(settingsNotifierProvider.notifier)
+                  .updateSetting('privacyModeGestureEnabled', value);
+            },
+          ).animate()
+            .fadeIn(duration: DesignTokens.durationNormal, delay: 50.ms)
+            .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 50.ms),
+        ),
       ],
     );
   }
@@ -831,6 +904,28 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
     showDialog(
       context: context,
       builder: (context) => ClearDataDialog(),
+    );
+  }
+
+  String _getMethodDisplayName(String method) {
+    switch (method) {
+      case 'authenticator':
+        return 'Authenticator App';
+      case 'sms':
+        return 'SMS';
+      case 'email':
+        return 'Email';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  void _navigateToTwoFactorSetup(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const TwoFactorSetupScreen(),
+      ),
     );
   }
 

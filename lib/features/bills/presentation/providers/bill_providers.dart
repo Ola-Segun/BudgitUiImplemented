@@ -169,7 +169,7 @@ final subscriptionsProvider = Provider<List<Subscription>>((ref) {
   return billState.maybeWhen(
     loaded: (bills, summary) => bills
         .whereType<Subscription>()
-        .map((bill) => bill as Subscription)
+        .map((bill) => bill)
         .toList(),
     orElse: () => [],
   );

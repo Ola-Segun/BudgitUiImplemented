@@ -10,7 +10,6 @@ import 'package:budget_tracker/features/settings/presentation/states/settings_st
 import 'package:budget_tracker/features/settings/domain/entities/settings.dart';
 import 'package:budget_tracker/core/design_system/design_tokens.dart';
 import 'package:budget_tracker/core/design_system/color_tokens.dart';
-import 'package:budget_tracker/features/settings/domain/entities/settings.dart' as settings;
 @GenerateMocks([SettingsNotifier])
 import 'settings_screen_enhanced_test.mocks.dart';
 
@@ -71,7 +70,7 @@ void main() {
 
     testWidgets('displays settings content when loaded successfully', (WidgetTester tester) async {
       // Arrange
-      final mockSettings = Settings(
+      final mockSettings = AppSettings(
         themeMode: ThemeMode.system,
         currencyCode: 'USD',
         dateFormat: 'MM/dd/yyyy',
@@ -84,6 +83,9 @@ void main() {
         incomeReminderDays: 1,
         biometricEnabled: false,
         autoBackupEnabled: true,
+        languageCode: 'en',
+        isFirstTime: false,
+        appVersion: '1.0.0',
       );
 
       when(mockSettingsNotifier.state).thenReturn(
@@ -115,7 +117,7 @@ void main() {
 
     testWidgets('profile card displays user information', (WidgetTester tester) async {
       // Arrange
-      final mockSettings = Settings(
+      final mockSettings = AppSettings(
         themeMode: ThemeMode.system,
         currencyCode: 'USD',
         dateFormat: 'MM/dd/yyyy',
@@ -128,6 +130,9 @@ void main() {
         incomeReminderDays: 1,
         biometricEnabled: false,
         autoBackupEnabled: true,
+        languageCode: 'en',
+        isFirstTime: false,
+        appVersion: '1.0.0',
       );
 
       when(mockSettingsNotifier.state).thenReturn(
@@ -473,7 +478,7 @@ void main() {
 
     testWidgets('accessibility features are properly implemented', (WidgetTester tester) async {
       // Arrange
-      final mockSettings = Settings(
+      final mockSettings = AppSettings(
         themeMode: ThemeMode.system,
         currencyCode: 'USD',
         dateFormat: 'MM/dd/yyyy',
@@ -486,6 +491,9 @@ void main() {
         incomeReminderDays: 1,
         biometricEnabled: false,
         autoBackupEnabled: true,
+        languageCode: 'en',
+        isFirstTime: false,
+        appVersion: '1.0.0',
       );
 
       when(mockSettingsNotifier.state).thenReturn(

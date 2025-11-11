@@ -162,8 +162,8 @@ class DetectSpendingAnomalies {
         if (ratio > threshold) {
           final insight = Insight(
             id: 'anomaly_spike_${categoryId}_${currentWeek.millisecondsSinceEpoch}',
-            title: 'Unusual spending spike in ${categoryId}',
-            message: 'Spending in ${categoryId} this week (\$${currentAmount.toStringAsFixed(2)}) '
+            title: 'Unusual spending spike in $categoryId',
+            message: 'Spending in $categoryId this week (\$${currentAmount.toStringAsFixed(2)}) '
                 'is ${(ratio * 100).toStringAsFixed(0)}% higher than the previous ${previousWeeks.length}-week average. '
                 'This could indicate unusual activity.',
             type: InsightType.unusualActivity,
@@ -215,7 +215,7 @@ class DetectSpendingAnomalies {
           final insight = Insight(
             id: 'anomaly_frequency_${categoryId}_${dayEntry.key.millisecondsSinceEpoch}',
             title: 'Unusual transaction frequency detected',
-            message: '${count} transactions in ${categoryId} on ${dayEntry.key.toString().split(' ')[0]} '
+            message: '$count transactions in $categoryId on ${dayEntry.key.toString().split(' ')[0]} '
                 'is unusually high compared to the average of ${averageDaily.toStringAsFixed(1)} transactions per day. '
                 'This might indicate bulk purchases or unusual spending patterns.',
             type: InsightType.unusualActivity,

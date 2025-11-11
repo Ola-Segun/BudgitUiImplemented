@@ -1,9 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/account.dart';
-import '../../domain/usecases/get_accounts.dart';
 import '../../presentation/providers/account_providers.dart';
 
 /// Widget for selecting an account from a list

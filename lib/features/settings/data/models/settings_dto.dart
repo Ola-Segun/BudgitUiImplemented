@@ -57,6 +57,45 @@ class SettingsDto {
   @HiveField(15)
   final Map<String, Map<String, dynamic>> accountTypeThemes;
 
+  @HiveField(16)
+  final bool privacyModeEnabled;
+
+  @HiveField(17)
+  final bool privacyModeGestureEnabled;
+
+  @HiveField(18)
+  final bool twoFactorEnabled;
+
+  @HiveField(19)
+  final String twoFactorMethod;
+
+  @HiveField(20)
+  final List<String> backupCodes;
+
+  @HiveField(21)
+  final bool activityLoggingEnabled;
+
+  @HiveField(22)
+  final bool quietHoursEnabled;
+
+  @HiveField(23)
+  final String quietHoursStart;
+
+  @HiveField(24)
+  final String quietHoursEnd;
+
+  @HiveField(25)
+  final String notificationFrequency;
+
+  @HiveField(26)
+  final String defaultExportFormat;
+
+  @HiveField(27)
+  final bool scheduledExportEnabled;
+
+  @HiveField(28)
+  final String scheduledExportFrequency;
+
   const SettingsDto({
     required this.themeMode,
     required this.currencyCode,
@@ -74,6 +113,19 @@ class SettingsDto {
     required this.isFirstTime,
     required this.appVersion,
     required this.accountTypeThemes,
+    required this.privacyModeEnabled,
+    required this.privacyModeGestureEnabled,
+    required this.twoFactorEnabled,
+    required this.twoFactorMethod,
+    required this.backupCodes,
+    required this.activityLoggingEnabled,
+    required this.quietHoursEnabled,
+    required this.quietHoursStart,
+    required this.quietHoursEnd,
+    required this.notificationFrequency,
+    required this.defaultExportFormat,
+    required this.scheduledExportEnabled,
+    required this.scheduledExportFrequency,
   });
 
   /// Create DTO from domain entity
@@ -102,6 +154,19 @@ class SettingsDto {
           'colorValue': theme.colorValue,
         }),
       ),
+      privacyModeEnabled: settings.privacyModeEnabled,
+      privacyModeGestureEnabled: settings.privacyModeGestureEnabled,
+      twoFactorEnabled: settings.twoFactorEnabled,
+      twoFactorMethod: settings.twoFactorMethod,
+      backupCodes: settings.backupCodes,
+      activityLoggingEnabled: settings.activityLoggingEnabled,
+      quietHoursEnabled: settings.quietHoursEnabled,
+      quietHoursStart: settings.quietHoursStart,
+      quietHoursEnd: settings.quietHoursEnd,
+      notificationFrequency: settings.notificationFrequency,
+      defaultExportFormat: settings.defaultExportFormat,
+      scheduledExportEnabled: settings.scheduledExportEnabled,
+      scheduledExportFrequency: settings.scheduledExportFrequency,
     );
   }
 
@@ -137,12 +202,54 @@ class SettingsDto {
           ),
         ),
       ),
+      privacyModeEnabled: privacyModeEnabled,
+      privacyModeGestureEnabled: privacyModeGestureEnabled,
+      twoFactorEnabled: twoFactorEnabled,
+      twoFactorMethod: twoFactorMethod,
+      backupCodes: backupCodes,
+      activityLoggingEnabled: activityLoggingEnabled,
+      quietHoursEnabled: quietHoursEnabled,
+      quietHoursStart: quietHoursStart,
+      quietHoursEnd: quietHoursEnd,
+      notificationFrequency: notificationFrequency,
+      defaultExportFormat: defaultExportFormat,
+      scheduledExportEnabled: scheduledExportEnabled,
+      scheduledExportFrequency: scheduledExportFrequency,
     );
   }
 
   /// Create default settings DTO
   factory SettingsDto.defaultSettings() {
-    final defaultSettings = AppSettings.defaultSettings();
-    return SettingsDto.fromDomain(defaultSettings);
+    return SettingsDto(
+      themeMode: 'system',
+      currencyCode: '',
+      dateFormat: 'MM/dd/yyyy',
+      notificationsEnabled: true,
+      budgetAlertsEnabled: true,
+      billRemindersEnabled: true,
+      incomeRemindersEnabled: true,
+      budgetAlertThreshold: 80,
+      billReminderDays: 3,
+      incomeReminderDays: 1,
+      biometricEnabled: false,
+      autoBackupEnabled: false,
+      languageCode: 'en',
+      isFirstTime: true,
+      appVersion: '1.0.0',
+      accountTypeThemes: {},
+      privacyModeEnabled: false,
+      privacyModeGestureEnabled: true,
+      twoFactorEnabled: false,
+      twoFactorMethod: '',
+      backupCodes: [],
+      activityLoggingEnabled: true,
+      quietHoursEnabled: false,
+      quietHoursStart: '22:00',
+      quietHoursEnd: '08:00',
+      notificationFrequency: 'immediate',
+      defaultExportFormat: 'csv',
+      scheduledExportEnabled: false,
+      scheduledExportFrequency: 'monthly',
+    );
   }
 }

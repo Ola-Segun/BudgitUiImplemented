@@ -693,7 +693,7 @@ class _EnhancedAddTransactionBottomSheetState
             ),
           ),
           Text(
-            'Date: ${DateFormat('MMM dd, yyyy').format(_scannedReceiptData!.date!)}',
+            'Date: ${DateFormat('MMM dd, yyyy').format(_scannedReceiptData!.date)}',
             style: TypographyTokens.captionMd.copyWith(
               color: ColorTokens.textPrimary,
             ),
@@ -795,7 +795,7 @@ class _EnhancedAddTransactionBottomSheetState
 
       // Auto-populate date if available
       setState(() {
-        _selectedDate = receiptData.date!;
+        _selectedDate = receiptData.date;
       });
     
       // Auto-suggest category

@@ -265,6 +265,45 @@ class SettingsNotifier extends StateNotifier<AsyncValue<SettingsState>> {
           case 'autoBackupEnabled':
             updatedSettings = currentState.settings.copyWith(autoBackupEnabled: value as bool);
             break;
+          case 'privacyModeEnabled':
+            updatedSettings = currentState.settings.copyWith(privacyModeEnabled: value as bool);
+            break;
+          case 'privacyModeGestureEnabled':
+            updatedSettings = currentState.settings.copyWith(privacyModeGestureEnabled: value as bool);
+            break;
+          case 'twoFactorEnabled':
+            updatedSettings = currentState.settings.copyWith(twoFactorEnabled: value as bool);
+            break;
+          case 'twoFactorMethod':
+            updatedSettings = currentState.settings.copyWith(twoFactorMethod: value as String);
+            break;
+          case 'backupCodes':
+            updatedSettings = currentState.settings.copyWith(backupCodes: value as List<String>);
+            break;
+          case 'activityLoggingEnabled':
+            updatedSettings = currentState.settings.copyWith(activityLoggingEnabled: value as bool);
+            break;
+          case 'quietHoursEnabled':
+            updatedSettings = currentState.settings.copyWith(quietHoursEnabled: value as bool);
+            break;
+          case 'quietHoursStart':
+            updatedSettings = currentState.settings.copyWith(quietHoursStart: value as String);
+            break;
+          case 'quietHoursEnd':
+            updatedSettings = currentState.settings.copyWith(quietHoursEnd: value as String);
+            break;
+          case 'notificationFrequency':
+            updatedSettings = currentState.settings.copyWith(notificationFrequency: value as String);
+            break;
+          case 'defaultExportFormat':
+            updatedSettings = currentState.settings.copyWith(defaultExportFormat: value as String);
+            break;
+          case 'scheduledExportEnabled':
+            updatedSettings = currentState.settings.copyWith(scheduledExportEnabled: value as bool);
+            break;
+          case 'scheduledExportFrequency':
+            updatedSettings = currentState.settings.copyWith(scheduledExportFrequency: value as String);
+            break;
           default:
             return false;
         }

@@ -52,9 +52,32 @@ class AppSettings with _$AppSettings {
 
     /// App version (for display purposes)
     required String appVersion,
-  
+
     /// Custom account type themes
     @Default({}) Map<String, AccountTypeTheme> accountTypeThemes,
+
+    /// Privacy Mode Settings
+    @Default(false) bool privacyModeEnabled,
+    @Default(true) bool privacyModeGestureEnabled,
+
+    /// Two-Factor Authentication Settings
+    @Default(false) bool twoFactorEnabled,
+    @Default('') String twoFactorMethod,
+    @Default([]) List<String> backupCodes,
+
+    /// Activity Logging
+    @Default(true) bool activityLoggingEnabled,
+
+    /// Advanced Notification Settings
+    @Default(false) bool quietHoursEnabled,
+    @Default('22:00') String quietHoursStart,
+    @Default('08:00') String quietHoursEnd,
+    @Default('immediate') String notificationFrequency,
+
+    /// Advanced Export Settings
+    @Default('csv') String defaultExportFormat,
+    @Default(false) bool scheduledExportEnabled,
+    @Default('monthly') String scheduledExportFrequency,
     }) = _AppSettings;
 
   factory AppSettings.defaultSettings() => AppSettings(
@@ -73,6 +96,19 @@ class AppSettings with _$AppSettings {
         languageCode: 'en',
         isFirstTime: true,
         appVersion: '1.0.0',
+        privacyModeEnabled: false,
+        privacyModeGestureEnabled: true,
+        twoFactorEnabled: false,
+        twoFactorMethod: '',
+        backupCodes: [],
+        activityLoggingEnabled: true,
+        quietHoursEnabled: false,
+        quietHoursStart: '22:00',
+        quietHoursEnd: '08:00',
+        notificationFrequency: 'immediate',
+        defaultExportFormat: 'csv',
+        scheduledExportEnabled: false,
+        scheduledExportFrequency: 'monthly',
       );
 }
 

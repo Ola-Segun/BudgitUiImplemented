@@ -124,8 +124,8 @@ class AnalyzeSpendingTrends {
           final direction = expenseChange > 0 ? 'increased' : 'decreased';
           final insight = Insight(
             id: 'period_comparison_${currentMonth.millisecondsSinceEpoch}',
-            title: 'Monthly spending ${direction} by ${expenseChangePercent.abs().toStringAsFixed(1)}%',
-            message: 'Your total expenses this month ${direction} by \$${expenseChange.abs().toStringAsFixed(2)} '
+            title: 'Monthly spending $direction by ${expenseChangePercent.abs().toStringAsFixed(1)}%',
+            message: 'Your total expenses this month $direction by \$${expenseChange.abs().toStringAsFixed(2)} '
                 'compared to last month. ${expenseChange > 0 ? 'Consider reviewing your spending habits.' : 'Great job on reducing expenses!'}',
             type: InsightType.comparison,
             generatedAt: DateTime.now(),

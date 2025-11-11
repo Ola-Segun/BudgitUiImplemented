@@ -65,6 +65,29 @@ mixin _$AppSettings {
   Map<String, AccountTypeTheme> get accountTypeThemes =>
       throw _privateConstructorUsedError;
 
+  /// Privacy Mode Settings
+  bool get privacyModeEnabled => throw _privateConstructorUsedError;
+  bool get privacyModeGestureEnabled => throw _privateConstructorUsedError;
+
+  /// Two-Factor Authentication Settings
+  bool get twoFactorEnabled => throw _privateConstructorUsedError;
+  String get twoFactorMethod => throw _privateConstructorUsedError;
+  List<String> get backupCodes => throw _privateConstructorUsedError;
+
+  /// Activity Logging
+  bool get activityLoggingEnabled => throw _privateConstructorUsedError;
+
+  /// Advanced Notification Settings
+  bool get quietHoursEnabled => throw _privateConstructorUsedError;
+  String get quietHoursStart => throw _privateConstructorUsedError;
+  String get quietHoursEnd => throw _privateConstructorUsedError;
+  String get notificationFrequency => throw _privateConstructorUsedError;
+
+  /// Advanced Export Settings
+  String get defaultExportFormat => throw _privateConstructorUsedError;
+  bool get scheduledExportEnabled => throw _privateConstructorUsedError;
+  String get scheduledExportFrequency => throw _privateConstructorUsedError;
+
   @JsonKey(ignore: true)
   $AppSettingsCopyWith<AppSettings> get copyWith =>
       throw _privateConstructorUsedError;
@@ -92,7 +115,20 @@ abstract class $AppSettingsCopyWith<$Res> {
       String languageCode,
       bool isFirstTime,
       String appVersion,
-      Map<String, AccountTypeTheme> accountTypeThemes});
+      Map<String, AccountTypeTheme> accountTypeThemes,
+      bool privacyModeEnabled,
+      bool privacyModeGestureEnabled,
+      bool twoFactorEnabled,
+      String twoFactorMethod,
+      List<String> backupCodes,
+      bool activityLoggingEnabled,
+      bool quietHoursEnabled,
+      String quietHoursStart,
+      String quietHoursEnd,
+      String notificationFrequency,
+      String defaultExportFormat,
+      bool scheduledExportEnabled,
+      String scheduledExportFrequency});
 }
 
 /// @nodoc
@@ -124,6 +160,19 @@ class _$AppSettingsCopyWithImpl<$Res, $Val extends AppSettings>
     Object? isFirstTime = null,
     Object? appVersion = null,
     Object? accountTypeThemes = null,
+    Object? privacyModeEnabled = null,
+    Object? privacyModeGestureEnabled = null,
+    Object? twoFactorEnabled = null,
+    Object? twoFactorMethod = null,
+    Object? backupCodes = null,
+    Object? activityLoggingEnabled = null,
+    Object? quietHoursEnabled = null,
+    Object? quietHoursStart = null,
+    Object? quietHoursEnd = null,
+    Object? notificationFrequency = null,
+    Object? defaultExportFormat = null,
+    Object? scheduledExportEnabled = null,
+    Object? scheduledExportFrequency = null,
   }) {
     return _then(_value.copyWith(
       themeMode: null == themeMode
@@ -190,6 +239,58 @@ class _$AppSettingsCopyWithImpl<$Res, $Val extends AppSettings>
           ? _value.accountTypeThemes
           : accountTypeThemes // ignore: cast_nullable_to_non_nullable
               as Map<String, AccountTypeTheme>,
+      privacyModeEnabled: null == privacyModeEnabled
+          ? _value.privacyModeEnabled
+          : privacyModeEnabled // ignore: cast_nullable_to_non_nullable
+              as bool,
+      privacyModeGestureEnabled: null == privacyModeGestureEnabled
+          ? _value.privacyModeGestureEnabled
+          : privacyModeGestureEnabled // ignore: cast_nullable_to_non_nullable
+              as bool,
+      twoFactorEnabled: null == twoFactorEnabled
+          ? _value.twoFactorEnabled
+          : twoFactorEnabled // ignore: cast_nullable_to_non_nullable
+              as bool,
+      twoFactorMethod: null == twoFactorMethod
+          ? _value.twoFactorMethod
+          : twoFactorMethod // ignore: cast_nullable_to_non_nullable
+              as String,
+      backupCodes: null == backupCodes
+          ? _value.backupCodes
+          : backupCodes // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      activityLoggingEnabled: null == activityLoggingEnabled
+          ? _value.activityLoggingEnabled
+          : activityLoggingEnabled // ignore: cast_nullable_to_non_nullable
+              as bool,
+      quietHoursEnabled: null == quietHoursEnabled
+          ? _value.quietHoursEnabled
+          : quietHoursEnabled // ignore: cast_nullable_to_non_nullable
+              as bool,
+      quietHoursStart: null == quietHoursStart
+          ? _value.quietHoursStart
+          : quietHoursStart // ignore: cast_nullable_to_non_nullable
+              as String,
+      quietHoursEnd: null == quietHoursEnd
+          ? _value.quietHoursEnd
+          : quietHoursEnd // ignore: cast_nullable_to_non_nullable
+              as String,
+      notificationFrequency: null == notificationFrequency
+          ? _value.notificationFrequency
+          : notificationFrequency // ignore: cast_nullable_to_non_nullable
+              as String,
+      defaultExportFormat: null == defaultExportFormat
+          ? _value.defaultExportFormat
+          : defaultExportFormat // ignore: cast_nullable_to_non_nullable
+              as String,
+      scheduledExportEnabled: null == scheduledExportEnabled
+          ? _value.scheduledExportEnabled
+          : scheduledExportEnabled // ignore: cast_nullable_to_non_nullable
+              as bool,
+      scheduledExportFrequency: null == scheduledExportFrequency
+          ? _value.scheduledExportFrequency
+          : scheduledExportFrequency // ignore: cast_nullable_to_non_nullable
+              as String,
     ) as $Val);
   }
 }
@@ -218,7 +319,20 @@ abstract class _$$AppSettingsImplCopyWith<$Res>
       String languageCode,
       bool isFirstTime,
       String appVersion,
-      Map<String, AccountTypeTheme> accountTypeThemes});
+      Map<String, AccountTypeTheme> accountTypeThemes,
+      bool privacyModeEnabled,
+      bool privacyModeGestureEnabled,
+      bool twoFactorEnabled,
+      String twoFactorMethod,
+      List<String> backupCodes,
+      bool activityLoggingEnabled,
+      bool quietHoursEnabled,
+      String quietHoursStart,
+      String quietHoursEnd,
+      String notificationFrequency,
+      String defaultExportFormat,
+      bool scheduledExportEnabled,
+      String scheduledExportFrequency});
 }
 
 /// @nodoc
@@ -248,6 +362,19 @@ class __$$AppSettingsImplCopyWithImpl<$Res>
     Object? isFirstTime = null,
     Object? appVersion = null,
     Object? accountTypeThemes = null,
+    Object? privacyModeEnabled = null,
+    Object? privacyModeGestureEnabled = null,
+    Object? twoFactorEnabled = null,
+    Object? twoFactorMethod = null,
+    Object? backupCodes = null,
+    Object? activityLoggingEnabled = null,
+    Object? quietHoursEnabled = null,
+    Object? quietHoursStart = null,
+    Object? quietHoursEnd = null,
+    Object? notificationFrequency = null,
+    Object? defaultExportFormat = null,
+    Object? scheduledExportEnabled = null,
+    Object? scheduledExportFrequency = null,
   }) {
     return _then(_$AppSettingsImpl(
       themeMode: null == themeMode
@@ -314,6 +441,58 @@ class __$$AppSettingsImplCopyWithImpl<$Res>
           ? _value._accountTypeThemes
           : accountTypeThemes // ignore: cast_nullable_to_non_nullable
               as Map<String, AccountTypeTheme>,
+      privacyModeEnabled: null == privacyModeEnabled
+          ? _value.privacyModeEnabled
+          : privacyModeEnabled // ignore: cast_nullable_to_non_nullable
+              as bool,
+      privacyModeGestureEnabled: null == privacyModeGestureEnabled
+          ? _value.privacyModeGestureEnabled
+          : privacyModeGestureEnabled // ignore: cast_nullable_to_non_nullable
+              as bool,
+      twoFactorEnabled: null == twoFactorEnabled
+          ? _value.twoFactorEnabled
+          : twoFactorEnabled // ignore: cast_nullable_to_non_nullable
+              as bool,
+      twoFactorMethod: null == twoFactorMethod
+          ? _value.twoFactorMethod
+          : twoFactorMethod // ignore: cast_nullable_to_non_nullable
+              as String,
+      backupCodes: null == backupCodes
+          ? _value._backupCodes
+          : backupCodes // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      activityLoggingEnabled: null == activityLoggingEnabled
+          ? _value.activityLoggingEnabled
+          : activityLoggingEnabled // ignore: cast_nullable_to_non_nullable
+              as bool,
+      quietHoursEnabled: null == quietHoursEnabled
+          ? _value.quietHoursEnabled
+          : quietHoursEnabled // ignore: cast_nullable_to_non_nullable
+              as bool,
+      quietHoursStart: null == quietHoursStart
+          ? _value.quietHoursStart
+          : quietHoursStart // ignore: cast_nullable_to_non_nullable
+              as String,
+      quietHoursEnd: null == quietHoursEnd
+          ? _value.quietHoursEnd
+          : quietHoursEnd // ignore: cast_nullable_to_non_nullable
+              as String,
+      notificationFrequency: null == notificationFrequency
+          ? _value.notificationFrequency
+          : notificationFrequency // ignore: cast_nullable_to_non_nullable
+              as String,
+      defaultExportFormat: null == defaultExportFormat
+          ? _value.defaultExportFormat
+          : defaultExportFormat // ignore: cast_nullable_to_non_nullable
+              as String,
+      scheduledExportEnabled: null == scheduledExportEnabled
+          ? _value.scheduledExportEnabled
+          : scheduledExportEnabled // ignore: cast_nullable_to_non_nullable
+              as bool,
+      scheduledExportFrequency: null == scheduledExportFrequency
+          ? _value.scheduledExportFrequency
+          : scheduledExportFrequency // ignore: cast_nullable_to_non_nullable
+              as String,
     ));
   }
 }
@@ -337,8 +516,22 @@ class _$AppSettingsImpl implements _AppSettings {
       required this.languageCode,
       required this.isFirstTime,
       required this.appVersion,
-      final Map<String, AccountTypeTheme> accountTypeThemes = const {}})
-      : _accountTypeThemes = accountTypeThemes;
+      final Map<String, AccountTypeTheme> accountTypeThemes = const {},
+      this.privacyModeEnabled = false,
+      this.privacyModeGestureEnabled = true,
+      this.twoFactorEnabled = false,
+      this.twoFactorMethod = '',
+      final List<String> backupCodes = const [],
+      this.activityLoggingEnabled = true,
+      this.quietHoursEnabled = false,
+      this.quietHoursStart = '22:00',
+      this.quietHoursEnd = '08:00',
+      this.notificationFrequency = 'immediate',
+      this.defaultExportFormat = 'csv',
+      this.scheduledExportEnabled = false,
+      this.scheduledExportFrequency = 'monthly'})
+      : _accountTypeThemes = accountTypeThemes,
+        _backupCodes = backupCodes;
 
   /// Theme mode preference
   @override
@@ -413,9 +606,63 @@ class _$AppSettingsImpl implements _AppSettings {
     return EqualUnmodifiableMapView(_accountTypeThemes);
   }
 
+  /// Privacy Mode Settings
+  @override
+  @JsonKey()
+  final bool privacyModeEnabled;
+  @override
+  @JsonKey()
+  final bool privacyModeGestureEnabled;
+
+  /// Two-Factor Authentication Settings
+  @override
+  @JsonKey()
+  final bool twoFactorEnabled;
+  @override
+  @JsonKey()
+  final String twoFactorMethod;
+  final List<String> _backupCodes;
+  @override
+  @JsonKey()
+  List<String> get backupCodes {
+    if (_backupCodes is EqualUnmodifiableListView) return _backupCodes;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_backupCodes);
+  }
+
+  /// Activity Logging
+  @override
+  @JsonKey()
+  final bool activityLoggingEnabled;
+
+  /// Advanced Notification Settings
+  @override
+  @JsonKey()
+  final bool quietHoursEnabled;
+  @override
+  @JsonKey()
+  final String quietHoursStart;
+  @override
+  @JsonKey()
+  final String quietHoursEnd;
+  @override
+  @JsonKey()
+  final String notificationFrequency;
+
+  /// Advanced Export Settings
+  @override
+  @JsonKey()
+  final String defaultExportFormat;
+  @override
+  @JsonKey()
+  final bool scheduledExportEnabled;
+  @override
+  @JsonKey()
+  final String scheduledExportFrequency;
+
   @override
   String toString() {
-    return 'AppSettings(themeMode: $themeMode, currencyCode: $currencyCode, dateFormat: $dateFormat, notificationsEnabled: $notificationsEnabled, budgetAlertsEnabled: $budgetAlertsEnabled, billRemindersEnabled: $billRemindersEnabled, incomeRemindersEnabled: $incomeRemindersEnabled, budgetAlertThreshold: $budgetAlertThreshold, billReminderDays: $billReminderDays, incomeReminderDays: $incomeReminderDays, biometricEnabled: $biometricEnabled, autoBackupEnabled: $autoBackupEnabled, languageCode: $languageCode, isFirstTime: $isFirstTime, appVersion: $appVersion, accountTypeThemes: $accountTypeThemes)';
+    return 'AppSettings(themeMode: $themeMode, currencyCode: $currencyCode, dateFormat: $dateFormat, notificationsEnabled: $notificationsEnabled, budgetAlertsEnabled: $budgetAlertsEnabled, billRemindersEnabled: $billRemindersEnabled, incomeRemindersEnabled: $incomeRemindersEnabled, budgetAlertThreshold: $budgetAlertThreshold, billReminderDays: $billReminderDays, incomeReminderDays: $incomeReminderDays, biometricEnabled: $biometricEnabled, autoBackupEnabled: $autoBackupEnabled, languageCode: $languageCode, isFirstTime: $isFirstTime, appVersion: $appVersion, accountTypeThemes: $accountTypeThemes, privacyModeEnabled: $privacyModeEnabled, privacyModeGestureEnabled: $privacyModeGestureEnabled, twoFactorEnabled: $twoFactorEnabled, twoFactorMethod: $twoFactorMethod, backupCodes: $backupCodes, activityLoggingEnabled: $activityLoggingEnabled, quietHoursEnabled: $quietHoursEnabled, quietHoursStart: $quietHoursStart, quietHoursEnd: $quietHoursEnd, notificationFrequency: $notificationFrequency, defaultExportFormat: $defaultExportFormat, scheduledExportEnabled: $scheduledExportEnabled, scheduledExportFrequency: $scheduledExportFrequency)';
   }
 
   @override
@@ -454,28 +701,70 @@ class _$AppSettingsImpl implements _AppSettings {
             (identical(other.appVersion, appVersion) ||
                 other.appVersion == appVersion) &&
             const DeepCollectionEquality()
-                .equals(other._accountTypeThemes, _accountTypeThemes));
+                .equals(other._accountTypeThemes, _accountTypeThemes) &&
+            (identical(other.privacyModeEnabled, privacyModeEnabled) ||
+                other.privacyModeEnabled == privacyModeEnabled) &&
+            (identical(other.privacyModeGestureEnabled,
+                    privacyModeGestureEnabled) ||
+                other.privacyModeGestureEnabled == privacyModeGestureEnabled) &&
+            (identical(other.twoFactorEnabled, twoFactorEnabled) ||
+                other.twoFactorEnabled == twoFactorEnabled) &&
+            (identical(other.twoFactorMethod, twoFactorMethod) ||
+                other.twoFactorMethod == twoFactorMethod) &&
+            const DeepCollectionEquality()
+                .equals(other._backupCodes, _backupCodes) &&
+            (identical(other.activityLoggingEnabled, activityLoggingEnabled) ||
+                other.activityLoggingEnabled == activityLoggingEnabled) &&
+            (identical(other.quietHoursEnabled, quietHoursEnabled) ||
+                other.quietHoursEnabled == quietHoursEnabled) &&
+            (identical(other.quietHoursStart, quietHoursStart) ||
+                other.quietHoursStart == quietHoursStart) &&
+            (identical(other.quietHoursEnd, quietHoursEnd) ||
+                other.quietHoursEnd == quietHoursEnd) &&
+            (identical(other.notificationFrequency, notificationFrequency) ||
+                other.notificationFrequency == notificationFrequency) &&
+            (identical(other.defaultExportFormat, defaultExportFormat) ||
+                other.defaultExportFormat == defaultExportFormat) &&
+            (identical(other.scheduledExportEnabled, scheduledExportEnabled) ||
+                other.scheduledExportEnabled == scheduledExportEnabled) &&
+            (identical(
+                    other.scheduledExportFrequency, scheduledExportFrequency) ||
+                other.scheduledExportFrequency == scheduledExportFrequency));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      themeMode,
-      currencyCode,
-      dateFormat,
-      notificationsEnabled,
-      budgetAlertsEnabled,
-      billRemindersEnabled,
-      incomeRemindersEnabled,
-      budgetAlertThreshold,
-      billReminderDays,
-      incomeReminderDays,
-      biometricEnabled,
-      autoBackupEnabled,
-      languageCode,
-      isFirstTime,
-      appVersion,
-      const DeepCollectionEquality().hash(_accountTypeThemes));
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        themeMode,
+        currencyCode,
+        dateFormat,
+        notificationsEnabled,
+        budgetAlertsEnabled,
+        billRemindersEnabled,
+        incomeRemindersEnabled,
+        budgetAlertThreshold,
+        billReminderDays,
+        incomeReminderDays,
+        biometricEnabled,
+        autoBackupEnabled,
+        languageCode,
+        isFirstTime,
+        appVersion,
+        const DeepCollectionEquality().hash(_accountTypeThemes),
+        privacyModeEnabled,
+        privacyModeGestureEnabled,
+        twoFactorEnabled,
+        twoFactorMethod,
+        const DeepCollectionEquality().hash(_backupCodes),
+        activityLoggingEnabled,
+        quietHoursEnabled,
+        quietHoursStart,
+        quietHoursEnd,
+        notificationFrequency,
+        defaultExportFormat,
+        scheduledExportEnabled,
+        scheduledExportFrequency
+      ]);
 
   @JsonKey(ignore: true)
   @override
@@ -486,23 +775,35 @@ class _$AppSettingsImpl implements _AppSettings {
 
 abstract class _AppSettings implements AppSettings {
   const factory _AppSettings(
-          {required final ThemeMode themeMode,
-          final String? currencyCode,
-          required final String dateFormat,
-          required final bool notificationsEnabled,
-          required final bool budgetAlertsEnabled,
-          required final bool billRemindersEnabled,
-          required final bool incomeRemindersEnabled,
-          required final int budgetAlertThreshold,
-          required final int billReminderDays,
-          required final int incomeReminderDays,
-          required final bool biometricEnabled,
-          required final bool autoBackupEnabled,
-          required final String languageCode,
-          required final bool isFirstTime,
-          required final String appVersion,
-          final Map<String, AccountTypeTheme> accountTypeThemes}) =
-      _$AppSettingsImpl;
+      {required final ThemeMode themeMode,
+      final String? currencyCode,
+      required final String dateFormat,
+      required final bool notificationsEnabled,
+      required final bool budgetAlertsEnabled,
+      required final bool billRemindersEnabled,
+      required final bool incomeRemindersEnabled,
+      required final int budgetAlertThreshold,
+      required final int billReminderDays,
+      required final int incomeReminderDays,
+      required final bool biometricEnabled,
+      required final bool autoBackupEnabled,
+      required final String languageCode,
+      required final bool isFirstTime,
+      required final String appVersion,
+      final Map<String, AccountTypeTheme> accountTypeThemes,
+      final bool privacyModeEnabled,
+      final bool privacyModeGestureEnabled,
+      final bool twoFactorEnabled,
+      final String twoFactorMethod,
+      final List<String> backupCodes,
+      final bool activityLoggingEnabled,
+      final bool quietHoursEnabled,
+      final String quietHoursStart,
+      final String quietHoursEnd,
+      final String notificationFrequency,
+      final String defaultExportFormat,
+      final bool scheduledExportEnabled,
+      final String scheduledExportFrequency}) = _$AppSettingsImpl;
 
   @override
 
@@ -568,6 +869,42 @@ abstract class _AppSettings implements AppSettings {
 
   /// Custom account type themes
   Map<String, AccountTypeTheme> get accountTypeThemes;
+  @override
+
+  /// Privacy Mode Settings
+  bool get privacyModeEnabled;
+  @override
+  bool get privacyModeGestureEnabled;
+  @override
+
+  /// Two-Factor Authentication Settings
+  bool get twoFactorEnabled;
+  @override
+  String get twoFactorMethod;
+  @override
+  List<String> get backupCodes;
+  @override
+
+  /// Activity Logging
+  bool get activityLoggingEnabled;
+  @override
+
+  /// Advanced Notification Settings
+  bool get quietHoursEnabled;
+  @override
+  String get quietHoursStart;
+  @override
+  String get quietHoursEnd;
+  @override
+  String get notificationFrequency;
+  @override
+
+  /// Advanced Export Settings
+  String get defaultExportFormat;
+  @override
+  bool get scheduledExportEnabled;
+  @override
+  String get scheduledExportFrequency;
   @override
   @JsonKey(ignore: true)
   _$$AppSettingsImplCopyWith<_$AppSettingsImpl> get copyWith =>
