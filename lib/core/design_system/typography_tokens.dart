@@ -604,7 +604,7 @@ class TypographyTokens {
     return style.copyWith(fontStyle: FontStyle.italic);
   }
 
-  /// Apply underline decoration
+  /// Make text style underlined
   static TextStyle underline(TextStyle style) {
     return style.copyWith(decoration: TextDecoration.underline);
   }

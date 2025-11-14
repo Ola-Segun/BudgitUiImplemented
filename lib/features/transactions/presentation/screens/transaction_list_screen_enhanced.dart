@@ -5,15 +5,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/design_system/design_tokens.dart';
+import '../../../../core/design_system/color_tokens.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../domain/entities/transaction.dart';
 import '../providers/transaction_providers.dart';
 import '../states/transaction_state.dart';
 import '../widgets/enhanced_transaction_header.dart';
-import '../widgets/enhanced_transaction_tile.dart';
+import '../../../../core/design_system/patterns/enhanced_transaction_card_pattern.dart';
 import '../widgets/enhanced_transaction_filters.dart';
 import '../widgets/enhanced_transaction_filters_bar.dart';
 import '../widgets/enhanced_empty_states.dart';
@@ -45,7 +45,7 @@ class _TransactionListScreenEnhancedState extends ConsumerState<TransactionListS
     final stats = ref.watch(transactionStatsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: ColorTokens.surfaceBackground,
       body: SafeArea(
         child: Column(
           children: [
@@ -123,8 +123,8 @@ class _TransactionListScreenEnhancedState extends ConsumerState<TransactionListS
       },
       child: ListView.builder(
         padding: EdgeInsets.symmetric(
-          horizontal: AppDimensions.screenPaddingH,
-          vertical: AppDimensions.screenPaddingV,
+          horizontal: DesignTokens.screenPaddingH,
+          vertical: DesignTokens.screenPaddingV,
         ),
         itemCount: _calculateItemCount(groupedTransactions, state),
         itemBuilder: (context, index) {
@@ -162,7 +162,7 @@ class _TransactionListScreenEnhancedState extends ConsumerState<TransactionListS
       // Date header
       if (index == currentIndex++) {
         return Padding(
-          padding: EdgeInsets.symmetric(vertical: AppDimensions.spacing3),
+          padding: EdgeInsets.symmetric(vertical: DesignTokens.spacing3),
           child: _DateHeader(date: date)
               .animate()
               .fadeIn(duration: 300.ms, delay: Duration(milliseconds: 50 * (currentIndex ~/ 2)))
@@ -175,7 +175,7 @@ class _TransactionListScreenEnhancedState extends ConsumerState<TransactionListS
         if (index == currentIndex++) {
           return Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: EnhancedTransactionTile(transaction: transaction)
+            child: EnhancedTransactionCardPattern(transaction: transaction)
                 .animate()
                 .fadeIn(duration: 400.ms, delay: Duration(milliseconds: 30 * (currentIndex - 1)))
                 .slideX(begin: 0.05, duration: 400.ms, delay: Duration(milliseconds: 30 * (currentIndex - 1))),
@@ -185,21 +185,21 @@ class _TransactionListScreenEnhancedState extends ConsumerState<TransactionListS
 
       // Spacing after date group
       if (index == currentIndex++) {
-        return SizedBox(height: AppDimensions.spacing4);
+        return SizedBox(height: DesignTokens.spacing4);
       }
     }
 
     // Load More Button
     if (state.hasMoreData && !state.isLoadingMore) {
       return Padding(
-        padding: EdgeInsets.symmetric(vertical: AppDimensions.spacing4),
+        padding: EdgeInsets.symmetric(vertical: DesignTokens.spacing4),
         child: Center(
           child: TextButton.icon(
             onPressed: () => ref.read(transactionNotifierProvider.notifier).loadMoreTransactions(),
             icon: const Icon(Icons.expand_more),
             label: const Text('Load More'),
             style: TextButton.styleFrom(
-              foregroundColor: AppColors.primary,
+              foregroundColor: ColorTokens.teal500,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
           ),
@@ -219,18 +219,11 @@ class _TransactionListScreenEnhancedState extends ConsumerState<TransactionListS
     return Container(
       height: 56,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.primary,
-            AppColors.primaryDark,
-          ],
-        ),
+        gradient: ColorTokens.gradientPrimary,
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.4),
+            color: ColorTokens.teal500.withValues(alpha: 0.4),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -340,11 +333,11 @@ class _DateHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: AppDimensions.spacing3,
-        vertical: AppDimensions.spacing2,
+        horizontal: DesignTokens.spacing3,
+        vertical: DesignTokens.spacing2,
       ),
       decoration: BoxDecoration(
-        color: AppColors.backgroundAlt,
+        color: ColorTokens.surfaceSecondary,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -352,20 +345,20 @@ class _DateHeader extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
+              color: ColorTokens.teal500.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               Icons.calendar_today,
               size: 14,
-              color: AppColors.primary,
+              color: ColorTokens.teal500,
             ),
           ),
-          SizedBox(width: AppDimensions.spacing2),
+          SizedBox(width: DesignTokens.spacing2),
           Text(
             _formatDate(),
             style: TextStyle(
-              color: AppColors.textPrimary,
+              color: ColorTokens.textPrimary,
               fontWeight: FontWeight.w700,
               fontSize: 13,
             ),

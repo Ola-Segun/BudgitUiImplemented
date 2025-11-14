@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/di/providers.dart' as core_providers;
@@ -196,32 +197,197 @@ final budgetProvider = Provider.family<AsyncValue<Budget?>, String>((ref, budget
   );
 });
 
-/// Provider for budget status by ID
+
+/// Provider for budget status by ID with real-time updates
 final budgetStatusProvider = FutureProvider.family<BudgetStatus?, String>((ref, budgetId) async {
+  debugPrint('BudgetStatusProvider: Starting calculation for budgetId: $budgetId');
+
   // Listen to budget state changes to refresh
   final budgetState = ref.watch(budgetNotifierProvider);
-  // Listen to transaction changes to refresh status
-  ref.watch(transactionNotifierProvider);
+  debugPrint('BudgetStatusProvider: Budget state type: ${budgetState.runtimeType}');
+
+  // Listen to transaction changes to refresh status immediately
+  final transactionState = ref.watch(transactionNotifierProvider);
+  debugPrint('BudgetStatusProvider: Transaction state type: ${transactionState.runtimeType}');
+
   // Listen to category changes to refresh status (important for category name/icon/color updates)
-  ref.watch(categoryNotifierProvider);
+  final categoryState = ref.watch(categoryNotifierProvider);
+  debugPrint('BudgetStatusProvider: Category state type: ${categoryState.runtimeType}');
 
   final calculateBudgetStatus = ref.watch(calculateBudgetStatusProvider);
+  debugPrint('BudgetStatusProvider: CalculateBudgetStatus instance obtained');
 
   // Get budget from the notifier state instead of direct repository call
   final budget = budgetState.maybeWhen(
-    data: (state) => state.budgets.where((b) => b.id == budgetId).firstOrNull,
-    orElse: () => null,
+    data: (state) {
+      final foundBudget = state.budgets.where((b) => b.id == budgetId).firstOrNull;
+      debugPrint('BudgetStatusProvider: Found budget in state: ${foundBudget?.id ?? 'null'}');
+      return foundBudget;
+    },
+    loading: () {
+      debugPrint('BudgetStatusProvider: Budget state is loading');
+      return null;
+    },
+    error: (error, stack) {
+      debugPrint('BudgetStatusProvider: Budget state error: $error');
+      debugPrint('BudgetStatusProvider: Budget state stack: $stack');
+      return null;
+    },
+    orElse: () {
+      debugPrint('BudgetStatusProvider: Budget state is in unexpected state');
+      return null;
+    },
   );
 
-  if (budget == null) return null;
+  if (budget == null) {
+    debugPrint('BudgetStatusProvider: Budget not found for ID: $budgetId - returning null');
+    return null;
+  }
 
-  final result = await calculateBudgetStatus(budget);
+  // Validate budget data integrity before processing
+  try {
+    if (budget.categories.isEmpty) {
+      debugPrint('BudgetStatusProvider: WARNING - Budget has no categories for budget $budgetId');
+    } else {
+      // Check for corrupted category data
+      for (final category in budget.categories) {
+        if (category.id.isEmpty) {
+          debugPrint('BudgetStatusProvider: ERROR - Budget category with null/empty ID found in budget $budgetId');
+          return null;
+        }
+        if (category.amount.isNaN || category.amount.isInfinite) {
+          debugPrint('BudgetStatusProvider: ERROR - Budget category ${category.id} has invalid amount: ${category.amount} in budget $budgetId');
+          return null;
+        }
+      }
+    }
+  } catch (e, stackTrace) {
+    debugPrint('BudgetStatusProvider: CRITICAL - Error validating budget data for $budgetId: $e');
+    debugPrint('BudgetStatusProvider: Validation stack trace: $stackTrace');
+    return null;
+  }
 
-  return result.when(
-    success: (status) => status,
-    error: (failure) => null,
-  );
-});
+  debugPrint('BudgetStatusProvider: Calculating status for budget: ${budget.id} with ${budget.categories.length} categories');
+
+  // Implement retry mechanism for budget status calculation
+  const int maxRetries = 2;
+  Duration retryDelay = const Duration(seconds: 1);
+
+  for (int attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      debugPrint('BudgetStatusProvider: Attempt $attempt/$maxRetries for budget $budgetId');
+      final result = await calculateBudgetStatus(budget);
+      debugPrint('BudgetStatusProvider: calculateBudgetStatus returned result type: ${result.runtimeType}');
+
+      final status = result.when(
+        success: (status) {
+          debugPrint('BudgetStatusProvider: SUCCESS - Status calculated for budget ${budget.id}: spent=\$${status.totalSpent.toStringAsFixed(2)}, budget=\$${status.totalBudget.toStringAsFixed(2)}, categories=${status.categoryStatuses.length}');
+
+          // Validate returned status data
+          if (status.totalSpent.isNaN || status.totalSpent.isInfinite) {
+            debugPrint('BudgetStatusProvider: ERROR - Invalid totalSpent in status for budget $budgetId: ${status.totalSpent}');
+            return null;
+          }
+          if (status.totalBudget.isNaN || status.totalBudget.isInfinite) {
+            debugPrint('BudgetStatusProvider: ERROR - Invalid totalBudget in status for budget $budgetId: ${status.totalBudget}');
+            return null;
+          }
+
+          return status;
+        },
+        error: (failure) {
+          debugPrint('BudgetStatusProvider: ERROR - Failed to calculate budget status for ${budget.id}: ${failure.message}');
+          debugPrint('BudgetStatusProvider: ERROR - Failure type: ${failure.runtimeType}');
+
+          // Enhanced error handling - check for different types of failures
+          if (_isConnectionError(failure)) {
+            debugPrint('BudgetStatusProvider: CONNECTION ERROR detected - returning null to show offline state');
+            return null; // UI will handle this as offline state
+          } else if (_isRetryableError(failure) && attempt < maxRetries) {
+            debugPrint('BudgetStatusProvider: RETRYABLE ERROR detected - will retry');
+            // Don't return, let the loop continue
+            return null; // This will be ignored since we continue
+          } else {
+            debugPrint('BudgetStatusProvider: NON-RETRYABLE ERROR or MAX RETRIES - returning null');
+            // For non-retryable errors or max retries reached, return null
+            return null;
+          }
+        },
+      );
+
+      // If we got a status, return it
+      if (status != null) {
+        return status;
+      }
+      // If status is null and it's retryable, continue to next attempt
+      if (result.isError && _isRetryableError(result.failureOrNull!) && attempt < maxRetries) {
+        await Future.delayed(retryDelay);
+        retryDelay *= 2; // Exponential backoff
+        continue;
+      }
+      // If not retryable or max attempts, return null
+      return null;
+    } catch (e, stack) {
+      debugPrint('BudgetStatusProvider: EXCEPTION - Unexpected error calculating budget status for ${budget.id}: $e');
+      debugPrint('BudgetStatusProvider: EXCEPTION - Stack trace: $stack');
+
+      // Enhanced exception handling
+      if (_isConnectionException(e) && attempt < maxRetries) {
+        debugPrint('BudgetStatusProvider: CONNECTION EXCEPTION detected - retrying in ${retryDelay.inSeconds}s');
+        await Future.delayed(retryDelay);
+        retryDelay *= 2; // Exponential backoff
+        continue; // Retry
+      } else if (_isConnectionException(e)) {
+        debugPrint('BudgetStatusProvider: CONNECTION EXCEPTION detected - max retries reached, returning null');
+        return null; // UI will show offline indicator
+      } else {
+        debugPrint('BudgetStatusProvider: NON-CONNECTION EXCEPTION - rethrowing');
+        rethrow; // Let Riverpod handle unexpected exceptions
+      }
+    }
+  }
+
+  // This should never be reached, but just in case
+  debugPrint('BudgetStatusProvider: Unexpected end of retry loop for budget $budgetId');
+  return null;
+}
+);
+
+/// Helper function to check if failure is connection-related
+bool _isConnectionError(Object failure) {
+  final message = failure.toString().toLowerCase();
+  return message.contains('connection') ||
+         message.contains('network') ||
+         message.contains('timeout') ||
+         message.contains('unreachable') ||
+         message.contains('dns') ||
+         message.contains('socket') ||
+         message.contains('http');
+}
+
+/// Helper function to check if failure is retryable
+bool _isRetryableError(Object failure) {
+  // Most failures are retryable except for data validation errors
+  final message = failure.toString().toLowerCase();
+  return !message.contains('invalid') &&
+          !message.contains('not found') &&
+          !message.contains('unauthorized') &&
+          !message.contains('forbidden') &&
+          !message.contains('permission denied') &&
+          !message.contains('authentication failed');
+}
+
+/// Helper function to check if exception is connection-related
+bool _isConnectionException(Object e) {
+  final errorString = e.toString().toLowerCase();
+  return errorString.contains('connection') ||
+         errorString.contains('network') ||
+         errorString.contains('timeout') ||
+         errorString.contains('socket') ||
+         errorString.contains('unreachable') ||
+         errorString.contains('dns') ||
+         errorString.contains('http');
+}
 
 /// Provider for budget transactions
 final budgetTransactionsProvider = FutureProvider.family<List<dynamic>, String>((ref, budgetId) async {

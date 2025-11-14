@@ -88,29 +88,27 @@ class _StatColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        children: [
-          Text(
-            label,
-            style: AppTypographyExtended.statsLabel,
-          ),
-          const SizedBox(height: 8),
-          TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0.0, end: value),
-            duration: const Duration(milliseconds: 1000),
-            curve: Curves.easeOutCubic,
-            builder: (context, animatedValue, child) {
-              return Text(
-                NumberFormat.currency(symbol: '\$', decimalDigits: 0).format(animatedValue),
-                style: AppTypographyExtended.statsValue.copyWith(
-                  color: color,
-                ),
-              );
-            },
-          ),
-        ],
-      ),
+    return Column(
+      children: [
+        Text(
+          label,
+          style: AppTypographyExtended.statsLabel,
+        ),
+        const SizedBox(height: 8),
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: value),
+          duration: const Duration(milliseconds: 1000),
+          curve: Curves.easeOutCubic,
+          builder: (context, animatedValue, child) {
+            return Text(
+              NumberFormat.currency(symbol: '\$', decimalDigits: 0).format(animatedValue),
+              style: AppTypographyExtended.statsValue.copyWith(
+                color: color,
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 }

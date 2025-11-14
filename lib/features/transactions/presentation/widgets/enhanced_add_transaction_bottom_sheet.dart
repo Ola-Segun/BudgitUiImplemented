@@ -16,12 +16,10 @@ import '../../../../core/design_system/components/enhanced_dropdown_field.dart';
 import '../../../../core/design_system/components/enhanced_switch_field.dart';
 import '../../../../core/design_system/components/category_button_selector.dart';
 import '../../../../core/design_system/components/optional_fields_toggle.dart';
-import '../../../../core/di/providers.dart' as core_providers;
 import '../../domain/entities/transaction.dart';
 import '../providers/transaction_providers.dart';
 import '../../../accounts/presentation/providers/account_providers.dart';
 import '../../../receipt_scanning/domain/entities/receipt_data.dart';
-import '../../../receipt_scanning/domain/repositories/receipt_scanning_repository.dart';
 import 'split_transaction_bottom_sheet.dart';
 
 /// Enhanced add transaction bottom sheet with modern design
