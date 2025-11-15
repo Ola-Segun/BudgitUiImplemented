@@ -27,7 +27,6 @@ import '../widgets/budget_status_banner.dart';
 import '../widgets/budget_metric_cards.dart';
 import '../widgets/budget_stats_row.dart';
 import '../widgets/budget_bar_chart.dart';
-import '../widgets/interactive_budget_chart.dart';
 import '../widgets/budget_category_breakdown_enhanced.dart';
 import 'budget_edit_screen.dart';
 

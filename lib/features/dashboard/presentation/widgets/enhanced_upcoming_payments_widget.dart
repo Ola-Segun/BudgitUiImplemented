@@ -707,8 +707,8 @@ class _EnhancedIncomeCard extends StatelessWidget {
                   label: 'Record receipt for ${incomeStatus.income.name}',
                   button: true,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    constraints: const BoxConstraints(minWidth: 48, minHeight: 36),
                     decoration: BoxDecoration(
                       color: AppColorsExtended.budgetPrimary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),

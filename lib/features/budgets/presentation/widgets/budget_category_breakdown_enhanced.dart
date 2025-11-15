@@ -49,12 +49,6 @@ class _BudgetCategoryBreakdownEnhancedState
 
     try {
       // Validate input data
-      if (widget.budget == null) {
-        debugPrint('BudgetCategoryBreakdownEnhanced: ERROR - Budget status or budget is null');
-        return _buildErrorState('Budget data is missing');
-      }
-
-      // Check for corrupted data
       if (widget.budgetStatus.totalBudget.isNaN || widget.budgetStatus.totalBudget.isInfinite) {
         debugPrint('BudgetCategoryBreakdownEnhanced: ERROR - Invalid total budget: ${widget.budgetStatus.totalBudget}');
         return _buildErrorState('Invalid budget amount data');

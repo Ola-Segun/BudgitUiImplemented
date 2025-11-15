@@ -333,11 +333,11 @@ class _AddTransactionBottomSheetState extends ConsumerState<AddTransactionBottom
               .slideX(begin: 0.1, duration: 400.ms, delay: 600.ms, curve: Curves.easeOutCubic),
             const SizedBox(height: 16),
 
-            // Description Field with animation
+            // Title Field with animation
             TextFormField(
               controller: _descriptionController,
               decoration: const InputDecoration(
-                labelText: 'Description (optional)',
+                labelText: 'Title',
                 hintText: 'e.g., Grocery shopping at Walmart',
               ),
               maxLength: 100,
@@ -359,12 +359,12 @@ class _AddTransactionBottomSheetState extends ConsumerState<AddTransactionBottom
               .slideY(begin: 0.1, duration: 400.ms, delay: 800.ms, curve: Curves.easeOutCubic),
             const SizedBox(height: 16),
 
-            // Note Field with animation
+            // Description Field with animation
             TextFormField(
               controller: _noteController,
               decoration: const InputDecoration(
-                labelText: 'Note (optional)',
-                hintText: 'Additional details...',
+                labelText: 'Description (optional)',
+                hintText: 'Supplementary details...',
               ),
               maxLength: 200,
               maxLines: 2,

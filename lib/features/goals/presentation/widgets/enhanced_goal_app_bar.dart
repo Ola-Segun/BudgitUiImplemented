@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/theme/app_typography_extended.dart';
 import '../../../budgets/presentation/widgets/circular_budget_indicator.dart';
 import '../../domain/entities/goal.dart';
 import '../theme/goals_theme_extended.dart';
