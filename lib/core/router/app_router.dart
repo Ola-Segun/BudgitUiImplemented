@@ -15,7 +15,7 @@ import '../../features/bills/presentation/screens/bill_creation_screen.dart';
 import '../../features/bills/presentation/screens/bill_detail_screen.dart';
 import '../../features/goals/presentation/screens/goals_list_screen.dart';
 import '../../features/goals/presentation/screens/goal_creation_screen.dart';
-import '../../features/goals/presentation/screens/goal_detail_screen.dart';
+import '../../features/goals/presentation/screens/goal_detail_screen_enhanced.dart';
 import '../../features/goals/presentation/screens/goal_template_selection_screen.dart';
 import '../../features/goals/domain/entities/goal_template.dart';
 import '../../features/insights/presentation/screens/insights_dashboard_screen.dart';
@@ -341,7 +341,7 @@ class _GoalDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GoalDetailScreen(goalId: id);
+    return GoalDetailScreenEnhanced(goalId: id);
   }
 }
 

@@ -248,3 +248,14 @@ final goalContributionsProvider = FutureProvider.family<List<dynamic>, String>((
 final goalRepositoryProvider = Provider<GoalRepository>((ref) {
   return ref.read(core_providers.goalRepositoryProvider);
 });
+
+/// Provider for aggregated goal
+final aggregatedGoalProvider = Provider<AsyncValue<Goal?>>((ref) {
+  final goalState = ref.watch(goalNotifierProvider);
+
+  return goalState.when(
+    data: (state) => AsyncValue.data(state.aggregatedGoal),
+    loading: () => const AsyncValue.loading(),
+    error: (error, stack) => AsyncValue.error(error, stack),
+  );
+});

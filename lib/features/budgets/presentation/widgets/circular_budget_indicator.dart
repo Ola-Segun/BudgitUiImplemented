@@ -9,8 +9,8 @@ class CircularBudgetIndicator extends StatefulWidget {
   const CircularBudgetIndicator({
     super.key,
     required this.percentage,
-    required this.spent,
-    required this.total,
+    this.spent,
+    this.total,
     this.size = 200,
     this.strokeWidth = 20,
     this.animationDuration = const Duration(milliseconds: 1500),
@@ -20,10 +20,10 @@ class CircularBudgetIndicator extends StatefulWidget {
   final double percentage;
 
   /// Amount spent
-  final double spent;
+  final double? spent;
 
   /// Total budget amount
-  final double total;
+  final double? total;
 
   /// Size of the circular indicator
   final double size;
@@ -136,31 +136,32 @@ class _CircularBudgetIndicatorState extends State<CircularBudgetIndicator>
                     },
                   ),
                   const SizedBox(height: 4),
-                  TweenAnimationBuilder<double>(
-                    tween: Tween(begin: 0.0, end: widget.spent),
-                    duration: widget.animationDuration,
-                    builder: (context, value, child) {
-                      return RichText(
-                        text: TextSpan(
-                          style: AppTypographyExtended.circularProgressAmount.copyWith(
-                            color: const Color(0xFF6B7280),
-                          ),
-                          children: [
-                            TextSpan(
-                              text: '\$${value.toInt()}',
-                              style: const TextStyle(
-                                color: Color(0xFF0F172A),
-                                fontWeight: FontWeight.w700,
+                  if (widget.spent != null && widget.total != null)
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.0, end: widget.spent!),
+                      duration: widget.animationDuration,
+                      builder: (context, value, child) {
+                        return RichText(
+                          text: TextSpan(
+                            style: AppTypographyExtended.circularProgressAmount.copyWith(
+                              color: const Color(0xFF6B7280),
+                            ),
+                            children: [
+                              TextSpan(
+                                text: '\$${value.toInt()}',
+                                style: const TextStyle(
+                                  color: Color(0xFF0F172A),
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
-                            ),
-                            TextSpan(
-                              text: ' / \$${widget.total.toInt()}',
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                              TextSpan(
+                                text: ' / \$${widget.total!.toInt()}',
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                 ],
               ),
             ],

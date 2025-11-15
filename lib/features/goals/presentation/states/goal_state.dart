@@ -117,6 +117,43 @@ class GoalState with _$GoalState {
     return (totalCurrentAmount / totalTargetAmount).clamp(0.0, 1.0);
   }
 
+  /// Get aggregated goal representing all goals combined
+  Goal? get aggregatedGoal {
+    if (goals.isEmpty) return null;
+
+    // Find earliest creation date and latest deadline
+    final earliestCreated = goals.map((g) => g.createdAt).reduce((a, b) => a.isBefore(b) ? a : b);
+    final latestDeadline = goals.map((g) => g.deadline).reduce((a, b) => a.isAfter(b) ? a : b);
+
+    // Sum all targets and current amounts
+    final totalTarget = totalTargetAmount;
+    final totalCurrent = totalCurrentAmount;
+
+    // Determine priority based on highest priority goal
+    final highestPriority = goals.map((g) => g.priority).reduce((a, b) => a.value > b.value ? a : b);
+
+    // Use a generic category or the most common one
+    final categoryCounts = <String, int>{};
+    for (final goal in goals) {
+      categoryCounts[goal.categoryId] = (categoryCounts[goal.categoryId] ?? 0) + 1;
+    }
+    final mostCommonCategory = categoryCounts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+
+    return Goal(
+      id: 'aggregated_goals',
+      title: 'All Goals Combined',
+      description: 'Aggregated view of all your financial goals',
+      targetAmount: totalTarget,
+      currentAmount: totalCurrent,
+      deadline: latestDeadline,
+      priority: highestPriority,
+      categoryId: mostCommonCategory,
+      createdAt: earliestCreated,
+      updatedAt: DateTime.now(),
+      tags: [],
+    );
+  }
+
   /// Get goals sorted by priority and progress
   List<Goal> get prioritizedGoals {
     final sorted = List<Goal>.from(filteredGoals);

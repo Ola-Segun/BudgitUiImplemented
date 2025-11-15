@@ -108,8 +108,8 @@ class _GoalsListScreenEnhancedState extends ConsumerState<GoalsListScreenEnhance
       return _buildEmptyState();
     }
 
-    final activeGoals = state.goals.where((g) => !g.isCompleted).toList();
-    final featuredGoal = activeGoals.isNotEmpty ? activeGoals.first : state.goals.first;
+    // Use aggregated goal for featured section
+    final featuredGoal = state.aggregatedGoal ?? state.goals.first;
 
     return RefreshIndicator(
       onRefresh: () async {
