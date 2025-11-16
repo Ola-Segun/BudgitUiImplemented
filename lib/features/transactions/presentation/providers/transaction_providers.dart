@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/di/providers.dart' as core_providers;
+import '../../../goals/presentation/providers/goal_providers.dart';
 import '../../domain/entities/transaction.dart';
 import '../../domain/services/category_icon_color_service.dart';
 import '../../domain/usecases/add_transaction.dart';
@@ -84,12 +85,16 @@ final transactionNotifierProvider =
   final updateTransaction = ref.watch(updateTransactionProvider);
   final deleteTransaction = ref.watch(deleteTransactionProvider);
 
+  // Get goal notifier for cross-feature state updates
+  final goalNotifier = ref.watch(goalNotifierProvider.notifier);
+
   return TransactionNotifier(
     getTransactions: getTransactions,
     getPaginatedTransactions: getPaginatedTransactions,
     addTransaction: addTransaction,
     updateTransaction: updateTransaction,
     deleteTransaction: deleteTransaction,
+    goalNotifier: goalNotifier,
   );
 });
 

@@ -4,7 +4,11 @@ import 'package:hive/hive.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../../../../core/storage/hive_storage.dart';
+import '../../../goals/data/models/goal_contribution_dto.dart';
+import '../../../goals/data/models/goal_contribution_mapper.dart';
+import '../../../goals/domain/entities/goal_contribution.dart';
 import '../models/transaction_dto.dart';
+import '../models/transaction_mapper.dart';
 import '../../domain/entities/transaction.dart';
 
 /// Hive-based data source for transaction operations
@@ -112,7 +116,13 @@ class TransactionHiveDataSource {
       }
 
       final dtos = _box!.values.toList();
-      final transactions = dtos.map((dto) => dto.toDomain()).toList();
+      final transactions = <Transaction>[];
+
+      for (final dto in dtos) {
+        final allocations = await _getGoalAllocations(dto.goalAllocationIds);
+        final transaction = TransactionMapper.toDomainWithAllocations(dto, allocations);
+        transactions.add(transaction);
+      }
 
       // Sort by date (newest first)
       transactions.sort((a, b) => b.date.compareTo(a.date));
@@ -329,5 +339,31 @@ class TransactionHiveDataSource {
   Future<void> close() async {
     await _box?.close();
     _box = null;
+  }
+
+  /// Get goal allocations for a transaction
+  Future<List<GoalContribution>?> _getGoalAllocations(List<String>? allocationIds) async {
+    if (allocationIds == null || allocationIds.isEmpty) {
+      return null;
+    }
+
+    try {
+      // Import the contribution box dynamically to avoid circular dependencies
+      final contributionBox = await Hive.openBox('goal_contributions');
+      final allocations = <GoalContribution>[];
+
+      for (final id in allocationIds) {
+        final data = contributionBox.get(id);
+        if (data != null && data is GoalContributionDto) {
+          allocations.add(data.toDomain());
+        }
+      }
+
+      await contributionBox.close();
+      return allocations.isEmpty ? null : allocations;
+    } catch (e) {
+      debugPrint('Failed to load goal allocations: $e');
+      return null;
+    }
   }
 }

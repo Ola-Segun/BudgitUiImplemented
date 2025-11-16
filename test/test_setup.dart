@@ -21,7 +21,7 @@ import 'package:budget_tracker/features/seasonal_analysis/domain/entities/season
 import 'package:budget_tracker/features/settings/domain/entities/settings.dart';
 import 'package:budget_tracker/features/transactions/domain/entities/transaction.dart';
 
-/// Common test setup for providing dummy values for Mockito Result<T> types
+// Common test setup for providing dummy values for Mockito Result<T> types
 void setupMockitoDummies() {
   // Primitive types
   provideDummy<Result<void>>(Result.error(Failure.unknown('dummy')));

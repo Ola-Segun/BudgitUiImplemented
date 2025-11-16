@@ -1,6 +1,11 @@
+import 'package:hive/hive.dart';
+
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../../../accounts/domain/repositories/account_repository.dart';
+import '../../../goals/data/models/goal_contribution_dto.dart';
+import '../../../goals/data/models/goal_contribution_mapper.dart';
+import '../../../goals/domain/entities/goal_contribution.dart';
 import '../../domain/entities/transaction.dart';
 import '../../domain/entities/transaction_filter.dart';
 import '../../domain/repositories/transaction_repository.dart';
@@ -9,10 +14,15 @@ import '../datasources/transaction_category_hive_datasource.dart';
 
 /// Implementation of TransactionRepository using Hive data source
 class TransactionRepositoryImpl implements TransactionRepository {
-  const TransactionRepositoryImpl(this._dataSource, this._accountRepository);
+  const TransactionRepositoryImpl(
+    this._dataSource,
+    this._accountRepository,
+    this._contributionBox,
+  );
 
   final TransactionHiveDataSource _dataSource;
   final AccountRepository _accountRepository;
+  final Box<GoalContributionDto> _contributionBox;
 
   @override
   Future<Result<List<Transaction>>> getAll() => _dataSource.getAll();
@@ -407,6 +417,26 @@ class TransactionRepositoryImpl implements TransactionRepository {
     } catch (e) {
       // Silently fail - usage tracking is not critical
       return;
+    }
+  }
+
+  /// Get goal allocations for a transaction
+  Future<List<GoalContribution>?> _getGoalAllocations(List<String>? allocationIds) async {
+    if (allocationIds == null || allocationIds.isEmpty) {
+      return null;
+    }
+
+    try {
+      final allocations = allocationIds
+          .map((id) => _contributionBox.get(id))
+          .whereType<GoalContributionDto>()
+          .map(GoalContributionMapper.toDomain)
+          .toList();
+
+      return allocations;
+    } catch (e) {
+      // Silently fail goal allocations loading - don't fail the transaction loading
+      return null;
     }
   }
 

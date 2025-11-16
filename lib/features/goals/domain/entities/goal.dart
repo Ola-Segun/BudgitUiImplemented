@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'goal_contribution.dart';
+
 part 'goal.freezed.dart';
 
 /// Goal entity - represents a financial goal
@@ -18,6 +20,7 @@ class Goal with _$Goal {
     required DateTime createdAt,
     required DateTime updatedAt,
     @Default([]) List<String> tags,
+    @Default([]) List<GoalContribution> contributions,
   }) = _Goal;
 
   const Goal._();
@@ -46,6 +49,29 @@ class Goal with _$Goal {
 
   /// Alias for deadline (used in some calculations)
   DateTime get targetDate => deadline;
+
+  /// Calculate percentage complete (0.0 to 1.0)
+  double get percentageComplete => (currentAmount / targetAmount).clamp(0.0, 1.0);
+
+  /// Check if goal is on track based on time elapsed
+  bool get isOnTrack {
+    final daysElapsed = DateTime.now().difference(createdAt).inDays;
+    final totalDays = deadline.difference(createdAt).inDays;
+
+    if (totalDays == 0) return currentAmount >= targetAmount;
+
+    final expectedPercentage = (daysElapsed / totalDays) * 100;
+    return percentageComplete >= expectedPercentage;
+  }
+
+  /// Calculate monthly contribution needed to meet deadline
+  double get monthlyContributionNeeded {
+    final remaining = remainingAmount;
+    final monthsLeft = deadline.difference(DateTime.now()).inDays / 30;
+
+    if (monthsLeft <= 0) return remaining;
+    return remaining / monthsLeft;
+  }
 
   /// Calculate projected completion date based on current progress
   DateTime? get projectedCompletionDate {

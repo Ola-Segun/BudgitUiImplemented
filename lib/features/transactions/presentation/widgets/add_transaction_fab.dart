@@ -24,24 +24,18 @@ class AddTransactionFAB extends ConsumerWidget {
   }
 
   Future<void> _showAddTransactionSheet(BuildContext context, WidgetRef ref) async {
-    print('DEBUG: AddTransactionFAB tapped - showing bottom sheet directly');
     await EnhancedAddTransactionBottomSheet.show(
       context: context,
       onSubmit: (transaction) async {
-        print('DEBUG: Transaction submitted from bottom sheet');
-        print('DEBUG: Transaction details - ID: ${transaction.id}, Amount: ${transaction.amount}, Type: ${transaction.type}, Category: ${transaction.categoryId}, Account: ${transaction.accountId}');
         final success = await ref
             .read(transactionNotifierProvider.notifier)
             .addTransaction(transaction);
-        print('DEBUG: Add transaction result: $success');
         if (success && context.mounted) {
-          print('DEBUG: Transaction added successfully');
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Transaction added successfully')),
           );
         } else {
-          print('DEBUG: Transaction addition failed or context not mounted');
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Failed to add transaction')),
@@ -50,6 +44,5 @@ class AddTransactionFAB extends ConsumerWidget {
         }
       },
     );
-    print('DEBUG: Bottom sheet dismissed');
   }
 }

@@ -20,7 +20,9 @@ import '../../domain/entities/transaction.dart';
 import '../providers/transaction_providers.dart';
 import '../../../accounts/presentation/providers/account_providers.dart';
 import '../../../receipt_scanning/domain/entities/receipt_data.dart';
+import '../../../goals/domain/entities/goal_contribution.dart';
 import 'split_transaction_bottom_sheet.dart';
+import 'goal_allocation_section.dart';
 
 /// Enhanced add transaction bottom sheet with modern design
 class EnhancedAddTransactionBottomSheet extends ConsumerWidget {
@@ -109,6 +111,9 @@ class _EnhancedAddTransactionBottomSheetState
   bool _showOptionalFields = false;
   final bool _isRecurring = false;
 
+  // Goal allocation state
+  List<GoalContribution> _goalAllocations = [];
+
   // Receipt scanning integration
   ReceiptData? _scannedReceiptData;
   bool _isProcessingReceipt = false;
@@ -117,14 +122,22 @@ class _EnhancedAddTransactionBottomSheetState
   void initState() {
     super.initState();
     _selectedType = widget.initialType ?? TransactionType.expense;
+    // Add listener to amount controller to trigger rebuilds when amount changes
+    _amountController.addListener(_onAmountChanged);
   }
 
   @override
   void dispose() {
+    _amountController.removeListener(_onAmountChanged);
     _amountController.dispose();
     _descriptionController.dispose();
     _noteController.dispose();
     super.dispose();
+  }
+
+  void _onAmountChanged() {
+    // Trigger rebuild when amount changes to show/hide goal allocation section
+    setState(() {});
   }
 
   @override
@@ -317,7 +330,7 @@ class _EnhancedAddTransactionBottomSheetState
             // Description Field
             EnhancedTextField(
               controller: _descriptionController,
-              label: 'Description (optional)',
+              label: 'Title (optional)',
               hint: 'e.g., Grocery shopping at Walmart',
               prefix: Icon(
                 Icons.description_outlined,
@@ -350,7 +363,7 @@ class _EnhancedAddTransactionBottomSheetState
             // Note Field
             EnhancedTextField(
               controller: _noteController,
-              label: 'Note (optional)',
+              label: 'Description (optional)',
               hint: 'Additional details...',
               maxLines: 3,
               maxLength: 200,
@@ -362,6 +375,32 @@ class _EnhancedAddTransactionBottomSheetState
           ],
 
           SizedBox(height: FormTokens.fieldGapMd),
+
+          // Goal Allocation Section (only for income transactions with valid amount)
+          if (_selectedType == TransactionType.income) ...[
+            Builder(
+              builder: (context) {
+                final amount = double.tryParse(_amountController.text) ?? 0;
+                // Only show goal allocation if amount is valid and positive
+                if (amount <= 0) {
+                  return const SizedBox.shrink();
+                }
+                return GoalAllocationSection(
+                  transactionAmount: amount,
+                  transactionType: _selectedType,
+                  onAllocationsChanged: (allocations) {
+                    setState(() {
+                      _goalAllocations = allocations;
+                    });
+                  },
+                ).animate()
+                  .fadeIn(duration: DesignTokens.durationNormal, delay: 800.ms)
+                  .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 800.ms);
+              },
+            ),
+
+            SizedBox(height: FormTokens.fieldGapMd),
+          ],
 
           // Split Transaction Toggle
           EnhancedSwitchField(
@@ -394,8 +433,8 @@ class _EnhancedAddTransactionBottomSheetState
               }
             },
           ).animate()
-            .fadeIn(duration: DesignTokens.durationNormal, delay: 800.ms)
-            .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 800.ms),
+            .fadeIn(duration: DesignTokens.durationNormal, delay: 900.ms)
+            .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 900.ms),
 
           SizedBox(height: FormTokens.fieldGapMd),
 
@@ -876,6 +915,7 @@ class _EnhancedAddTransactionBottomSheetState
         description: _noteController.text.isNotEmpty
             ? _noteController.text
             : null,
+        goalAllocations: _goalAllocations.isNotEmpty ? _goalAllocations : null,
       );
 
       await widget.onSubmit(transaction);

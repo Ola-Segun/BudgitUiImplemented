@@ -237,7 +237,6 @@ class _AddContributionBottomSheetState extends State<AddContributionBottomSheet>
         amount: amount,
         date: _selectedDate,
         note: _noteController.text.isNotEmpty ? _noteController.text : null,
-        createdAt: DateTime.now(),
       );
 
       await widget.onSubmit(contribution);

@@ -21,10 +21,10 @@ class GoalContributionDto extends HiveObject {
   late DateTime date;
 
   @HiveField(4)
-  String? note;
+  String? transactionId;
 
   @HiveField(5)
-  late DateTime createdAt;
+  String? note;
 
   /// Default constructor
   GoalContributionDto();
@@ -35,8 +35,8 @@ class GoalContributionDto extends HiveObject {
     goalId = contribution.goalId;
     amount = contribution.amount;
     date = contribution.date;
+    transactionId = contribution.transactionId;
     note = contribution.note;
-    createdAt = contribution.createdAt;
   }
 
   /// Convert to domain entity
@@ -46,8 +46,8 @@ class GoalContributionDto extends HiveObject {
       goalId: goalId,
       amount: amount,
       date: date,
+      transactionId: transactionId,
       note: note,
-      createdAt: createdAt,
     );
   }
 }

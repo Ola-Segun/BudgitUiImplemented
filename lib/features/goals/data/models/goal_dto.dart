@@ -41,6 +41,9 @@ class GoalDto extends HiveObject {
   @HiveField(10)
   List<String>? tags;
 
+  @HiveField(11)
+  List<String>? contributionIds;
+
   /// Default constructor
   GoalDto();
 
@@ -57,6 +60,7 @@ class GoalDto extends HiveObject {
     createdAt = goal.createdAt;
     updatedAt = goal.updatedAt;
     tags = goal.tags;
+    contributionIds = goal.contributions.map((c) => c.id).toList();
   }
 
   /// Convert to domain entity
@@ -76,6 +80,7 @@ class GoalDto extends HiveObject {
       createdAt: createdAt,
       updatedAt: updatedAt,
       tags: tags ?? [],
+      contributions: [], // Will be populated by repository
     );
   }
 }

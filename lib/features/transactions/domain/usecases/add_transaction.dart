@@ -3,6 +3,9 @@ import 'dart:developer' as developer;
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../../../accounts/domain/repositories/account_repository.dart';
+import '../../../goals/domain/entities/goal_contribution.dart';
+import '../../../goals/domain/repositories/goal_repository.dart';
+import '../../../goals/domain/usecases/add_goal_contribution.dart';
 import '../entities/transaction.dart';
 import '../repositories/transaction_repository.dart';
 
@@ -12,10 +15,12 @@ class AddTransaction {
   const AddTransaction(
     this._transactionRepository,
     this._accountRepository,
+    this._addGoalContribution,
   );
 
   final TransactionRepository _transactionRepository;
   final AccountRepository _accountRepository;
+  final AddGoalContribution _addGoalContribution;
 
   /// Execute the use case with immediate balance updates
   /// Follows Eager Update strategy: add transaction then update balances
@@ -50,6 +55,15 @@ class AddTransaction {
         // For now, log the error but return success since transaction was added
         // In production, implement proper transaction rollback
         return Result.error(balanceUpdateResult.failureOrNull!);
+      }
+
+      // 5. Handle goal allocations for income transactions
+      if (addedTransaction.isIncome && addedTransaction.goalAllocations != null && addedTransaction.goalAllocations!.isNotEmpty) {
+        final goalAllocationResult = await _processGoalAllocations(addedTransaction);
+        if (goalAllocationResult.isError) {
+          // Log error but don't fail the transaction - goal allocation is secondary
+          developer.log('Failed to process goal allocations: ${goalAllocationResult.failureOrNull!.message}');
+        }
       }
 
       return txResult;
@@ -248,5 +262,35 @@ class AddTransaction {
       success: (_) => Result.success(null),
       error: (failure) => Result.error(failure),
     );
+  }
+
+  /// Process goal allocations for income transactions
+  Future<Result<void>> _processGoalAllocations(Transaction transaction) async {
+    if (transaction.goalAllocations == null || transaction.goalAllocations!.isEmpty) {
+      return Result.success(null);
+    }
+
+    try {
+      for (final allocation in transaction.goalAllocations!) {
+        // Create goal contribution from allocation
+        final contribution = GoalContribution(
+          id: allocation.id,
+          goalId: allocation.goalId,
+          amount: allocation.amount,
+          date: transaction.date,
+          transactionId: transaction.id,
+        );
+
+        final result = await _addGoalContribution(contribution);
+        if (result.isError) {
+          developer.log('Failed to add goal contribution for goal ${allocation.goalId}: ${result.failureOrNull!.message}');
+          // Continue processing other allocations even if one fails
+        }
+      }
+
+      return Result.success(null);
+    } catch (e) {
+      return Result.error(Failure.unknown('Failed to process goal allocations: $e'));
+    }
   }
 }

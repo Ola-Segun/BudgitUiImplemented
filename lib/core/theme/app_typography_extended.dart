@@ -42,7 +42,7 @@ class AppTypographyExtended {
     fontSize: 14,
     fontWeight: FontWeight.w500,
     height: 1.4,
-    color: Colors.white.withOpacity(0.9),
+    color: Colors.white.withValues(alpha: 0.9),
   );
 
   /// Account name - Card titles

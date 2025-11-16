@@ -21,8 +21,8 @@ class GoalContributionDtoAdapter extends TypeAdapter<GoalContributionDto> {
       ..goalId = fields[1] as String
       ..amount = fields[2] as double
       ..date = fields[3] as DateTime
-      ..note = fields[4] as String?
-      ..createdAt = fields[5] as DateTime;
+      ..transactionId = fields[4] as String?
+      ..note = fields[5] as String?;
   }
 
   @override
@@ -38,9 +38,9 @@ class GoalContributionDtoAdapter extends TypeAdapter<GoalContributionDto> {
       ..writeByte(3)
       ..write(obj.date)
       ..writeByte(4)
-      ..write(obj.note)
+      ..write(obj.transactionId)
       ..writeByte(5)
-      ..write(obj.createdAt);
+      ..write(obj.note);
   }
 
   @override

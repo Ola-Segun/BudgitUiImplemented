@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
+import '../../../transactions/domain/entities/transaction.dart';
 import '../../../transactions/domain/repositories/transaction_category_repository.dart';
 import '../../domain/entities/goal.dart';
 import '../../domain/entities/goal_contribution.dart';
@@ -100,5 +102,68 @@ class GoalRepositoryImpl implements GoalRepository {
         return categoryId;
       },
     );
+  }
+
+  @override
+  Future<Result<List<Goal>>> getEligibleForAllocation(
+    double amount,
+    TransactionType transactionType,
+  ) async {
+    try {
+      // Get all active goals
+      final activeGoals = await _dataSource.getActive();
+
+      return activeGoals.when(
+        success: (goals) {
+          // Filter based on transaction type and other criteria
+          final eligible = goals.where((goal) {
+            // Only show for income transactions
+            if (transactionType != TransactionType.income) {
+              return false;
+            }
+
+            // Don't show completed goals
+            if (goal.isCompleted) {
+              return false;
+            }
+
+            // Don't show if goal needs less than $1
+            if (goal.remainingAmount < 1) {
+              return false;
+            }
+
+            return true;
+          }).toList();
+
+          // Sort by priority and progress
+          eligible.sort((a, b) {
+            // High priority first
+            final priorityCompare = _comparePriority(a.priority, b.priority);
+            if (priorityCompare != 0) return priorityCompare;
+
+            // Then by closest to completion
+            return b.percentageComplete.compareTo(a.percentageComplete);
+          });
+
+          return Result.success(eligible);
+        },
+        error: (failure) => Result.error(failure),
+      );
+    } catch (e) {
+      return Result.error(
+        Failure.unknown('Failed to get eligible goals: $e'),
+      );
+    }
+  }
+
+  int _comparePriority(GoalPriority? a, GoalPriority? b) {
+    const priorities = {
+      GoalPriority.high: 3,
+      GoalPriority.medium: 2,
+      GoalPriority.low: 1,
+      null: 0,
+    };
+
+    return priorities[b]!.compareTo(priorities[a]!);
   }
 }

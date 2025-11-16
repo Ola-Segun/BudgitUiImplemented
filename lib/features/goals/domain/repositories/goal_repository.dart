@@ -1,4 +1,5 @@
 import '../../../../core/error/result.dart';
+import '../../../transactions/domain/entities/transaction.dart';
 import '../entities/goal.dart';
 import '../entities/goal_contribution.dart';
 import '../entities/goal_progress.dart';
@@ -53,4 +54,10 @@ abstract class GoalRepository {
 
   /// Get all goals with category names resolved
   Future<Result<List<Goal>>> getAllWithCategories();
+
+  /// Get eligible goals for allocation based on transaction amount and type
+  Future<Result<List<Goal>>> getEligibleForAllocation(
+    double amount,
+    TransactionType transactionType,
+  );
 }

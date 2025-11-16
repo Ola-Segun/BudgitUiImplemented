@@ -115,6 +115,6 @@ class AppColors {
 
   /// Get category color with opacity for backgrounds
   static Color getCategoryBackground(String category, {double opacity = 0.1}) {
-    return getCategoryColor(category).withOpacity(opacity);
+    return getCategoryColor(category).withValues(alpha: opacity);
   }
 }

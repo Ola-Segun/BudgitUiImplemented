@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../goals/presentation/notifiers/goal_notifier.dart';
 import '../../domain/entities/transaction.dart';
 import '../../domain/entities/transaction_filter.dart';
 import '../../domain/usecases/add_transaction.dart';
@@ -17,6 +18,7 @@ class TransactionNotifier extends StateNotifier<AsyncValue<TransactionState>> {
   final AddTransaction _addTransaction;
   final UpdateTransaction _updateTransaction;
   final DeleteTransaction _deleteTransaction;
+  final GoalNotifier? _goalNotifier;
 
   TransactionNotifier({
     required GetTransactions getTransactions,
@@ -24,11 +26,13 @@ class TransactionNotifier extends StateNotifier<AsyncValue<TransactionState>> {
     required AddTransaction addTransaction,
     required UpdateTransaction updateTransaction,
     required DeleteTransaction deleteTransaction,
+    GoalNotifier? goalNotifier,
   })  : _getTransactions = getTransactions,
         _getPaginatedTransactions = getPaginatedTransactions,
         _addTransaction = addTransaction,
         _updateTransaction = updateTransaction,
         _deleteTransaction = deleteTransaction,
+        _goalNotifier = goalNotifier,
         super(const AsyncValue.loading()) {
     loadTransactions();
   }
@@ -154,6 +158,13 @@ class TransactionNotifier extends StateNotifier<AsyncValue<TransactionState>> {
         // Reload transactions to ensure consistency with pagination and filters
         // Use initializeWithPagination to maintain pagination state
         initializeWithPagination();
+
+        // Refresh goals if transaction has goal allocations
+        if (addedTransaction.goalAllocations != null && addedTransaction.goalAllocations!.isNotEmpty && _goalNotifier != null) {
+          debugPrint('TransactionNotifier: Transaction has goal allocations, refreshing goals');
+          _goalNotifier!.loadGoals();
+        }
+
         debugPrint('TransactionNotifier: Transactions reloaded after successful addition');
         return true;
       },

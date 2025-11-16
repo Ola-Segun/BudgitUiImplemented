@@ -27,6 +27,8 @@ mixin _$Goal {
   DateTime get createdAt => throw _privateConstructorUsedError;
   DateTime get updatedAt => throw _privateConstructorUsedError;
   List<String> get tags => throw _privateConstructorUsedError;
+  List<GoalContribution> get contributions =>
+      throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $GoalCopyWith<Goal> get copyWith => throw _privateConstructorUsedError;
@@ -48,7 +50,8 @@ abstract class $GoalCopyWith<$Res> {
       String categoryId,
       DateTime createdAt,
       DateTime updatedAt,
-      List<String> tags});
+      List<String> tags,
+      List<GoalContribution> contributions});
 }
 
 /// @nodoc
@@ -75,6 +78,7 @@ class _$GoalCopyWithImpl<$Res, $Val extends Goal>
     Object? createdAt = null,
     Object? updatedAt = null,
     Object? tags = null,
+    Object? contributions = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -121,6 +125,10 @@ class _$GoalCopyWithImpl<$Res, $Val extends Goal>
           ? _value.tags
           : tags // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      contributions: null == contributions
+          ? _value.contributions
+          : contributions // ignore: cast_nullable_to_non_nullable
+              as List<GoalContribution>,
     ) as $Val);
   }
 }
@@ -143,7 +151,8 @@ abstract class _$$GoalImplCopyWith<$Res> implements $GoalCopyWith<$Res> {
       String categoryId,
       DateTime createdAt,
       DateTime updatedAt,
-      List<String> tags});
+      List<String> tags,
+      List<GoalContribution> contributions});
 }
 
 /// @nodoc
@@ -167,6 +176,7 @@ class __$$GoalImplCopyWithImpl<$Res>
     Object? createdAt = null,
     Object? updatedAt = null,
     Object? tags = null,
+    Object? contributions = null,
   }) {
     return _then(_$GoalImpl(
       id: null == id
@@ -213,6 +223,10 @@ class __$$GoalImplCopyWithImpl<$Res>
           ? _value._tags
           : tags // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      contributions: null == contributions
+          ? _value._contributions
+          : contributions // ignore: cast_nullable_to_non_nullable
+              as List<GoalContribution>,
     ));
   }
 }
@@ -231,8 +245,10 @@ class _$GoalImpl extends _Goal {
       required this.categoryId,
       required this.createdAt,
       required this.updatedAt,
-      final List<String> tags = const []})
+      final List<String> tags = const [],
+      final List<GoalContribution> contributions = const []})
       : _tags = tags,
+        _contributions = contributions,
         super._();
 
   @override
@@ -264,9 +280,18 @@ class _$GoalImpl extends _Goal {
     return EqualUnmodifiableListView(_tags);
   }
 
+  final List<GoalContribution> _contributions;
+  @override
+  @JsonKey()
+  List<GoalContribution> get contributions {
+    if (_contributions is EqualUnmodifiableListView) return _contributions;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_contributions);
+  }
+
   @override
   String toString() {
-    return 'Goal(id: $id, title: $title, description: $description, targetAmount: $targetAmount, currentAmount: $currentAmount, deadline: $deadline, priority: $priority, categoryId: $categoryId, createdAt: $createdAt, updatedAt: $updatedAt, tags: $tags)';
+    return 'Goal(id: $id, title: $title, description: $description, targetAmount: $targetAmount, currentAmount: $currentAmount, deadline: $deadline, priority: $priority, categoryId: $categoryId, createdAt: $createdAt, updatedAt: $updatedAt, tags: $tags, contributions: $contributions)';
   }
 
   @override
@@ -292,7 +317,9 @@ class _$GoalImpl extends _Goal {
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
                 other.updatedAt == updatedAt) &&
-            const DeepCollectionEquality().equals(other._tags, _tags));
+            const DeepCollectionEquality().equals(other._tags, _tags) &&
+            const DeepCollectionEquality()
+                .equals(other._contributions, _contributions));
   }
 
   @override
@@ -308,7 +335,8 @@ class _$GoalImpl extends _Goal {
       categoryId,
       createdAt,
       updatedAt,
-      const DeepCollectionEquality().hash(_tags));
+      const DeepCollectionEquality().hash(_tags),
+      const DeepCollectionEquality().hash(_contributions));
 
   @JsonKey(ignore: true)
   @override
@@ -329,7 +357,8 @@ abstract class _Goal extends Goal {
       required final String categoryId,
       required final DateTime createdAt,
       required final DateTime updatedAt,
-      final List<String> tags}) = _$GoalImpl;
+      final List<String> tags,
+      final List<GoalContribution> contributions}) = _$GoalImpl;
   const _Goal._() : super._();
 
   @override
@@ -354,6 +383,8 @@ abstract class _Goal extends Goal {
   DateTime get updatedAt;
   @override
   List<String> get tags;
+  @override
+  List<GoalContribution> get contributions;
   @override
   @JsonKey(ignore: true)
   _$$GoalImplCopyWith<_$GoalImpl> get copyWith =>

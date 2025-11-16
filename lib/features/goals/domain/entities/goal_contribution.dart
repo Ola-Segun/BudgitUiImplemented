@@ -11,8 +11,8 @@ class GoalContribution with _$GoalContribution {
     required String goalId,
     required double amount,
     required DateTime date,
+    String? transactionId, // Link to source transaction
     String? note,
-    required DateTime createdAt,
   }) = _GoalContribution;
 
   const GoalContribution._();

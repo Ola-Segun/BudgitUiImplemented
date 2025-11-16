@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/goal.dart';
 import '../../domain/entities/goal_contribution.dart';
+import '../../domain/usecases/add_goal_contribution.dart';
 import '../../domain/usecases/create_goal.dart';
 import '../../domain/usecases/delete_goal.dart';
 import '../../domain/usecases/get_goals.dart';
@@ -176,7 +177,9 @@ class GoalNotifier extends StateNotifier<AsyncValue<GoalState>> {
     final currentState = state.value;
     if (currentState == null) return false;
 
-    final result = await _addGoalContribution(goalId, contribution);
+    // Ensure the contribution has the correct goal ID
+    final contributionWithId = contribution.copyWith(goalId: goalId);
+    final result = await _addGoalContribution(contributionWithId);
 
     return result.when(
       success: (updatedGoal) {

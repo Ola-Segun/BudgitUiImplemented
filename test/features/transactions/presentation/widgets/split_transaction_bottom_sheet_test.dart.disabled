@@ -6,15 +6,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 
-import '../../../../test_setup.dart';
-import '../../../accounts/domain/entities/account.dart';
-import '../../../accounts/presentation/providers/account_providers.dart';
-import '../../domain/entities/split_transaction.dart';
-import '../../domain/entities/transaction.dart';
-import '../../presentation/notifiers/category_notifier.dart';
-import '../../presentation/notifiers/transaction_notifier.dart';
-import '../../presentation/providers/transaction_providers.dart';
-import '../../presentation/widgets/split_transaction_bottom_sheet.dart';
+import 'package:budget_tracker/test_setup.dart';
+import 'package:budget_tracker/features/accounts/domain/entities/account.dart';
+import 'package:budget_tracker/features/accounts/presentation/providers/account_providers.dart';
+import 'package:budget_tracker/features/transactions/domain/entities/split_transaction.dart';
+import 'package:budget_tracker/features/transactions/domain/entities/transaction.dart';
+import 'package:budget_tracker/features/transactions/presentation/notifiers/category_notifier.dart';
+import 'package:budget_tracker/features/transactions/presentation/notifiers/transaction_notifier.dart';
+import 'package:budget_tracker/features/transactions/presentation/providers/transaction_providers.dart';
+import 'package:budget_tracker/features/transactions/presentation/widgets/split_transaction_bottom_sheet.dart';
 
 class MockTransactionNotifier extends Mock implements TransactionNotifier {}
 

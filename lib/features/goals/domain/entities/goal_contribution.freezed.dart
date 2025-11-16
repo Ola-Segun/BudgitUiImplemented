@@ -20,8 +20,9 @@ mixin _$GoalContribution {
   String get goalId => throw _privateConstructorUsedError;
   double get amount => throw _privateConstructorUsedError;
   DateTime get date => throw _privateConstructorUsedError;
+  String? get transactionId =>
+      throw _privateConstructorUsedError; // Link to source transaction
   String? get note => throw _privateConstructorUsedError;
-  DateTime get createdAt => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $GoalContributionCopyWith<GoalContribution> get copyWith =>
@@ -39,8 +40,8 @@ abstract class $GoalContributionCopyWith<$Res> {
       String goalId,
       double amount,
       DateTime date,
-      String? note,
-      DateTime createdAt});
+      String? transactionId,
+      String? note});
 }
 
 /// @nodoc
@@ -60,8 +61,8 @@ class _$GoalContributionCopyWithImpl<$Res, $Val extends GoalContribution>
     Object? goalId = null,
     Object? amount = null,
     Object? date = null,
+    Object? transactionId = freezed,
     Object? note = freezed,
-    Object? createdAt = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -80,14 +81,14 @@ class _$GoalContributionCopyWithImpl<$Res, $Val extends GoalContribution>
           ? _value.date
           : date // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      transactionId: freezed == transactionId
+          ? _value.transactionId
+          : transactionId // ignore: cast_nullable_to_non_nullable
+              as String?,
       note: freezed == note
           ? _value.note
           : note // ignore: cast_nullable_to_non_nullable
               as String?,
-      createdAt: null == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
     ) as $Val);
   }
 }
@@ -105,8 +106,8 @@ abstract class _$$GoalContributionImplCopyWith<$Res>
       String goalId,
       double amount,
       DateTime date,
-      String? note,
-      DateTime createdAt});
+      String? transactionId,
+      String? note});
 }
 
 /// @nodoc
@@ -124,8 +125,8 @@ class __$$GoalContributionImplCopyWithImpl<$Res>
     Object? goalId = null,
     Object? amount = null,
     Object? date = null,
+    Object? transactionId = freezed,
     Object? note = freezed,
-    Object? createdAt = null,
   }) {
     return _then(_$GoalContributionImpl(
       id: null == id
@@ -144,14 +145,14 @@ class __$$GoalContributionImplCopyWithImpl<$Res>
           ? _value.date
           : date // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      transactionId: freezed == transactionId
+          ? _value.transactionId
+          : transactionId // ignore: cast_nullable_to_non_nullable
+              as String?,
       note: freezed == note
           ? _value.note
           : note // ignore: cast_nullable_to_non_nullable
               as String?,
-      createdAt: null == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
     ));
   }
 }
@@ -164,8 +165,8 @@ class _$GoalContributionImpl extends _GoalContribution {
       required this.goalId,
       required this.amount,
       required this.date,
-      this.note,
-      required this.createdAt})
+      this.transactionId,
+      this.note})
       : super._();
 
   @override
@@ -177,13 +178,14 @@ class _$GoalContributionImpl extends _GoalContribution {
   @override
   final DateTime date;
   @override
-  final String? note;
+  final String? transactionId;
+// Link to source transaction
   @override
-  final DateTime createdAt;
+  final String? note;
 
   @override
   String toString() {
-    return 'GoalContribution(id: $id, goalId: $goalId, amount: $amount, date: $date, note: $note, createdAt: $createdAt)';
+    return 'GoalContribution(id: $id, goalId: $goalId, amount: $amount, date: $date, transactionId: $transactionId, note: $note)';
   }
 
   @override
@@ -195,14 +197,14 @@ class _$GoalContributionImpl extends _GoalContribution {
             (identical(other.goalId, goalId) || other.goalId == goalId) &&
             (identical(other.amount, amount) || other.amount == amount) &&
             (identical(other.date, date) || other.date == date) &&
-            (identical(other.note, note) || other.note == note) &&
-            (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt));
+            (identical(other.transactionId, transactionId) ||
+                other.transactionId == transactionId) &&
+            (identical(other.note, note) || other.note == note));
   }
 
   @override
   int get hashCode =>
-      Object.hash(runtimeType, id, goalId, amount, date, note, createdAt);
+      Object.hash(runtimeType, id, goalId, amount, date, transactionId, note);
 
   @JsonKey(ignore: true)
   @override
@@ -218,8 +220,8 @@ abstract class _GoalContribution extends GoalContribution {
       required final String goalId,
       required final double amount,
       required final DateTime date,
-      final String? note,
-      required final DateTime createdAt}) = _$GoalContributionImpl;
+      final String? transactionId,
+      final String? note}) = _$GoalContributionImpl;
   const _GoalContribution._() : super._();
 
   @override
@@ -231,9 +233,9 @@ abstract class _GoalContribution extends GoalContribution {
   @override
   DateTime get date;
   @override
+  String? get transactionId;
+  @override // Link to source transaction
   String? get note;
-  @override
-  DateTime get createdAt;
   @override
   @JsonKey(ignore: true)
   _$$GoalContributionImplCopyWith<_$GoalContributionImpl> get copyWith =>

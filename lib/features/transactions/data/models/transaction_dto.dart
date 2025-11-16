@@ -1,5 +1,6 @@
 import 'package:hive/hive.dart';
 
+import '../../../goals/domain/entities/goal_contribution.dart';
 import '../../domain/entities/transaction.dart';
 
 part 'transaction_dto.g.dart';
@@ -47,6 +48,9 @@ class TransactionDto extends HiveObject {
   @HiveField(12)
   late String currencyCode;
 
+  @HiveField(13)
+  List<String>? goalAllocationIds; // References to goal contributions
+
   /// Default constructor
   TransactionDto();
 
@@ -65,6 +69,7 @@ class TransactionDto extends HiveObject {
     receiptUrl = transaction.receiptUrl;
     tags = transaction.tags;
     currencyCode = transaction.currencyCode ?? 'USD';
+    goalAllocationIds = transaction.goalAllocations?.map((a) => a.id).toList();
   }
 
   /// Convert to domain entity
@@ -86,6 +91,31 @@ class TransactionDto extends HiveObject {
       receiptUrl: receiptUrl,
       tags: tags ?? [],
       currencyCode: currencyCode,
+      goalAllocations: null, // Will be populated by repository
+    );
+  }
+
+  /// Convert to domain entity with goal allocations
+  /// Used by repository to populate goal allocations after loading
+  Transaction toDomainWithAllocations(List<GoalContribution>? allocations) {
+    return Transaction(
+      id: id,
+      title: title,
+      amount: amount,
+      type: TransactionType.values.firstWhere(
+        (e) => e.name == type,
+        orElse: () => TransactionType.expense, // Default fallback
+      ),
+      date: date,
+      categoryId: categoryId,
+      accountId: accountId,
+      toAccountId: toAccountId,
+      transferFee: transferFee,
+      description: description,
+      receiptUrl: receiptUrl,
+      tags: tags ?? [],
+      currencyCode: currencyCode,
+      goalAllocations: allocations,
     );
   }
 }

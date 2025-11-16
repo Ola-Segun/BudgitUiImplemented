@@ -218,8 +218,8 @@ class AppTheme {
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 8,
-        shadowColor: Colors.black.withOpacity(0.1),
-        indicatorColor: AppColors.primary.withOpacity(0.1),
+        shadowColor: Colors.black.withValues(alpha: 0.1),
+        indicatorColor: AppColors.primary.withValues(alpha: 0.1),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return AppTypography.caption.copyWith(

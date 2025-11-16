@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../../../goals/domain/entities/goal_contribution.dart';
+
 part 'transaction.freezed.dart';
 
 /// Transaction entity - represents a financial transaction
@@ -20,6 +22,7 @@ class Transaction with _$Transaction {
      String? receiptUrl,
      @Default([]) List<String> tags,
      String? currencyCode, // Currency code (USD, EUR, etc.)
+     List<GoalContribution>? goalAllocations, // NEW: Goal allocations
    }) = _Transaction;
 
   const Transaction._();
@@ -53,6 +56,17 @@ class Transaction with _$Transaction {
 
   /// Get absolute amount
   double get absoluteAmount => amount.abs();
+
+  /// Get total goal allocations amount
+  double get totalGoalAllocations =>
+      goalAllocations?.fold<double>(0.0, (sum, a) => sum + (a.amount ?? 0.0)) ?? 0.0;
+
+  /// Get net amount after goal allocations
+  double get netAmount => amount - totalGoalAllocations;
+
+  /// Check if transaction has goal allocations
+  bool get hasGoalAllocations =>
+      goalAllocations != null && goalAllocations!.isNotEmpty;
 }
 
 /// Transaction type enum

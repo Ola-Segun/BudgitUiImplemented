@@ -5,11 +5,15 @@ import '../../../transactions/presentation/providers/transaction_providers.dart'
 import '../../../transactions/presentation/states/category_state.dart';
 import '../../../../core/di/providers.dart' as core_providers;
 import '../../domain/entities/goal.dart';
+import '../../domain/entities/goal_contribution.dart';
 import '../../domain/repositories/goal_repository.dart';
+import '../../domain/usecases/allocate_to_goals.dart' as allocate_to_goals_usecase;
+import '../../domain/usecases/add_goal_contribution.dart' as add_goal_contribution_usecase;
 import '../../domain/usecases/create_goal.dart';
 import '../../domain/usecases/delete_goal.dart';
 import '../../domain/usecases/get_goals.dart';
 import '../../domain/usecases/update_goal.dart';
+import '../../domain/usecases/validate_goal_allocation.dart';
 import '../notifiers/goal_notifier.dart';
 import '../states/goal_state.dart';
 
@@ -90,7 +94,7 @@ final deleteGoalProvider = Provider<DeleteGoal>((ref) {
 });
 
 /// Provider for AddGoalContribution use case
-final addGoalContributionProvider = Provider<AddGoalContribution>((ref) {
+final addGoalContributionProvider = Provider<add_goal_contribution_usecase.AddGoalContribution>((ref) {
   return ref.read(core_providers.addGoalContributionProvider);
 });
 
@@ -106,16 +110,16 @@ final goalNotifierProvider =
   final deleteGoal = ref.watch(deleteGoalProvider);
   final addGoalContribution = ref.watch(addGoalContributionProvider);
 
-  final notifier = GoalNotifier(
-    getGoals: getGoals,
-    getActiveGoals: getActiveGoals,
-    getCompletedGoals: getCompletedGoals,
-    getGoalById: getGoalById,
-    createGoal: createGoal,
-    updateGoal: updateGoal,
-    deleteGoal: deleteGoal,
-    addGoalContribution: addGoalContribution,
-  );
+final notifier = GoalNotifier(
+  getGoals: getGoals,
+  getActiveGoals: getActiveGoals,
+  getCompletedGoals: getCompletedGoals,
+  getGoalById: getGoalById,
+  createGoal: createGoal,
+  updateGoal: updateGoal,
+  deleteGoal: deleteGoal,
+  addGoalContribution: addGoalContribution,
+);
 
   // Listen to category changes and refresh goals only when necessary
   ref.listen<AsyncValue<CategoryState>>(
@@ -258,4 +262,131 @@ final aggregatedGoalProvider = Provider<AsyncValue<Goal?>>((ref) {
     loading: () => const AsyncValue.loading(),
     error: (error, stack) => AsyncValue.error(error, stack),
   );
+});
+
+/// Provider for eligible goals for allocation in transactions
+/// Filters active goals that can accept contributions based on transaction amount and type
+final eligibleGoalsForAllocationProvider = Provider.family<AsyncValue<List<Goal>>, ({double transactionAmount, TransactionType transactionType})>((ref, params) {
+  try {
+    final goalState = ref.watch(goalNotifierProvider);
+
+    return goalState.when(
+      data: (state) {
+        try {
+          // Only show for income transactions
+          if (params.transactionType != TransactionType.income) {
+            return AsyncValue.data([]);
+          }
+
+          // Validate transaction amount - provide more specific error message
+          if (params.transactionAmount <= 0) {
+            return AsyncValue.error('Transaction amount must be greater than zero to allocate to goals', StackTrace.current);
+          }
+
+          // Filter active goals that have remaining amount to contribute to
+          // and are not overdue
+          final eligibleGoals = state.activeGoals.where((goal) {
+            try {
+              final remaining = goal.targetAmount - goal.currentAmount;
+              return remaining > 0 && !goal.isOverdue && goal.targetAmount > 0;
+            } catch (e) {
+              // Skip invalid goals
+              return false;
+            }
+          }).toList();
+
+          return AsyncValue.data(eligibleGoals);
+        } catch (e, stack) {
+          return AsyncValue.error(e, stack);
+        }
+      },
+      loading: () => const AsyncValue.loading(),
+      error: (error, stack) => AsyncValue.error(error, stack),
+    );
+  } catch (e, stack) {
+    return AsyncValue.error('Provider initialization failed: $e', stack);
+  }
+});
+
+/// Provider for suggested allocations for a transaction
+/// Calculates smart allocation suggestions based on goal priorities and remaining amounts
+final suggestedAllocationsProvider = Provider.family<AsyncValue<List<Map<String, dynamic>>>, ({double transactionAmount, TransactionType transactionType})>((ref, params) {
+  final eligibleGoalsAsync = ref.watch(eligibleGoalsForAllocationProvider(params));
+
+  return eligibleGoalsAsync.when(
+    data: (goals) {
+      try {
+        if (goals.isEmpty || params.transactionType != TransactionType.income) {
+          return AsyncValue.data([]);
+        }
+
+        // Validate transaction amount
+        if (params.transactionAmount <= 0) {
+          return AsyncValue.error('Invalid transaction amount for suggestions', StackTrace.current);
+        }
+
+        // Calculate suggested allocations with over-allocation prevention
+        final suggestions = <Map<String, dynamic>>[];
+        double remainingAmount = params.transactionAmount;
+
+        // Sort goals by priority (high priority first) and then by progress percentage
+        final sortedGoals = goals.toList()
+          ..sort((a, b) {
+            try {
+              // High priority goals first
+              if (a.priority == GoalPriority.high && b.priority != GoalPriority.high) return -1;
+              if (b.priority == GoalPriority.high && a.priority != GoalPriority.high) return 1;
+
+              // Then by progress (closer to completion first)
+              final aProgress = a.targetAmount > 0 ? a.currentAmount / a.targetAmount : 0.0;
+              final bProgress = b.targetAmount > 0 ? b.currentAmount / b.targetAmount : 0.0;
+              return bProgress.compareTo(aProgress);
+            } catch (e) {
+              // Fallback to default sorting
+              return 0;
+            }
+          });
+
+        for (final goal in sortedGoals) {
+          if (remainingAmount <= 0) break;
+
+          try {
+            final remaining = goal.targetAmount - goal.currentAmount;
+            // Prevent over-allocation: don't suggest more than remaining goal amount
+            final suggestedAmount = (remainingAmount * 0.1).clamp(0, remaining).clamp(0, remainingAmount);
+
+            if (suggestedAmount > 0) {
+              suggestions.add({
+                'goalId': goal.id,
+                'goalTitle': goal.title,
+                'suggestedAmount': suggestedAmount,
+                'remaining': remaining,
+                'priority': goal.priority,
+              });
+              remainingAmount -= suggestedAmount;
+            }
+          } catch (e) {
+            // Skip invalid goals
+            continue;
+          }
+        }
+
+        return AsyncValue.data(suggestions);
+      } catch (e, stack) {
+        return AsyncValue.error(e, stack);
+      }
+    },
+    loading: () => const AsyncValue.loading(),
+    error: (error, stack) => AsyncValue.error(error, stack),
+  );
+});
+
+/// Provider for goal allocation validation
+final validateGoalAllocationProvider = Provider<ValidateGoalAllocation>((ref) {
+  return ref.read(core_providers.validateGoalAllocationProvider);
+});
+
+/// Provider for allocating to goals
+final allocateToGoalsProvider = Provider<allocate_to_goals_usecase.AllocateToGoals>((ref) {
+  return ref.read(core_providers.allocateToGoalsProvider);
 });

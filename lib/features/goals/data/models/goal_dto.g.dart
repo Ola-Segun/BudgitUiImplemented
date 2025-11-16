@@ -27,13 +27,14 @@ class GoalDtoAdapter extends TypeAdapter<GoalDto> {
       ..categoryId = fields[7] as String
       ..createdAt = fields[8] as DateTime
       ..updatedAt = fields[9] as DateTime
-      ..tags = (fields[10] as List?)?.cast<String>();
+      ..tags = (fields[10] as List?)?.cast<String>()
+      ..contributionIds = (fields[11] as List?)?.cast<String>();
   }
 
   @override
   void write(BinaryWriter writer, GoalDto obj) {
     writer
-      ..writeByte(11)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -55,7 +56,9 @@ class GoalDtoAdapter extends TypeAdapter<GoalDto> {
       ..writeByte(9)
       ..write(obj.updatedAt)
       ..writeByte(10)
-      ..write(obj.tags);
+      ..write(obj.tags)
+      ..writeByte(11)
+      ..write(obj.contributionIds);
   }
 
   @override

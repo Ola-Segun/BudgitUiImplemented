@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive/hive.dart';
 
 import '../storage/hive_storage.dart';
 import '../router/app_router.dart';
@@ -32,11 +33,15 @@ import '../../features/budgets/domain/usecases/delete_budget.dart';
 import '../../features/budgets/domain/usecases/calculate_budget_status.dart';
 import '../../features/goals/data/datasources/goal_hive_datasource.dart';
 import '../../features/goals/data/repositories/goal_repository_impl.dart';
+import '../../features/goals/data/models/goal_contribution_dto.dart';
 import '../../features/goals/domain/repositories/goal_repository.dart';
 import '../../features/goals/domain/usecases/create_goal.dart';
 import '../../features/goals/domain/usecases/get_goals.dart';
 import '../../features/goals/domain/usecases/update_goal.dart';
 import '../../features/goals/domain/usecases/delete_goal.dart';
+import '../../features/goals/domain/usecases/add_goal_contribution.dart' as add_goal_contribution_usecase;
+import '../../features/goals/domain/usecases/validate_goal_allocation.dart';
+import '../../features/goals/domain/usecases/allocate_to_goals.dart' as allocate_to_goals_usecase;
 import '../../features/insights/data/datasources/insight_hive_datasource.dart';
 import '../../features/insights/data/repositories/insight_repository_impl.dart';
 import '../../features/insights/domain/repositories/insight_repository.dart';
@@ -129,14 +134,15 @@ final transactionRepositoryProvider = Provider<TransactionRepository>((ref) {
   return TransactionRepositoryImpl(
     ref.read(transactionDataSourceProvider),
     ref.read(accountRepositoryProvider),
+    Hive.box<GoalContributionDto>('goal_contributions'),
   );
 });
 
 final transactionCategoryRepositoryProvider = Provider<TransactionCategoryRepository>((ref) {
   return TransactionCategoryRepositoryImpl(
     ref.read(transactionCategoryDataSourceProvider),
-    ref.read(transactionRepositoryProvider),
-    ref.read(billRepositoryProvider),
+    // Remove circular dependency by not passing transactionRepository for now
+    null, // Will be set later when needed
   );
 });
 
@@ -174,6 +180,7 @@ final addTransactionProvider = Provider<AddTransaction>((ref) {
   return AddTransaction(
     ref.read(transactionRepositoryProvider),
     ref.read(accountRepositoryProvider),
+    ref.read(addGoalContributionProvider),
   );
 });
 
@@ -452,8 +459,16 @@ final deleteGoalProvider = Provider<DeleteGoal>((ref) {
   return DeleteGoal(ref.read(goalRepositoryProvider));
 });
 
-final addGoalContributionProvider = Provider<AddGoalContribution>((ref) {
-  return AddGoalContribution(ref.read(goalRepositoryProvider));
+final addGoalContributionProvider = Provider<add_goal_contribution_usecase.AddGoalContribution>((ref) {
+  return add_goal_contribution_usecase.AddGoalContribution(ref.read(goalRepositoryProvider));
+});
+
+final validateGoalAllocationProvider = Provider<ValidateGoalAllocation>((ref) {
+  return ValidateGoalAllocation(ref.read(goalRepositoryProvider));
+});
+
+final allocateToGoalsProvider = Provider<allocate_to_goals_usecase.AllocateToGoals>((ref) {
+  return allocate_to_goals_usecase.AllocateToGoals(ref.read(goalRepositoryProvider));
 });
 
 // Insight data sources

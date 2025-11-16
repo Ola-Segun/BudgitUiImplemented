@@ -11,12 +11,10 @@ class TransactionCategoryRepositoryImpl implements TransactionCategoryRepository
   const TransactionCategoryRepositoryImpl(
     this._dataSource,
     this._transactionRepository,
-    this._billRepository,
   );
 
   final TransactionCategoryHiveDataSource _dataSource;
-  final TransactionRepository _transactionRepository;
-  final BillRepository _billRepository;
+  final TransactionRepository? _transactionRepository;
 
   @override
   Future<Result<List<TransactionCategory>>> getAll() => _dataSource.getAll();
@@ -49,7 +47,10 @@ class TransactionCategoryRepositoryImpl implements TransactionCategoryRepository
   Future<Result<bool>> isCategoryInUse(String categoryId) async {
     try {
       // Check if category is used by any transactions
-      final transactionsResult = await _transactionRepository.getByCategory(categoryId);
+      final transactionsResult = _transactionRepository != null
+          ? await _transactionRepository!.getByCategory(categoryId)
+          : Result.success([]); // Return empty if transaction repository is not available
+      
       if (transactionsResult.isError) {
         return Result.error(transactionsResult.failureOrNull!);
       }
@@ -59,16 +60,9 @@ class TransactionCategoryRepositoryImpl implements TransactionCategoryRepository
         return Result.success(true);
       }
 
-      // Check if category is used by any bills
-      final billsResult = await _billRepository.getAll();
-      if (billsResult.isError) {
-        return Result.error(billsResult.failureOrNull!);
-      }
-
-      final bills = billsResult.dataOrNull ?? [];
-      final isUsedByBills = bills.any((bill) => bill.categoryId == categoryId);
-
-      return Result.success(isUsedByBills);
+      // Note: Bill usage check removed to break circular dependency
+      // This check should be done at a higher level if needed
+      return Result.success(false);
     } catch (e) {
       return Result.error(Failure.unknown('Failed to check category usage: $e'));
     }

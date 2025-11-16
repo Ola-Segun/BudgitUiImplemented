@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/di/providers.dart' as core_providers;
-import '../../../core/error/result.dart';
+import '../../../../core/di/providers.dart' as core_providers;
+import '../../../../core/error/result.dart' as result;
 import '../../../transactions/domain/entities/transaction.dart';
 import '../../../transactions/domain/usecases/add_transaction.dart';
-import '../domain/entities/account.dart';
-import '../domain/usecases/get_accounts.dart';
-import '../domain/usecases/transfer_money.dart';
+import '../../domain/entities/account.dart';
+import '../../domain/usecases/get_accounts.dart';
+import '../../domain/usecases/transfer_money.dart';
+import '../providers/account_providers.dart';
 import 'account_selector.dart';
 
 /// Provider for TransferMoney use case
