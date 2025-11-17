@@ -277,7 +277,6 @@ class RecurringIncomeHiveDataSource {
     String incomeId,
     RecurringIncomeInstance instance,
     AddTransaction addTransaction,
-    DeleteTransaction deleteTransaction,
     {String? accountId}
   ) async {
     debugPrint('RecurringIncomeHiveDataSource: Recording income receipt - incomeId: $incomeId, amount: ${instance.amount}, accountId: $accountId');
@@ -367,18 +366,7 @@ class RecurringIncomeHiveDataSource {
       return Result.success(dto.toDomain());
     } catch (e) {
       debugPrint('RecurringIncomeHiveDataSource: Failed to update income status - error: $e');
-      // Step 3: Rollback transaction if income update fails
-      if (transactionToRollback != null) {
-        try {
-          debugPrint('RecurringIncomeHiveDataSource: Rolling back transaction - id: ${transactionToRollback.id}');
-          await deleteTransaction(transactionToRollback.id);
-          debugPrint('RecurringIncomeHiveDataSource: Transaction rollback successful');
-        } catch (rollbackError) {
-          // Log rollback failure but don't mask original error
-          debugPrint('RecurringIncomeHiveDataSource: Failed to rollback transaction ${transactionToRollback.id}: $rollbackError');
-        }
-      }
-
+      // Note: Transaction rollback is now handled at the use case level
       return Result.error(Failure.cache('Failed to update income status after transaction creation: $e'));
     }
   }

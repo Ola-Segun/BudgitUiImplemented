@@ -250,7 +250,7 @@ class BillHiveDataSource {
   }
 
   /// Mark bill as paid
-  Future<Result<Bill>> markAsPaid(String billId, BillPayment payment, AddTransaction addTransaction, DeleteTransaction deleteTransaction, {String? accountId}) async {
+  Future<Result<Bill>> markAsPaid(String billId, BillPayment payment, AddTransaction addTransaction, {String? accountId}) async {
     if (_box == null) {
       return Result.error(Failure.cache('Data source not initialized'));
     }
@@ -309,22 +309,13 @@ class BillHiveDataSource {
 
       return Result.success(dto.toDomain());
     } catch (e) {
-      // Step 3: Rollback transaction if bill update fails
-      if (transactionToRollback != null) {
-        try {
-          await deleteTransaction(transactionToRollback.id);
-        } catch (rollbackError) {
-          // Log rollback failure but don't mask original error
-          debugPrint('Failed to rollback transaction ${transactionToRollback.id}: $rollbackError');
-        }
-      }
-
+      // Note: Transaction rollback is now handled at the use case level
       return Result.error(Failure.cache('Failed to update bill status after transaction creation: $e'));
     }
   }
 
   /// Mark bill as unpaid
-  Future<Result<Bill>> markAsUnpaid(String billId, DeleteTransaction deleteTransaction) async {
+  Future<Result<Bill>> markAsUnpaid(String billId) async {
     try {
       if (_box == null) {
         return Result.error(Failure.cache('Data source not initialized'));
@@ -335,16 +326,11 @@ class BillHiveDataSource {
         return Result.error(Failure.cache('Bill not found'));
       }
 
-      // Find and delete associated transactions from payment history
+      // Note: Transaction deletion is now handled at the use case level
+      // Clear transaction ID references
       if (dto.paymentHistory != null) {
         for (final payment in dto.paymentHistory!) {
-          if (payment.transactionId != null) {
-            // Delete the associated transaction using the proper usecase
-            // This ensures balance rollback follows Account-Transaction-Relationship principles
-            await deleteTransaction(payment.transactionId!);
-            // Clear the transaction ID reference
-            payment.transactionId = null;
-          }
+          payment.transactionId = null;
         }
       }
 

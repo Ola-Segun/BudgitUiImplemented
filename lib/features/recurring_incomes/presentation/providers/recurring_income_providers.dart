@@ -10,14 +10,8 @@ import '../../domain/usecases/record_income_receipt.dart';
 import '../notifiers/recurring_income_notifier.dart';
 import '../states/recurring_income_state.dart';
 
-// Repository provider
-final recurringIncomeRepositoryProvider = Provider<RecurringIncomeRepository>((ref) {
-  return RecurringIncomeRepositoryImpl(
-    ref.read(core_providers.accountRepositoryProvider),
-    ref.read(core_providers.addTransactionProvider),
-    ref.read(core_providers.deleteTransactionProvider),
-  );
-});
+// Repository provider - now defined in core/di/providers.dart
+// This local definition has been removed to avoid circular dependency
 
 // Use case providers
 final createRecurringIncomeProvider = Provider<CreateRecurringIncome>((ref) {

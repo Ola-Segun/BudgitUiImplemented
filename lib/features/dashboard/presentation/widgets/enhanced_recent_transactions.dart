@@ -8,8 +8,10 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_colors_extended.dart';
 import '../../../../core/theme/app_typography_extended.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../transactions/domain/entities/transaction.dart';
 import '../../../transactions/presentation/providers/transaction_providers.dart';
+import '../../../transactions/presentation/widgets/transaction_detail_bottom_sheet.dart';
 
 class EnhancedRecentTransactions extends ConsumerWidget {
   const EnhancedRecentTransactions({
@@ -159,7 +161,13 @@ class _EnhancedTransactionCard extends ConsumerWidget {
         onTap: () {
           HapticFeedback.lightImpact();
           if (context.mounted) {
-            context.go('/transactions/${transaction.id}');
+            AppBottomSheet.show(
+              context: context,
+              child: TransactionDetailBottomSheet(
+                transaction: transaction,
+                startInEditMode: false,
+              ),
+            );
           }
         },
         borderRadius: BorderRadius.circular(12),

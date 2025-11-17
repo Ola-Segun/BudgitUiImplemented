@@ -10,7 +10,6 @@ import '../../../transactions/presentation/providers/transaction_providers.dart'
 import '../../../budgets/presentation/providers/budget_providers.dart';
 import '../../../bills/presentation/providers/bill_providers.dart';
 import '../../../accounts/presentation/providers/account_providers.dart';
-import '../../../recurring_incomes/presentation/providers/recurring_income_providers.dart';
 import '../../../goals/presentation/providers/goal_providers.dart';
 
 // Repository providers
@@ -23,7 +22,7 @@ final dashboardRepositoryProvider = Provider<DashboardRepository>((ref) {
     ref.watch(core_providers.insightRepositoryProvider),
     ref.watch(core_providers.transactionCategoryRepositoryProvider),
     ref.watch(core_providers.calculateBudgetStatusProvider),
-    ref.watch(recurringIncomeRepositoryProvider),
+    ref.watch(core_providers.recurringIncomeRepositoryProvider),
   );
 });
 
@@ -131,7 +130,7 @@ class DashboardDataNotifier extends StateNotifier<AsyncValue<DashboardData>> {
       }
     });
 
-    ref.listen(recurringIncomeNotifierProvider, (previous, next) {
+    ref.listen(core_providers.recurringIncomeNotifierProvider, (previous, next) {
       if (previous != next) {
         _dashboardCache.invalidate();
         _refreshData();

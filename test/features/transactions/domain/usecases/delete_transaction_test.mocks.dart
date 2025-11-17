@@ -10,6 +10,14 @@ import 'package:budget_tracker/features/accounts/domain/entities/account.dart'
     as _i9;
 import 'package:budget_tracker/features/accounts/domain/repositories/account_repository.dart'
     as _i8;
+import 'package:budget_tracker/features/bills/domain/entities/bill.dart'
+    as _i11;
+import 'package:budget_tracker/features/bills/domain/repositories/bill_repository.dart'
+    as _i10;
+import 'package:budget_tracker/features/recurring_incomes/domain/entities/recurring_income.dart'
+    as _i13;
+import 'package:budget_tracker/features/recurring_incomes/domain/repositories/recurring_income_repository.dart'
+    as _i12;
 import 'package:budget_tracker/features/transactions/domain/entities/transaction.dart'
     as _i5;
 import 'package:budget_tracker/features/transactions/domain/entities/transaction_filter.dart'
@@ -609,4 +617,601 @@ class MockAccountRepository extends _i1.Mock implements _i8.AccountRepository {
           ),
         )),
       ) as _i3.Future<_i4.Result<List<_i9.Account>>>);
+}
+
+/// A class which mocks [BillRepository].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockBillRepository extends _i1.Mock implements _i10.BillRepository {
+  MockBillRepository() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i3.Future<_i4.Result<List<_i11.Bill>>> getAll() => (super.noSuchMethod(
+        Invocation.method(
+          #getAll,
+          [],
+        ),
+        returnValue: _i3.Future<_i4.Result<List<_i11.Bill>>>.value(
+            _i6.dummyValue<_i4.Result<List<_i11.Bill>>>(
+          this,
+          Invocation.method(
+            #getAll,
+            [],
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<List<_i11.Bill>>>);
+
+  @override
+  _i3.Future<_i4.Result<_i11.Bill?>> getById(String? id) => (super.noSuchMethod(
+        Invocation.method(
+          #getById,
+          [id],
+        ),
+        returnValue: _i3.Future<_i4.Result<_i11.Bill?>>.value(
+            _i6.dummyValue<_i4.Result<_i11.Bill?>>(
+          this,
+          Invocation.method(
+            #getById,
+            [id],
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<_i11.Bill?>>);
+
+  @override
+  _i3.Future<_i4.Result<List<_i11.Bill>>> getDueWithin(int? days) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getDueWithin,
+          [days],
+        ),
+        returnValue: _i3.Future<_i4.Result<List<_i11.Bill>>>.value(
+            _i6.dummyValue<_i4.Result<List<_i11.Bill>>>(
+          this,
+          Invocation.method(
+            #getDueWithin,
+            [days],
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<List<_i11.Bill>>>);
+
+  @override
+  _i3.Future<_i4.Result<List<_i11.Bill>>> getOverdue() => (super.noSuchMethod(
+        Invocation.method(
+          #getOverdue,
+          [],
+        ),
+        returnValue: _i3.Future<_i4.Result<List<_i11.Bill>>>.value(
+            _i6.dummyValue<_i4.Result<List<_i11.Bill>>>(
+          this,
+          Invocation.method(
+            #getOverdue,
+            [],
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<List<_i11.Bill>>>);
+
+  @override
+  _i3.Future<_i4.Result<List<_i11.Bill>>> getPaidThisMonth() =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getPaidThisMonth,
+          [],
+        ),
+        returnValue: _i3.Future<_i4.Result<List<_i11.Bill>>>.value(
+            _i6.dummyValue<_i4.Result<List<_i11.Bill>>>(
+          this,
+          Invocation.method(
+            #getPaidThisMonth,
+            [],
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<List<_i11.Bill>>>);
+
+  @override
+  _i3.Future<_i4.Result<List<_i11.Bill>>> getUnpaidThisMonth() =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getUnpaidThisMonth,
+          [],
+        ),
+        returnValue: _i3.Future<_i4.Result<List<_i11.Bill>>>.value(
+            _i6.dummyValue<_i4.Result<List<_i11.Bill>>>(
+          this,
+          Invocation.method(
+            #getUnpaidThisMonth,
+            [],
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<List<_i11.Bill>>>);
+
+  @override
+  _i3.Future<_i4.Result<_i11.Bill>> add(_i11.Bill? bill) => (super.noSuchMethod(
+        Invocation.method(
+          #add,
+          [bill],
+        ),
+        returnValue: _i3.Future<_i4.Result<_i11.Bill>>.value(
+            _i6.dummyValue<_i4.Result<_i11.Bill>>(
+          this,
+          Invocation.method(
+            #add,
+            [bill],
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<_i11.Bill>>);
+
+  @override
+  _i3.Future<_i4.Result<_i11.Bill>> update(_i11.Bill? bill) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #update,
+          [bill],
+        ),
+        returnValue: _i3.Future<_i4.Result<_i11.Bill>>.value(
+            _i6.dummyValue<_i4.Result<_i11.Bill>>(
+          this,
+          Invocation.method(
+            #update,
+            [bill],
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<_i11.Bill>>);
+
+  @override
+  _i3.Future<_i4.Result<void>> delete(String? id) => (super.noSuchMethod(
+        Invocation.method(
+          #delete,
+          [id],
+        ),
+        returnValue:
+            _i3.Future<_i4.Result<void>>.value(_i6.dummyValue<_i4.Result<void>>(
+          this,
+          Invocation.method(
+            #delete,
+            [id],
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<void>>);
+
+  @override
+  _i3.Future<_i4.Result<_i11.Bill>> markAsPaid(
+    String? billId,
+    _i11.BillPayment? payment, {
+    String? accountId,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #markAsPaid,
+          [
+            billId,
+            payment,
+          ],
+          {#accountId: accountId},
+        ),
+        returnValue: _i3.Future<_i4.Result<_i11.Bill>>.value(
+            _i6.dummyValue<_i4.Result<_i11.Bill>>(
+          this,
+          Invocation.method(
+            #markAsPaid,
+            [
+              billId,
+              payment,
+            ],
+            {#accountId: accountId},
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<_i11.Bill>>);
+
+  @override
+  _i3.Future<_i4.Result<_i11.Bill>> markAsUnpaid(String? billId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #markAsUnpaid,
+          [billId],
+        ),
+        returnValue: _i3.Future<_i4.Result<_i11.Bill>>.value(
+            _i6.dummyValue<_i4.Result<_i11.Bill>>(
+          this,
+          Invocation.method(
+            #markAsUnpaid,
+            [billId],
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<_i11.Bill>>);
+
+  @override
+  _i3.Future<_i4.Result<_i11.BillStatus>> getBillStatus(String? billId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getBillStatus,
+          [billId],
+        ),
+        returnValue: _i3.Future<_i4.Result<_i11.BillStatus>>.value(
+            _i6.dummyValue<_i4.Result<_i11.BillStatus>>(
+          this,
+          Invocation.method(
+            #getBillStatus,
+            [billId],
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<_i11.BillStatus>>);
+
+  @override
+  _i3.Future<_i4.Result<List<_i11.BillStatus>>> getAllBillStatuses() =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getAllBillStatuses,
+          [],
+        ),
+        returnValue: _i3.Future<_i4.Result<List<_i11.BillStatus>>>.value(
+            _i6.dummyValue<_i4.Result<List<_i11.BillStatus>>>(
+          this,
+          Invocation.method(
+            #getAllBillStatuses,
+            [],
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<List<_i11.BillStatus>>>);
+
+  @override
+  _i3.Future<_i4.Result<_i11.BillsSummary>> getBillsSummary() =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getBillsSummary,
+          [],
+        ),
+        returnValue: _i3.Future<_i4.Result<_i11.BillsSummary>>.value(
+            _i6.dummyValue<_i4.Result<_i11.BillsSummary>>(
+          this,
+          Invocation.method(
+            #getBillsSummary,
+            [],
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<_i11.BillsSummary>>);
+
+  @override
+  _i3.Future<_i4.Result<_i11.Bill>> updateNextDueDate(String? billId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateNextDueDate,
+          [billId],
+        ),
+        returnValue: _i3.Future<_i4.Result<_i11.Bill>>.value(
+            _i6.dummyValue<_i4.Result<_i11.Bill>>(
+          this,
+          Invocation.method(
+            #updateNextDueDate,
+            [billId],
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<_i11.Bill>>);
+
+  @override
+  _i3.Future<_i4.Result<void>> reconcileBillPayments(String? billId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #reconcileBillPayments,
+          [billId],
+        ),
+        returnValue:
+            _i3.Future<_i4.Result<void>>.value(_i6.dummyValue<_i4.Result<void>>(
+          this,
+          Invocation.method(
+            #reconcileBillPayments,
+            [billId],
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<void>>);
+
+  @override
+  _i3.Future<_i4.Result<bool>> nameExists(
+    String? name, {
+    String? excludeId,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #nameExists,
+          [name],
+          {#excludeId: excludeId},
+        ),
+        returnValue:
+            _i3.Future<_i4.Result<bool>>.value(_i6.dummyValue<_i4.Result<bool>>(
+          this,
+          Invocation.method(
+            #nameExists,
+            [name],
+            {#excludeId: excludeId},
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<bool>>);
+}
+
+/// A class which mocks [RecurringIncomeRepository].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockRecurringIncomeRepository extends _i1.Mock
+    implements _i12.RecurringIncomeRepository {
+  MockRecurringIncomeRepository() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i3.Future<_i4.Result<List<_i13.RecurringIncome>>> getAll() =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getAll,
+          [],
+        ),
+        returnValue: _i3.Future<_i4.Result<List<_i13.RecurringIncome>>>.value(
+            _i6.dummyValue<_i4.Result<List<_i13.RecurringIncome>>>(
+          this,
+          Invocation.method(
+            #getAll,
+            [],
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<List<_i13.RecurringIncome>>>);
+
+  @override
+  _i3.Future<_i4.Result<_i13.RecurringIncome?>> getById(String? id) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getById,
+          [id],
+        ),
+        returnValue: _i3.Future<_i4.Result<_i13.RecurringIncome?>>.value(
+            _i6.dummyValue<_i4.Result<_i13.RecurringIncome?>>(
+          this,
+          Invocation.method(
+            #getById,
+            [id],
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<_i13.RecurringIncome?>>);
+
+  @override
+  _i3.Future<_i4.Result<List<_i13.RecurringIncome>>> getExpectedWithin(
+          int? days) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getExpectedWithin,
+          [days],
+        ),
+        returnValue: _i3.Future<_i4.Result<List<_i13.RecurringIncome>>>.value(
+            _i6.dummyValue<_i4.Result<List<_i13.RecurringIncome>>>(
+          this,
+          Invocation.method(
+            #getExpectedWithin,
+            [days],
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<List<_i13.RecurringIncome>>>);
+
+  @override
+  _i3.Future<_i4.Result<List<_i13.RecurringIncome>>> getOverdue() =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getOverdue,
+          [],
+        ),
+        returnValue: _i3.Future<_i4.Result<List<_i13.RecurringIncome>>>.value(
+            _i6.dummyValue<_i4.Result<List<_i13.RecurringIncome>>>(
+          this,
+          Invocation.method(
+            #getOverdue,
+            [],
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<List<_i13.RecurringIncome>>>);
+
+  @override
+  _i3.Future<_i4.Result<List<_i13.RecurringIncome>>> getReceivedThisMonth() =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getReceivedThisMonth,
+          [],
+        ),
+        returnValue: _i3.Future<_i4.Result<List<_i13.RecurringIncome>>>.value(
+            _i6.dummyValue<_i4.Result<List<_i13.RecurringIncome>>>(
+          this,
+          Invocation.method(
+            #getReceivedThisMonth,
+            [],
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<List<_i13.RecurringIncome>>>);
+
+  @override
+  _i3.Future<_i4.Result<List<_i13.RecurringIncome>>> getExpectedThisMonth() =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getExpectedThisMonth,
+          [],
+        ),
+        returnValue: _i3.Future<_i4.Result<List<_i13.RecurringIncome>>>.value(
+            _i6.dummyValue<_i4.Result<List<_i13.RecurringIncome>>>(
+          this,
+          Invocation.method(
+            #getExpectedThisMonth,
+            [],
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<List<_i13.RecurringIncome>>>);
+
+  @override
+  _i3.Future<_i4.Result<_i13.RecurringIncome>> add(
+          _i13.RecurringIncome? income) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #add,
+          [income],
+        ),
+        returnValue: _i3.Future<_i4.Result<_i13.RecurringIncome>>.value(
+            _i6.dummyValue<_i4.Result<_i13.RecurringIncome>>(
+          this,
+          Invocation.method(
+            #add,
+            [income],
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<_i13.RecurringIncome>>);
+
+  @override
+  _i3.Future<_i4.Result<_i13.RecurringIncome>> update(
+          _i13.RecurringIncome? income) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #update,
+          [income],
+        ),
+        returnValue: _i3.Future<_i4.Result<_i13.RecurringIncome>>.value(
+            _i6.dummyValue<_i4.Result<_i13.RecurringIncome>>(
+          this,
+          Invocation.method(
+            #update,
+            [income],
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<_i13.RecurringIncome>>);
+
+  @override
+  _i3.Future<_i4.Result<void>> delete(String? id) => (super.noSuchMethod(
+        Invocation.method(
+          #delete,
+          [id],
+        ),
+        returnValue:
+            _i3.Future<_i4.Result<void>>.value(_i6.dummyValue<_i4.Result<void>>(
+          this,
+          Invocation.method(
+            #delete,
+            [id],
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<void>>);
+
+  @override
+  _i3.Future<_i4.Result<_i13.RecurringIncome>> recordIncomeReceipt(
+    String? incomeId,
+    _i13.RecurringIncomeInstance? instance, {
+    String? accountId,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #recordIncomeReceipt,
+          [
+            incomeId,
+            instance,
+          ],
+          {#accountId: accountId},
+        ),
+        returnValue: _i3.Future<_i4.Result<_i13.RecurringIncome>>.value(
+            _i6.dummyValue<_i4.Result<_i13.RecurringIncome>>(
+          this,
+          Invocation.method(
+            #recordIncomeReceipt,
+            [
+              incomeId,
+              instance,
+            ],
+            {#accountId: accountId},
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<_i13.RecurringIncome>>);
+
+  @override
+  _i3.Future<_i4.Result<_i13.RecurringIncomeStatus>> getIncomeStatus(
+          String? incomeId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getIncomeStatus,
+          [incomeId],
+        ),
+        returnValue: _i3.Future<_i4.Result<_i13.RecurringIncomeStatus>>.value(
+            _i6.dummyValue<_i4.Result<_i13.RecurringIncomeStatus>>(
+          this,
+          Invocation.method(
+            #getIncomeStatus,
+            [incomeId],
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<_i13.RecurringIncomeStatus>>);
+
+  @override
+  _i3.Future<_i4.Result<List<_i13.RecurringIncomeStatus>>>
+      getAllIncomeStatuses() => (super.noSuchMethod(
+            Invocation.method(
+              #getAllIncomeStatuses,
+              [],
+            ),
+            returnValue: _i3
+                .Future<_i4.Result<List<_i13.RecurringIncomeStatus>>>.value(
+                _i6.dummyValue<_i4.Result<List<_i13.RecurringIncomeStatus>>>(
+              this,
+              Invocation.method(
+                #getAllIncomeStatuses,
+                [],
+              ),
+            )),
+          ) as _i3.Future<_i4.Result<List<_i13.RecurringIncomeStatus>>>);
+
+  @override
+  _i3.Future<_i4.Result<_i13.RecurringIncomesSummary>> getIncomesSummary() =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getIncomesSummary,
+          [],
+        ),
+        returnValue: _i3.Future<_i4.Result<_i13.RecurringIncomesSummary>>.value(
+            _i6.dummyValue<_i4.Result<_i13.RecurringIncomesSummary>>(
+          this,
+          Invocation.method(
+            #getIncomesSummary,
+            [],
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<_i13.RecurringIncomesSummary>>);
+
+  @override
+  _i3.Future<_i4.Result<_i13.RecurringIncome>> updateNextExpectedDate(
+          String? incomeId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateNextExpectedDate,
+          [incomeId],
+        ),
+        returnValue: _i3.Future<_i4.Result<_i13.RecurringIncome>>.value(
+            _i6.dummyValue<_i4.Result<_i13.RecurringIncome>>(
+          this,
+          Invocation.method(
+            #updateNextExpectedDate,
+            [incomeId],
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<_i13.RecurringIncome>>);
+
+  @override
+  _i3.Future<_i4.Result<bool>> nameExists(
+    String? name, {
+    String? excludeId,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #nameExists,
+          [name],
+          {#excludeId: excludeId},
+        ),
+        returnValue:
+            _i3.Future<_i4.Result<bool>>.value(_i6.dummyValue<_i4.Result<bool>>(
+          this,
+          Invocation.method(
+            #nameExists,
+            [name],
+            {#excludeId: excludeId},
+          ),
+        )),
+      ) as _i3.Future<_i4.Result<bool>>);
 }

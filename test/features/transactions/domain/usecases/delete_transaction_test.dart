@@ -6,22 +6,33 @@ import 'package:budget_tracker/core/error/failures.dart';
 import 'package:budget_tracker/core/error/result.dart';
 import 'package:budget_tracker/features/accounts/domain/entities/account.dart';
 import 'package:budget_tracker/features/accounts/domain/repositories/account_repository.dart';
+import 'package:budget_tracker/features/bills/domain/repositories/bill_repository.dart';
+import 'package:budget_tracker/features/recurring_incomes/domain/repositories/recurring_income_repository.dart';
 import 'package:budget_tracker/features/transactions/domain/entities/transaction.dart';
 import 'package:budget_tracker/features/transactions/domain/repositories/transaction_repository.dart';
 import 'package:budget_tracker/features/transactions/domain/usecases/delete_transaction.dart';
 
-@GenerateMocks([TransactionRepository, AccountRepository])
+@GenerateMocks([TransactionRepository, AccountRepository, BillRepository, RecurringIncomeRepository])
 import 'delete_transaction_test.mocks.dart';
 
 void main() {
   late DeleteTransaction useCase;
   late MockTransactionRepository mockTransactionRepository;
   late MockAccountRepository mockAccountRepository;
+  late MockBillRepository mockBillRepository;
+  late MockRecurringIncomeRepository mockRecurringIncomeRepository;
 
   setUp(() {
     mockTransactionRepository = MockTransactionRepository();
     mockAccountRepository = MockAccountRepository();
-    useCase = DeleteTransaction(mockTransactionRepository, mockAccountRepository);
+    mockBillRepository = MockBillRepository();
+    mockRecurringIncomeRepository = MockRecurringIncomeRepository();
+    useCase = DeleteTransaction(
+      mockTransactionRepository,
+      mockAccountRepository,
+      mockBillRepository,
+      mockRecurringIncomeRepository,
+    );
 
     // Provide dummy values for Mockito
     provideDummy<Result<Transaction?>>(Result.error(Failure.unknown('dummy')));

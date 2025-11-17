@@ -121,7 +121,7 @@ class _EnhancedDashboardHeaderState extends ConsumerState<EnhancedDashboardHeade
                       ),
                       SizedBox(width: AppDimensions.spacing1),
                       _HeaderIconButton(
-                        icon: Icons.tune,
+                        icon: Icons.more_vert,
                         onPressed: () {
                           if (context.mounted) {
                             context.go('/more');

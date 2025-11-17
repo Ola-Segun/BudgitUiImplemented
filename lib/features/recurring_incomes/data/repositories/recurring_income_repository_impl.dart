@@ -14,12 +14,10 @@ class RecurringIncomeRepositoryImpl implements RecurringIncomeRepository {
   RecurringIncomeRepositoryImpl(
     this._accountRepository,
     this._addTransaction,
-    this._deleteTransaction,
   ) : _dataSource = RecurringIncomeHiveDataSource();
 
   final AccountRepository _accountRepository;
   final AddTransaction _addTransaction;
-  final DeleteTransaction _deleteTransaction;
   final RecurringIncomeHiveDataSource _dataSource;
 
   @override
@@ -97,7 +95,7 @@ class RecurringIncomeRepositoryImpl implements RecurringIncomeRepository {
     developer.log('RecurringIncomeRepositoryImpl: Account validated successfully - proceeding with receipt recording');
 
     // Proceed with recording income receipt using the proper usecase pattern
-    final result = await _dataSource.recordIncomeReceipt(incomeId, instance, _addTransaction, _deleteTransaction, accountId: accountIdToUse);
+    final result = await _dataSource.recordIncomeReceipt(incomeId, instance, _addTransaction, accountId: accountIdToUse);
 
     result.when(
       success: (updatedIncome) {

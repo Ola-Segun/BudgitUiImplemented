@@ -8,7 +8,6 @@ import '../../../../core/design_system/design_tokens.dart';
 import '../../../../core/design_system/color_tokens.dart';
 import '../../../../core/design_system/typography_tokens.dart';
 import '../../../../core/design_system/form_tokens.dart';
-import '../../../../core/design_system/components/enhanced_bottom_sheet.dart';
 import '../../../../core/design_system/components/enhanced_text_field.dart';
 import '../../../../core/design_system/components/category_button_selector.dart';
 import '../../../../core/design_system/haptic_feedback_utils.dart';
@@ -42,147 +41,156 @@ class _TransactionDetailBottomSheetState extends ConsumerState<TransactionDetail
 
   @override
   Widget build(BuildContext context) {
-    // Show bottom sheet based on editing state
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        if (_isEditing) {
-          _showEditBottomSheet();
-        } else {
-          _showDetailBottomSheet();
-        }
-      }
-    });
-
-    // Return empty container since bottom sheet is shown via callback
-    return const SizedBox.shrink();
+    // Return content based on editing state
+    if (_isEditing) {
+      return _buildEditContent();
+    } else {
+      return _buildDetailContent();
+    }
   }
 
-  void _showDetailBottomSheet() {
-    EnhancedBottomSheet.showScrollable(
-      context: context,
-      title: 'Transaction Details',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Amount Card
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  Text(
-                    widget.transaction.signedAmount,
-                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: widget.transaction.isIncome
-                              ? Colors.green
-                              : Theme.of(context).colorScheme.onSurface,
-                        ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    widget.transaction.type.displayName,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                  ),
-                ],
-              ),
+  Widget _buildDetailContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Amount Card
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                Text(
+                  widget.transaction.signedAmount,
+                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: widget.transaction.isIncome
+                            ? Colors.green
+                            : Theme.of(context).colorScheme.onSurface,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  widget.transaction.type.displayName,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+              ],
             ),
           ),
+        ),
 
-          const SizedBox(height: 24),
+        const SizedBox(height: 24),
 
-          // Transaction Details
-          Text(
-            'Details',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
+        // Transaction Details
+        Text(
+          'Details',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+        ),
+        const SizedBox(height: 16),
+
+        _buildDetailRow('Title', widget.transaction.title),
+        _buildDetailRow('Description', widget.transaction.description ?? 'No description'),
+        _buildDetailRow('Category', _getCategoryName(widget.transaction.categoryId)),
+        _buildDetailRow('Date', DateFormat('EEEE, MMMM dd, yyyy').format(widget.transaction.date)),
+        _buildDetailRow('Time', DateFormat('HH:mm').format(widget.transaction.date)),
+
+        if (widget.transaction.receiptUrl != null) ...[
           const SizedBox(height: 16),
-
-          _buildDetailRow('Title', widget.transaction.title),
-          _buildDetailRow('Description', widget.transaction.description ?? 'No description'),
-          _buildDetailRow('Category', _getCategoryName(widget.transaction.categoryId)),
-          _buildDetailRow('Date', DateFormat('EEEE, MMMM dd, yyyy').format(widget.transaction.date)),
-          _buildDetailRow('Time', DateFormat('HH:mm').format(widget.transaction.date)),
-
-          if (widget.transaction.receiptUrl != null) ...[
-            const SizedBox(height: 16),
-            _buildDetailRow('Receipt', 'Available'),
-          ],
-
-          if (widget.transaction.tags.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            _buildDetailRow('Tags', widget.transaction.tags.join(', ')),
-          ],
+          _buildDetailRow('Receipt', 'Available'),
         ],
-      ),
+
+        if (widget.transaction.tags.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _buildDetailRow('Tags', widget.transaction.tags.join(', ')),
+        ],
+
+        // Edit button
+        const SizedBox(height: 24),
+        Center(
+          child: ElevatedButton.icon(
+            onPressed: () => setState(() => _isEditing = true),
+            icon: const Icon(Icons.edit),
+            label: const Text('Edit Transaction'),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
-  void _showEditBottomSheet() {
+  Widget _buildEditContent() {
     final categories = ref.watch(transactionCategoriesProvider);
     final categoryIconColorService = ref.read(categoryIconColorServiceProvider);
 
-    EnhancedBottomSheet.showForm(
-      context: context,
-      title: 'Edit Transaction',
-      subtitle: 'Update transaction details',
-      child: EditTransactionForm(
-        transaction: widget.transaction,
-        categories: categories,
-        categoryIconColorService: categoryIconColorService,
-        onSave: (updatedTransaction) async {
-          final success = await ref
-              .read(transactionNotifierProvider.notifier)
-              .updateTransaction(updatedTransaction);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header
+        Text(
+          'Edit Transaction',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Update transaction details',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+        ),
+        const SizedBox(height: 24),
 
-          if (success && mounted) {
-            setState(() => _isEditing = false);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Transaction updated successfully')),
-            );
-          }
-        },
-        onCancel: () => setState(() => _isEditing = false),
-      ),
-      actions: [
-        OutlinedButton(
-          onPressed: () => setState(() => _isEditing = false),
-          style: OutlinedButton.styleFrom(
-            minimumSize: Size(0, FormTokens.fieldHeightMd),
-            side: BorderSide(
-              color: ColorTokens.borderPrimary,
-              width: 1.5,
-            ),
-            shape: RoundedRectangleBorder(
+        // Edit Form
+        EditTransactionForm(
+          transaction: widget.transaction,
+          categories: categories,
+          categoryIconColorService: categoryIconColorService,
+          onSave: (updatedTransaction) async {
+            final success = await ref
+                .read(transactionNotifierProvider.notifier)
+                .updateTransaction(updatedTransaction);
+
+            if (success && mounted) {
+              setState(() => _isEditing = false);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Transaction updated successfully')),
+              );
+            }
+          },
+          onCancel: () => setState(() => _isEditing = false),
+        ),
+
+        const SizedBox(height: 24),
+
+        // Delete Button
+        Center(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: ColorTokens.gradientPrimary,
               borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
             ),
-          ),
-          child: Text('Cancel', style: TypographyTokens.labelMd),
-        ),
-        Container(
-          decoration: BoxDecoration(
-            gradient: ColorTokens.gradientPrimary,
-            borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-          ),
-          child: ElevatedButton(
-            onPressed: () => _confirmDeleteTransaction(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              shadowColor: Colors.transparent,
-              minimumSize: Size(0, FormTokens.fieldHeightMd),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
+            child: ElevatedButton(
+              onPressed: () => _confirmDeleteTransaction(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                minimumSize: const Size(200, 48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
+                ),
               ),
-            ),
-            child: Text(
-              'Delete',
-              style: TypographyTokens.labelMd.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
+              child: Text(
+                'Delete Transaction',
+                style: TypographyTokens.labelMd.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),

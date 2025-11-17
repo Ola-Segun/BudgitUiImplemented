@@ -15,12 +15,10 @@ class BillRepositoryImpl implements BillRepository {
   BillRepositoryImpl(
     this._transactionRepository,
     this._addTransaction,
-    this._deleteTransaction,
   ) : _dataSource = BillHiveDataSource();
 
   final TransactionRepository _transactionRepository;
   final AddTransaction _addTransaction;
-  final DeleteTransaction _deleteTransaction;
   final BillHiveDataSource _dataSource;
 
   @override
@@ -73,11 +71,11 @@ class BillRepositoryImpl implements BillRepository {
     }
 
     // Proceed with marking as paid using the proper usecase pattern
-    return _dataSource.markAsPaid(billId, payment, _addTransaction, _deleteTransaction, accountId: accountId);
+    return _dataSource.markAsPaid(billId, payment, _addTransaction, accountId: accountId);
   }
 
   @override
-  Future<Result<Bill>> markAsUnpaid(String billId) => _dataSource.markAsUnpaid(billId, _deleteTransaction);
+  Future<Result<Bill>> markAsUnpaid(String billId) => _dataSource.markAsUnpaid(billId);
 
   @override
   Future<Result<BillStatus>> getBillStatus(String billId) async {

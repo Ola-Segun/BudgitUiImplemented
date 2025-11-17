@@ -1,0 +1,364 @@
+{
+  "designSystemProfile": {
+    "meta": {
+      "name": "Budget App Form Design System",
+      "version": "1.0.0",
+      "description": "Comprehensive design system profile extracted from FormDesign screenshots for AI copilot guidance",
+      "platform": "Flutter Mobile App",
+      "designPhilosophy": "Clean, modern, accessible financial app with consistent form patterns"
+    },
+    "visualHierarchy": {
+      "screenStructure": {
+        "header": {
+          "position": "top",
+          "components": ["backButton", "title"],
+          "spacing": "16px vertical padding",
+          "alignment": "left-aligned title with back button"
+        },
+        "content": {
+          "padding": "16px horizontal",
+          "spacing": "24px between major sections",
+          "scroll": "vertical when content exceeds screen"
+        },
+        "footer": {
+          "position": "bottom",
+          "components": ["primaryAction", "keyboard"],
+          "spacing": "16px padding from edges"
+        }
+      },
+      "layering": {
+        "background": "Light gray (#F2F4F6)",
+        "surfaces": "White cards with subtle shadows",
+        "elevation": "2dp for cards, 8dp for bottom sheets"
+      }
+    },
+    "formPatterns": {
+      "commonStructure": {
+        "switchToggle": {
+          "pattern": "Two-option horizontal toggle",
+          "states": ["One Time", "Repetitive"],
+          "style": "Rounded pills with selected state highlighting",
+          "spacing": "Full width with equal distribution"
+        },
+        "amountInput": {
+          "display": "Large currency format",
+          "fontSize": "32-48px",
+          "fontWeight": "700 (bold)",
+          "color": "#0F172A (dark gray)",
+          "position": "Center prominent",
+          "features": ["Tabular figures", "Currency symbol"]
+        },
+        "categorySelection": {
+          "layout": "Horizontal scrollable grid",
+          "itemStyle": "Rounded squares with icons",
+          "colors": "Category-specific brand colors",
+          "iconStyle": "Bold, simple icons",
+          "labelPosition": "Below icon"
+        },
+        "toggleControls": {
+          "style": "iOS-style switch",
+          "activeColor": "#0F172A (dark)",
+          "inactiveColor": "#CBD5E1 (light gray)"
+        },
+        "dateTimeSelectors": {
+          "layout": "Side-by-side pills",
+          "style": "Rounded rectangular buttons",
+          "icons": ["calendar", "clock"],
+          "defaultState": "Light gray background"
+        },
+        "actionButton": {
+          "style": "Full-width rounded rectangle",
+          "color": "#0F172A (dark)",
+          "textColor": "white",
+          "height": "56px",
+          "borderRadius": "12px"
+        }
+      },
+      "specificFormTypes": {
+        "incomeForm": {
+          "categories": [
+            {"name": "Business", "color": "#14B8A6", "icon": "briefcase"},
+            {"name": "Salary", "color": "#0F172A", "icon": "card"},
+            {"name": "Property", "color": "#F97316", "icon": "home"},
+            {"name": "Interest", "color": "#3B82F6", "icon": "percent"},
+            {"name": "Freelance", "color": "#EC4899", "icon": "user"},
+            {"name": "Scholarship", "color": "#8B5CF6", "icon": "graduation"}
+          ],
+          "repeatOptions": {
+            "frequency": ["Month", "Week", "Day"],
+            "duration": ["Forever", "Until Date"]
+          },
+          "goalIntegration": {
+            "toggleLabel": "Include in Goals",
+            "goalCard": {
+              "style": "Rounded card with image and progress",
+              "layout": "Image left, title and progress right"
+            }
+          }
+        },
+        "expenseForm": {
+          "categories": [
+            {"name": "General", "color": "#14B8A6", "icon": "grid"},
+            {"name": "Food", "color": "#F97316", "icon": "utensils"},
+            {"name": "Party", "color": "#8B5CF6", "icon": "party"},
+            {"name": "Charity", "color": "#EC4899", "icon": "heart"},
+            {"name": "Movies", "color": "#0F172A", "icon": "film"},
+            {"name": "Shopping", "color": "#3B82F6", "icon": "bag"}
+          ]
+        },
+        "goalForm": {
+          "imageUpload": {
+            "style": "Dashed border placeholder",
+            "size": "Large square",
+            "icon": "image plus",
+            "text": "Add Image"
+          },
+          "inputFields": {
+            "goalTitle": {
+              "placeholder": "Goal Title",
+              "icon": "target",
+              "style": "Full-width with subtle border"
+            },
+            "targetAmount": {
+              "placeholder": "Target Amount",
+              "icon": "dollar",
+              "style": "Full-width with currency symbol"
+            }
+          }
+        },
+        "profileForm": {
+          "inputTypes": [
+            {"type": "text", "placeholder": "Full Name", "icon": "user"},
+            {"type": "email", "placeholder": "Email", "icon": "envelope"},
+            {"type": "phone", "placeholder": "Phone", "icon": "phone", "countryCode": true}
+          ],
+          "specialActions": [
+            {"label": "Change Password", "style": "Secondary button"},
+            {"label": "Update Profile", "style": "Primary button"}
+          ]
+        }
+      }
+    },
+    "componentLibrary": {
+      "inputs": {
+        "textField": {
+          "borderRadius": "12px",
+          "padding": "16px horizontal, 20px vertical",
+          "borderColor": "#E2E8F0",
+          "focusBorderColor": "#14B8A6",
+          "backgroundColor": "#FFFFFF",
+          "iconPosition": "left",
+          "iconSize": "20px",
+          "iconColor": "#94A3B8"
+        },
+        "amountField": {
+          "style": "Large, borderless, center-aligned",
+          "backgroundColor": "transparent",
+          "fontSize": "32px",
+          "fontWeight": "700"
+        },
+        "switchToggle": {
+          "height": "40px",
+          "borderRadius": "20px",
+          "selectedColor": "#14B8A6",
+          "unselectedColor": "#F1F5F9",
+          "textColor": {
+            "selected": "#FFFFFF",
+            "unselected": "#475569"
+          }
+        }
+      },
+      "buttons": {
+        "primary": {
+          "backgroundColor": "#0F172A",
+          "textColor": "#FFFFFF",
+          "borderRadius": "12px",
+          "height": "56px",
+          "fontSize": "16px",
+          "fontWeight": "600"
+        },
+        "secondary": {
+          "backgroundColor": "#F1F5F9",
+          "textColor": "#475569",
+          "borderRadius": "12px",
+          "height": "48px"
+        },
+        "categoryButton": {
+          "size": "64x64px",
+          "borderRadius": "12px",
+          "iconSize": "24px",
+          "labelFontSize": "12px",
+          "spacing": "8px between icon and label"
+        }
+      },
+      "cards": {
+        "goalCard": {
+          "borderRadius": "16px",
+          "padding": "16px",
+          "backgroundColor": "#FFFFFF",
+          "border": "1px solid #E2E8F0",
+          "shadow": "subtle",
+          "layout": "horizontal with image and content"
+        },
+        "inputCard": {
+          "borderRadius": "12px",
+          "padding": "20px",
+          "backgroundColor": "#FFFFFF",
+          "border": "1px solid #E2E8F0"
+        }
+      },
+      "keyboard": {
+        "style": "Custom numeric keypad",
+        "layout": "3x4 grid",
+        "buttonSize": "Equal width, 56px height",
+        "buttonStyle": "Rounded rectangles",
+        "backgroundColor": "#F1F5F9",
+        "textColor": "#0F172A",
+        "specialKeys": [".", "0", "backspace"]
+      }
+    },
+    "spacing": {
+      "scale": [4, 8, 12, 16, 20, 24, 32, 40, 48, 56, 64],
+      "components": {
+        "screenPadding": "16px",
+        "sectionSpacing": "24px",
+        "cardPadding": "16px",
+        "inputPadding": "16px horizontal, 20px vertical",
+        "buttonHeight": "56px",
+        "iconSpacing": "8px"
+      }
+    },
+    "typography": {
+      "fontFamily": "Inter",
+      "scales": {
+        "hero": {
+          "fontSize": "56px",
+          "fontWeight": "800",
+          "lineHeight": "1.1",
+          "letterSpacing": "-2.5px"
+        },
+        "display": {
+          "fontSize": "40px",
+          "fontWeight": "700",
+          "lineHeight": "1.2",
+          "letterSpacing": "-1.5px"
+        },
+        "title": {
+          "fontSize": "28px",
+          "fontWeight": "700",
+          "lineHeight": "1.25",
+          "letterSpacing": "-0.8px"
+        },
+        "currency": {
+          "fontSize": "32px",
+          "fontWeight": "700",
+          "lineHeight": "1.2",
+          "letterSpacing": "-1px",
+          "features": ["tabular-nums"]
+        },
+        "body": {
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "lineHeight": "1.5",
+          "letterSpacing": "0px"
+        },
+        "caption": {
+          "fontSize": "12px",
+          "fontWeight": "400",
+          "lineHeight": "1.4",
+          "letterSpacing": "0.4px"
+        }
+      }
+    },
+    "colors": {
+      "primary": "#14B8A6",
+      "primaryLight": "#5EEAD4",
+      "primaryDark": "#0F766E",
+      "secondary": "#EC4899",
+      "tertiary": "#8B5CF6",
+      "neutral": {
+        "black": "#0F172A",
+        "gray900": "#475569",
+        "gray500": "#94A3B8",
+        "gray300": "#CBD5E1",
+        "gray100": "#F1F5F9",
+        "gray50": "#F2F4F6",
+        "white": "#FFFFFF"
+      },
+      "semantic": {
+        "success": "#10B981",
+        "warning": "#F59E0B",
+        "error": "#EF4444",
+        "info": "#3B82F6"
+      },
+      "categories": {
+        "business": "#14B8A6",
+        "food": "#F97316",
+        "transport": "#3B82F6",
+        "entertainment": "#8B5CF6",
+        "health": "#10B981",
+        "shopping": "#EC4899"
+      }
+    },
+    "animations": {
+      "transitions": {
+        "quick": "150ms ease-out",
+        "normal": "250ms ease-out",
+        "slow": "350ms ease-out"
+      },
+      "curves": {
+        "standard": "cubic-bezier(0.2, 0, 0, 1)",
+        "enter": "cubic-bezier(0, 0, 0.2, 1)",
+        "exit": "cubic-bezier(0.4, 0, 1, 1)"
+      }
+    },
+    "accessibility": {
+      "minimumTapTarget": "44px",
+      "colorContrast": "WCAG AA compliant",
+      "focusIndicators": "Visible focus states",
+      "semanticLabels": "Proper ARIA labels and hints"
+    },
+    "patterns": {
+      "slideToSave": {
+        "description": "Bottom action with slide gesture",
+        "style": "Dark rounded button with chevron icon",
+        "interaction": "Horizontal slide to complete action"
+      },
+      "modalKeyboard": {
+        "description": "Custom numeric keyboard overlay",
+        "appearance": "Bottom-aligned grid",
+        "integration": "Works with amount input fields"
+      },
+      "categoryGrid": {
+        "description": "Horizontal scrollable category selection",
+        "layout": "Single row, equal-width items",
+        "selection": "Single select with visual feedback"
+      },
+      "dateTimePicker": {
+        "description": "Dual date/time selection interface",
+        "layout": "Side-by-side buttons",
+        "defaultValues": "Today and current time"
+      }
+    },
+    "stateManagement": {
+      "formStates": {
+        "loading": "Skeleton loaders and disabled inputs",
+        "error": "Red border and error message below field",
+        "success": "Green checkmark and confirmation",
+        "disabled": "Grayed out with reduced opacity"
+      },
+      "validation": {
+        "realTime": "Immediate feedback on field blur",
+        "errorDisplay": "Below field with icon and message",
+        "successIndicator": "Subtle green accent"
+      }
+    },
+    "implementation": {
+      "framework": "Flutter",
+      "stateManagement": "Riverpod/Provider pattern",
+      "designSystem": "Custom design tokens",
+      "responsiveness": "Mobile-first approach",
+      "platform": "iOS/Android optimized"
+    }
+  }
+}

@@ -199,8 +199,27 @@ final deleteTransactionProvider = Provider<DeleteTransaction>((ref) {
   return DeleteTransaction(
     ref.read(transactionRepositoryProvider),
     ref.read(accountRepositoryProvider),
+    ref.read(billRepositoryProvider),
+    ref.read(recurringIncomeRepositoryProvider),
   );
 });
+
+// Recurring Income repositories
+final recurringIncomeRepositoryProvider = Provider<RecurringIncomeRepository>((ref) {
+  return RecurringIncomeRepositoryImpl(
+    ref.read(accountRepositoryProvider),
+    ref.read(addTransactionProvider),
+  );
+});
+
+// Recurring Income repositories
+// final recurringIncomeRepositoryProvider = Provider<RecurringIncomeRepository>((ref) {
+//   return RecurringIncomeRepositoryImpl(
+//     ref.read(accountRepositoryProvider),
+//     ref.read(addTransactionProvider),
+//     ref.read(deleteTransactionProvider),
+//   );
+// });
 
 final getPaginatedTransactionsProvider = Provider<GetPaginatedTransactions>((ref) {
   return GetPaginatedTransactions(ref.read(transactionRepositoryProvider));
@@ -344,9 +363,9 @@ final billRepositoryProvider = Provider<BillRepository>((ref) {
   return BillRepositoryImpl(
     ref.read(transactionRepositoryProvider),
     ref.read(addTransactionProvider),
-    ref.read(deleteTransactionProvider),
   );
 });
+
 
 // Bill use cases
 final createBillProvider = Provider<CreateBill>((ref) {
@@ -596,15 +615,6 @@ final appInitializationProvider = FutureProvider<void>((ref) async {
 // Recurring Income data sources
 final recurringIncomeDataSourceProvider = Provider<RecurringIncomeHiveDataSource>((ref) {
   return RecurringIncomeHiveDataSource();
-});
-
-// Recurring Income repositories
-final recurringIncomeRepositoryProvider = Provider<RecurringIncomeRepository>((ref) {
-  return RecurringIncomeRepositoryImpl(
-    ref.read(accountRepositoryProvider),
-    ref.read(addTransactionProvider),
-    ref.read(deleteTransactionProvider),
-  );
 });
 
 // Recurring Income use cases
