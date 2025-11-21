@@ -8,7 +8,7 @@ import '../../../../core/theme/app_animations.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../domain/entities/budget.dart';
 import '../providers/budget_providers.dart';
-import '../screens/budget_edit_screen.dart';
+import '../widgets/budget_edit_bottom_sheet.dart';
 
 /// Card widget for displaying budget information
 class BudgetCard extends ConsumerWidget {
@@ -36,14 +36,23 @@ class BudgetCard extends ConsumerWidget {
     }
   }
 
-  void _editBudget(BuildContext context) {
+  void _editBudget(BuildContext context, WidgetRef ref) {
     HapticFeedback.lightImpact();
-    // Navigate to edit budget screen
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BudgetEditScreen(budget: budget),
-      ),
+    // Show edit budget bottom sheet
+    BudgetEditBottomSheet.show(
+      context: context,
+      budget: budget,
+      onSubmit: (updatedBudget) async {
+        await ref
+            .read(budgetNotifierProvider.notifier)
+            .updateBudget(updatedBudget);
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Budget updated successfully')),
+          );
+        }
+      },
     );
   }
 
@@ -116,7 +125,7 @@ class BudgetCard extends ConsumerWidget {
         children: [
           // Edit action (blue)
           SlidableAction(
-            onPressed: (_) => _editBudget(context),
+            onPressed: (_) => _editBudget(context, ref),
             backgroundColor: Theme.of(context).colorScheme.primary,
             foregroundColor: Colors.white,
             icon: Icons.edit,

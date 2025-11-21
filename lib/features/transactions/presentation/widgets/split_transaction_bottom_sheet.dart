@@ -1,22 +1,15 @@
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../../core/design_system/design_tokens.dart';
-import '../../../../core/design_system/color_tokens.dart';
-import '../../../../core/design_system/typography_tokens.dart';
-import '../../../../core/design_system/form_tokens.dart';
-import '../../../../core/design_system/components/enhanced_bottom_sheet.dart';
-import '../../../../core/design_system/components/enhanced_text_field.dart';
-import '../../../../core/design_system/components/enhanced_dropdown_field.dart';
-import '../../../../core/design_system/components/category_button_selector.dart';
-import '../../../../core/design_system/components/optional_fields_toggle.dart';
+import '../../../../core/design_system/modern/modern.dart';
+import '../../../../core/design_system/widgets/custom_numeric_keyboard.dart';
 import '../../domain/entities/transaction.dart';
 import '../../domain/entities/split_transaction.dart';
+import '../../domain/services/category_icon_color_service.dart';
 import '../providers/transaction_providers.dart';
+import '../states/category_state.dart';
 import '../../../accounts/presentation/providers/account_providers.dart';
 
 /// Bottom sheet for creating split transactions
@@ -50,16 +43,12 @@ class SplitTransactionBottomSheet extends ConsumerWidget {
     _isShowing = true;
 
     try {
-      return await EnhancedBottomSheet.showForm<T>(
+      return await showModernBottomSheet<T>(
         context: context,
-        title: 'Split Transaction',
-        subtitle: 'Split a single transaction across multiple categories',
-        child: SplitTransactionBottomSheet(
+        builder: (context) => SplitTransactionBottomSheet(
           onSubmit: onSubmit,
           initialType: initialType,
         ),
-        actions: const [],
-        onClose: () => _isShowing = false,
       );
     } finally {
       _isShowing = false;
@@ -88,10 +77,9 @@ class _SplitTransactionBottomSheetState
   final _descriptionController = TextEditingController();
 
   late TransactionType _selectedType;
-  DateTime _selectedDate = DateTime.now();
+  final DateTime _selectedDate = DateTime.now();
   String? _selectedAccountId;
   bool _isSubmitting = false;
-  bool _showOptionalFields = false;
 
   // Split management
   final List<TransactionSplit> _splits = [];
@@ -235,18 +223,6 @@ class _SplitTransactionBottomSheetState
     });
   }
 
-  void _recalculateAllPercentages() {
-    final totalAmount = double.tryParse(_totalAmountController.text) ?? 0.0;
-    if (totalAmount > 0) {
-      setState(() {
-        for (int i = 0; i < _splits.length; i++) {
-          final split = _splits[i];
-          final percentage = (split.amount / totalAmount) * 100;
-          _splits[i] = split.copyWith(percentage: percentage);
-        }
-      });
-    }
-  }
 
   void _updateRemainingAmount() {
     final totalAmount = double.tryParse(_totalAmountController.text) ?? 0.0;
@@ -277,343 +253,188 @@ class _SplitTransactionBottomSheetState
     final accountsAsync = ref.watch(filteredAccountsProvider);
     final categoryIconColorService = ref.watch(categoryIconColorServiceProvider);
 
-    return Form(
-      key: _formKey,
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Optional Fields Toggle
-            OptionalFieldsToggle(
-              onChanged: (show) {
-                setState(() {
-                  _showOptionalFields = show;
-                });
-              },
-              label: 'Show optional fields',
-            ).animate()
-                .fadeIn(duration: DesignTokens.durationNormal)
-                .slideY(begin: 0.1, duration: DesignTokens.durationNormal),
-
-            SizedBox(height: FormTokens.sectionGap),
-
-            // Transaction Type Selector
-            _buildTypeSelector().animate()
-                .fadeIn(duration: DesignTokens.durationNormal, delay: 100.ms)
-                .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 100.ms),
-
-            SizedBox(height: FormTokens.sectionGap),
-
-            // Total Amount Field
-            EnhancedTextField(
-              controller: _totalAmountController,
-              label: 'Total Amount',
-              hint: '0.00',
-              prefix: Icon(
-                Icons.attach_money,
-                color: FormTokens.iconColor,
-                size: DesignTokens.iconMd,
-              ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
-              ],
-              onChanged: (_) {
-                _updateRemainingAmount();
-                _recalculateAllPercentages();
-              },
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter total amount';
-                }
-                final amount = double.tryParse(value);
-                if (amount == null || amount <= 0) {
-                  return 'Please enter a valid amount';
-                }
-                return null;
-              },
-              autofocus: true,
-            ).animate()
-                .fadeIn(duration: DesignTokens.durationNormal, delay: 200.ms)
-                .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 200.ms),
-
-            SizedBox(height: FormTokens.fieldGapMd),
-
-            // Account Dropdown
-            accountsAsync.when(
-              data: (accounts) {
-                return EnhancedDropdownField<String>(
-                  label: 'Account',
-                  hint: 'Select an account',
-                  items: accounts.map((account) {
-                    return DropdownItem<String>(
-                      value: account.id,
-                      label: account.displayName,
-                      subtitle: account.formattedAvailableBalance,
-                      icon: Icons.account_balance_wallet,
-                      iconColor: Color(account.type.color),
-                    );
-                  }).toList(),
-                  value: _selectedAccountId,
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedAccountId = value;
-                    });
-                  },
-                  selectedItemBuilder: (item) => Text(
-                    item.label,
-                    style: TypographyTokens.bodyMd,
-                  ),
-                  validator: (value) {
-                    if (value == null) {
-                      return 'Please select an account';
-                    }
-                    return null;
-                  },
-                ).animate()
-                    .fadeIn(duration: DesignTokens.durationNormal, delay: 300.ms)
-                    .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 300.ms);
-              },
-              loading: () => const CircularProgressIndicator(),
-              error: (error, stack) => Text('Error loading accounts: $error'),
-            ),
-
-            SizedBox(height: FormTokens.fieldGapMd),
-
-            // Split Configuration
-            _buildSplitConfiguration(categoryState, categoryIconColorService)
-                .animate()
-                .fadeIn(duration: DesignTokens.durationNormal, delay: 400.ms)
-                .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 400.ms),
-
-            // Optional Fields Section
-            if (_showOptionalFields) ...[
-              SizedBox(height: FormTokens.fieldGapMd),
-
-              // Date Picker
-              _buildDatePicker().animate()
-                  .fadeIn(duration: DesignTokens.durationNormal, delay: 500.ms)
-                  .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 500.ms),
-
-              SizedBox(height: FormTokens.fieldGapMd),
-
-              // Description Field
-              EnhancedTextField(
-                controller: _descriptionController,
-                label: 'Description (optional)',
-                hint: 'e.g., Restaurant bill split',
-                prefix: Icon(
-                  Icons.description_outlined,
-                  color: FormTokens.iconColor,
-                  size: DesignTokens.iconMd,
-                ),
-                maxLength: 100,
-              ).animate()
-                  .fadeIn(duration: DesignTokens.durationNormal, delay: 600.ms)
-                  .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 600.ms),
-            ],
-
-            SizedBox(height: FormTokens.fieldGapMd),
-
-            // Submit Button
-            ElevatedButton(
-              onPressed: _isSubmitting ? null : _submitSplitTransaction,
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, FormTokens.fieldHeightMd),
-                backgroundColor: ColorTokens.teal500,
-                foregroundColor: ColorTokens.surfacePrimary,
-                disabledBackgroundColor: ColorTokens.teal500.withValues(alpha: 0.5),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-                ),
-                elevation: 0,
-              ),
-              child: _isSubmitting
-                  ? SizedBox(
-                      height: DesignTokens.iconMd,
-                      width: DesignTokens.iconMd,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(ColorTokens.surfacePrimary),
-                      ),
-                    )
-                  : Text(
-                      'Create Split Transaction',
-                      style: TypographyTokens.labelMd.copyWith(
+    return ModernBottomSheet(
+      child: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Header
+              Padding(
+                padding: const EdgeInsets.only(bottom: spacing_md),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.call_split,
+                      color: ModernColors.accentGreen,
+                      size: 24,
+                    ),
+                    const SizedBox(width: spacing_sm),
+                    Text(
+                      'Split Transaction',
+                      style: ModernTypography.titleLarge.copyWith(
+                        color: ModernColors.textPrimary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-            ).animate()
-                .fadeIn(duration: DesignTokens.durationNormal, delay: _showOptionalFields ? 700.ms : 500.ms)
-                .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: _showOptionalFields ? 700.ms : 500.ms),
-
-            SizedBox(height: FormTokens.sectionGap),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTypeSelector() {
-    return Container(
-      decoration: BoxDecoration(
-        color: ColorTokens.surfaceSecondary,
-        borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-        border: Border.all(
-          color: ColorTokens.borderSecondary,
-          width: 1.5,
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildTypeButton(
-              type: TransactionType.expense,
-              icon: Icons.remove_circle_outline,
-              label: 'Expense',
-              color: ColorTokens.critical500,
-            ),
-          ),
-          Container(
-            width: 1.5,
-            height: 48,
-            color: ColorTokens.borderSecondary,
-          ),
-          Expanded(
-            child: _buildTypeButton(
-              type: TransactionType.income,
-              icon: Icons.add_circle_outline,
-              label: 'Income',
-              color: ColorTokens.success500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTypeButton({
-    required TransactionType type,
-    required IconData icon,
-    required String label,
-    required Color color,
-  }) {
-    final isSelected = _selectedType == type;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          setState(() {
-            _selectedType = type;
-          });
-        },
-        borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-        child: AnimatedContainer(
-          duration: DesignTokens.durationSm,
-          curve: DesignTokens.curveEaseOut,
-          constraints: const BoxConstraints(minHeight: 48.0, minWidth: 48.0),
-          padding: EdgeInsets.symmetric(
-            vertical: DesignTokens.spacing3,
-          ),
-          decoration: BoxDecoration(
-            color: isSelected ? color.withValues(alpha: 0.1) : Colors.transparent,
-            borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: DesignTokens.iconMd,
-                color: isSelected ? color : ColorTokens.textSecondary,
-              ),
-              SizedBox(width: DesignTokens.spacing2),
-              Text(
-                label,
-                style: TypographyTokens.labelMd.copyWith(
-                  color: isSelected ? color : ColorTokens.textSecondary,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  ],
                 ),
               ),
+
+              // Transaction Type Toggle
+              ModernToggleButton(
+                options: const ['Expense', 'Income'],
+                selectedIndex: _selectedType == TransactionType.expense ? 0 : 1,
+                onChanged: (index) {
+                  setState(() {
+                    _selectedType = index == 0 ? TransactionType.expense : TransactionType.income;
+                  });
+                },
+              ),
+
+              const SizedBox(height: spacing_lg),
+
+              // Total Amount Display
+              ModernAmountDisplay(
+                amount: double.tryParse(_totalAmountController.text) ?? 0,
+                isEditable: true,
+                onAmountChanged: (amount) {
+                  _totalAmountController.text = amount.toStringAsFixed(0) ?? '0';
+                  _updateRemainingAmount();
+                },
+                onTap: () async {
+                  final result = await showCustomNumericKeyboard(
+                    context: context,
+                    initialValue: _totalAmountController.text,
+                    showDecimal: false,
+                  );
+                  if (result != null) {
+                    setState(() {
+                      _totalAmountController.text = result;
+                      _updateRemainingAmount();
+                    });
+                  }
+                },
+              ),
+
+              const SizedBox(height: spacing_lg),
+
+              // Account Selection
+              accountsAsync.when(
+                data: (accounts) {
+                  return ModernDropdownSelector<String>(
+                    label: 'Account',
+                    selectedValue: _selectedAccountId,
+                    items: accounts.map((account) => ModernDropdownItem<String>(
+                      value: account.id,
+                      label: '${account.displayName} - \$${(account.balance ?? 0).toStringAsFixed(2)}',
+                    )).toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _selectedAccountId = value);
+                      }
+                    },
+                  );
+                },
+                loading: () => const CircularProgressIndicator(),
+                error: (error, stack) => Text('Error loading accounts: $error'),
+              ),
+
+              const SizedBox(height: spacing_lg),
+
+              // Split Configuration
+              _buildSplitConfiguration(categoryState, categoryIconColorService),
+
+              const SizedBox(height: spacing_lg),
+
+              // Description
+              ModernTextField(
+                controller: _descriptionController,
+                placeholder: 'Description (optional)',
+                prefixIcon: Icons.description_outlined,
+                maxLength: 200,
+              ),
+
+              const SizedBox(height: spacing_lg),
+
+              // Action Button
+              ModernActionButton(
+                text: 'Create Split Transaction',
+                onPressed: _isSubmitting ? null : _submitSplitTransaction,
+                isLoading: _isSubmitting,
+              ),
+
+              const SizedBox(height: spacing_lg),
             ],
           ),
         ),
       ),
-    ).animate(target: isSelected ? 1 : 0)
-        .scaleXY(
-          begin: 1.0,
-          end: 1.02,
-          duration: DesignTokens.durationSm,
-        );
+    );
   }
 
+
   Widget _buildSplitConfiguration(
-    AsyncValue categoryState,
-    dynamic categoryIconColorService,
+    AsyncValue<CategoryState> categoryState,
+    CategoryIconColorService categoryIconColorService,
   ) {
     return Container(
-      padding: EdgeInsets.all(FormTokens.fieldPaddingH),
+      padding: const EdgeInsets.all(spacing_md),
       decoration: BoxDecoration(
-        color: ColorTokens.surfaceSecondary,
-        borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-        border: Border.all(
-          color: ColorTokens.borderSecondary,
-          width: 1.0,
-        ),
+        color: ModernColors.primaryGray,
+        borderRadius: BorderRadius.circular(radius_md),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header
           Row(
             children: [
               Icon(
                 Icons.call_split,
-                size: DesignTokens.iconMd,
-                color: ColorTokens.teal500,
+                size: 20,
+                color: ModernColors.accentGreen,
               ),
-              SizedBox(width: DesignTokens.spacing2),
+              const SizedBox(width: spacing_sm),
               Text(
-                'Split Configuration',
-                style: TypographyTokens.labelMd.copyWith(
+                'Split Details',
+                style: ModernTypography.bodyLarge.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: ColorTokens.textPrimary,
+                  color: ModernColors.textPrimary,
                 ),
               ),
               const Spacer(),
               Text(
                 '${_splits.length} split${_splits.length == 1 ? '' : 's'}',
-                style: TypographyTokens.captionMd.copyWith(
-                  color: ColorTokens.textSecondary,
+                style: ModernTypography.labelMedium.copyWith(
+                  color: ModernColors.textSecondary,
                 ),
               ),
             ],
           ),
-          SizedBox(height: FormTokens.fieldGapMd),
+
+          const SizedBox(height: spacing_md),
 
           // Remaining amount indicator
           Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: DesignTokens.spacing3,
-              vertical: DesignTokens.spacing2,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: spacing_sm, vertical: spacing_xs),
             decoration: BoxDecoration(
-              color: _remainingAmount >= 0 ? ColorTokens.success500.withValues(alpha: 0.1) : ColorTokens.critical500.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
+              color: _remainingAmount >= 0 ? ModernColors.accentGreen.withValues(alpha: 0.1) : ModernColors.error.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(radius_sm),
             ),
             child: Row(
               children: [
                 Icon(
                   _remainingAmount >= 0 ? Icons.check_circle : Icons.warning,
-                  size: DesignTokens.iconSm,
-                  color: _remainingAmount >= 0 ? ColorTokens.success500 : ColorTokens.critical500,
+                  size: 16,
+                  color: _remainingAmount >= 0 ? ModernColors.accentGreen : ModernColors.error,
                 ),
-                SizedBox(width: DesignTokens.spacing2),
+                const SizedBox(width: spacing_xs),
                 Text(
-                  'Remaining: \$${NumberFormat.currency(symbol: '', decimalDigits: 2).format(_remainingAmount.abs())}',
-                  style: TypographyTokens.captionMd.copyWith(
-                    color: _remainingAmount >= 0 ? ColorTokens.success500 : ColorTokens.critical500,
+                  'Remaining: \$${NumberFormat.currency(symbol: '', decimalDigits: 0).format(_remainingAmount.abs())}',
+                  style: ModernTypography.labelMedium.copyWith(
+                    color: _remainingAmount >= 0 ? ModernColors.accentGreen : ModernColors.error,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -621,40 +442,35 @@ class _SplitTransactionBottomSheetState
             ),
           ),
 
-          SizedBox(height: FormTokens.fieldGapMd),
+          const SizedBox(height: spacing_md),
 
           // Split items
           ..._splits.asMap().entries.map((entry) {
             final index = entry.key;
             final split = entry.value;
             return Padding(
-              padding: EdgeInsets.only(bottom: index < _splits.length - 1 ? FormTokens.fieldGapMd : 0),
-              child: _buildSplitItem(
-                index: index,
-                split: split,
-                categoryState: categoryState,
-                categoryIconColorService: categoryIconColorService,
-              ),
+              padding: EdgeInsets.only(bottom: index < _splits.length - 1 ? spacing_sm : 0),
+              child: _buildSplitItem(index, split, categoryState, categoryIconColorService),
             );
           }),
 
-          SizedBox(height: FormTokens.fieldGapMd),
+          const SizedBox(height: spacing_md),
 
           // Add split button
           OutlinedButton.icon(
             onPressed: _splits.length >= 10 ? null : _addSplit,
-            icon: Icon(Icons.add, size: DesignTokens.iconMd),
-            label: Text('Add Split', style: TypographyTokens.labelMd),
+            icon: Icon(Icons.add, size: 18),
+            label: Text('Add Split', style: ModernTypography.labelMedium),
             style: OutlinedButton.styleFrom(
-              minimumSize: Size(double.infinity, FormTokens.fieldHeightSm),
+              minimumSize: const Size(double.infinity, 40),
               side: BorderSide(
-                color: _splits.length >= 10 ? ColorTokens.borderSecondary : ColorTokens.borderPrimary,
+                color: _splits.length >= 10 ? ModernColors.borderColor : ModernColors.accentGreen,
                 width: 1.5,
               ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
+                borderRadius: BorderRadius.circular(radius_md),
               ),
-              foregroundColor: _splits.length >= 10 ? ColorTokens.textSecondary : ColorTokens.teal500,
+              foregroundColor: _splits.length >= 10 ? ModernColors.textSecondary : ModernColors.accentGreen,
             ),
           ),
         ],
@@ -662,32 +478,30 @@ class _SplitTransactionBottomSheetState
     );
   }
 
-  Widget _buildSplitItem({
-    required int index,
-    required TransactionSplit split,
-    required AsyncValue categoryState,
-    required dynamic categoryIconColorService,
-  }) {
+  Widget _buildSplitItem(
+    int index,
+    TransactionSplit split,
+    AsyncValue<CategoryState> categoryState,
+    CategoryIconColorService categoryIconColorService,
+  ) {
     return Container(
-      padding: EdgeInsets.all(FormTokens.fieldPaddingH),
+      padding: const EdgeInsets.all(spacing_sm),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-        border: Border.all(
-          color: ColorTokens.borderSecondary,
-          width: 1.0,
-        ),
+        color: ModernColors.lightBackground,
+        borderRadius: BorderRadius.circular(radius_md),
+        border: Border.all(color: ModernColors.borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header with remove button
           Row(
             children: [
               Text(
                 'Split ${index + 1}',
-                style: TypographyTokens.labelMd.copyWith(
+                style: ModernTypography.labelMedium.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: ColorTokens.textPrimary,
+                  color: ModernColors.textPrimary,
                 ),
               ),
               const Spacer(),
@@ -695,36 +509,39 @@ class _SplitTransactionBottomSheetState
                 IconButton(
                   onPressed: () => _removeSplit(index),
                   icon: Icon(
-                    Icons.remove_circle_outline,
-                    size: DesignTokens.iconMd,
-                    color: ColorTokens.critical500,
+                    Icons.close,
+                    size: 16,
+                    color: ModernColors.textSecondary,
                   ),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),
             ],
           ),
-          SizedBox(height: FormTokens.fieldGapSm),
+
+          const SizedBox(height: spacing_xs),
 
           // Category selection
           categoryState.when(
             data: (state) {
-              final categories = state.getCategoriesByType(_selectedType);
-              return CategoryButtonSelector(
-                categories: categories,
-                selectedCategoryId: split.categoryId.isNotEmpty ? split.categoryId : null,
-                onCategorySelected: (categoryId) {
+              final categories = state.getCategoriesByType(_selectedType).cast<TransactionCategory>();
+              final categoryItems = categories.map((cat) => CategoryItem(
+                id: cat.id,
+                name: cat.name,
+                icon: categoryIconColorService.getIconForCategory(cat.id),
+                color: categoryIconColorService.getColorForCategory(cat.id).value,
+              )).toList();
+
+              return ModernCategorySelector(
+                categories: categoryItems,
+                selectedId: split.categoryId.isNotEmpty ? split.categoryId : null,
+                onChanged: (categoryId) {
                   if (categoryId != null) {
                     final updatedSplit = split.copyWith(categoryId: categoryId);
-                    _updateSplit(index, updatedSplit);
+                    setState(() {
+                      _splits[index] = updatedSplit;
+                    });
                   }
-                },
-                categoryIconColorService: categoryIconColorService,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please select a category';
-                  }
-                  return null;
                 },
               );
             },
@@ -732,40 +549,31 @@ class _SplitTransactionBottomSheetState
             error: (error, stack) => Text('Error loading categories: $error'),
           ),
 
-          SizedBox(height: FormTokens.fieldGapSm),
+          const SizedBox(height: spacing_sm),
 
-          // Amount and percentage row
+          // Amount and percentage inputs
           Row(
             children: [
+              // Amount input
               Expanded(
-                child: EnhancedTextField(
-                  controller: _amountControllers[index] ??= TextEditingController(text: split.amount > 0 ? split.amount.toStringAsFixed(2) : ''),
-                  label: 'Amount',
-                  hint: '0.00',
-                  prefix: Icon(
-                    Icons.attach_money,
-                    color: FormTokens.iconColor,
-                    size: DesignTokens.iconSm,
-                  ),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-                  ],
-                  onChanged: (value) => _updateSplitAmount(index, value ?? ''),
+                child: ModernTextField(
+                  controller: _amountControllers[index] ??= TextEditingController(text: split.amount > 0 ? split.amount.toStringAsFixed(0) : ''),
+                  placeholder: 'Amount',
+                  prefixIcon: Icons.attach_money,
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) => _updateSplitAmount(index, value),
                 ),
               ),
-              SizedBox(width: FormTokens.fieldGapSm),
+
+              const SizedBox(width: spacing_sm),
+
+              // Percentage input
               Expanded(
-                child: EnhancedTextField(
+                child: ModernTextField(
                   controller: _percentageControllers[index] ??= TextEditingController(text: split.percentage > 0 ? split.percentage.toStringAsFixed(1) : ''),
-                  label: 'Percentage',
-                  hint: '0.0',
-                  suffix: Text('%', style: TypographyTokens.captionMd),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,1}')),
-                  ],
-                  onChanged: (value) => _updateSplitPercentage(index, value ?? ''),
+                  placeholder: 'Percentage',
+                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                  onChanged: (value) => _updateSplitPercentage(index, value),
                 ),
               ),
             ],
@@ -775,76 +583,6 @@ class _SplitTransactionBottomSheetState
     );
   }
 
-  Widget _buildDatePicker() {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () async {
-          final date = await showDatePicker(
-            context: context,
-            initialDate: _selectedDate,
-            firstDate: DateTime(2000),
-            lastDate: DateTime.now().add(const Duration(days: 365)),
-          );
-          if (date != null) {
-            setState(() {
-              _selectedDate = date;
-            });
-          }
-        },
-        borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 48.0),
-          padding: EdgeInsets.symmetric(
-            horizontal: FormTokens.fieldPaddingH,
-            vertical: FormTokens.fieldPaddingV,
-          ),
-          decoration: BoxDecoration(
-            color: FormTokens.fieldBackground,
-            borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-            border: Border.all(
-              color: FormTokens.fieldBorder,
-              width: 1.5,
-            ),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.calendar_today,
-                size: DesignTokens.iconMd,
-                color: FormTokens.iconColor,
-              ),
-              SizedBox(width: DesignTokens.spacing3),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Date',
-                      style: TypographyTokens.captionMd.copyWith(
-                        color: FormTokens.labelColor,
-                      ),
-                    ),
-                    SizedBox(height: DesignTokens.spacing05),
-                    Text(
-                      DateFormat('EEEE, MMMM dd, yyyy').format(_selectedDate),
-                      style: TypographyTokens.labelMd,
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.chevron_right,
-                size: DesignTokens.iconMd,
-                color: FormTokens.iconColor,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   Future<void> _submitSplitTransaction() async {
     if (!_formKey.currentState!.validate()) {
@@ -938,7 +676,7 @@ class _SplitTransactionBottomSheetState
 
       final splitTransaction = SplitTransaction(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
-        title: _descriptionController.text.isNotEmpty
+        title: _descriptionController.text.trim().isNotEmpty
             ? _descriptionController.text
             : 'Split Transaction',
         totalAmount: totalAmount,
@@ -946,7 +684,7 @@ class _SplitTransactionBottomSheetState
         date: _selectedDate,
         accountId: _selectedAccountId!,
         splits: _splits,
-        description: _descriptionController.text.isNotEmpty
+        description: _descriptionController.text.trim().isNotEmpty
             ? _descriptionController.text
             : null,
       );

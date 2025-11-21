@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../design_tokens.dart';
 import '../color_tokens.dart';
 import '../typography_tokens.dart';
+import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../features/transactions/domain/entities/transaction.dart';
 import '../../../features/transactions/presentation/providers/transaction_providers.dart';
+import '../../../features/transactions/presentation/widgets/transaction_detail_bottom_sheet.dart';
 
 /// Enhanced transaction card pattern with modern UI
 ///
@@ -84,9 +85,10 @@ class EnhancedTransactionCardPattern extends ConsumerWidget {
         child: InkWell(
           onTap: () {
             HapticFeedback.lightImpact();
-            if (context.mounted) {
-              context.go('/transactions/${transaction.id}');
-            }
+            AppBottomSheet.show(
+              context: context,
+              child: TransactionDetailBottomSheet(transaction: transaction),
+            );
           },
           borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
           child: Container(

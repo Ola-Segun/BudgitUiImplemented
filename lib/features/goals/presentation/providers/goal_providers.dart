@@ -5,7 +5,6 @@ import '../../../transactions/presentation/providers/transaction_providers.dart'
 import '../../../transactions/presentation/states/category_state.dart';
 import '../../../../core/di/providers.dart' as core_providers;
 import '../../domain/entities/goal.dart';
-import '../../domain/entities/goal_contribution.dart';
 import '../../domain/repositories/goal_repository.dart';
 import '../../domain/usecases/allocate_to_goals.dart' as allocate_to_goals_usecase;
 import '../../domain/usecases/add_goal_contribution.dart' as add_goal_contribution_usecase;

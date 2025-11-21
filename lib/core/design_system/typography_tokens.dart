@@ -576,6 +576,51 @@ class TypographyTokens {
   );
 
   // ============================================================================
+  // FORM DESIGN SYSTEM STYLES (from FormDesign screenshots)
+  // ============================================================================
+
+  /// Form currency style (large amount display)
+  static TextStyle get formCurrencyStyle => TextStyle(
+    fontFamily: fontFamilyPrimary,
+    fontSize: fontSize5xl, // 32px
+    fontWeight: weightBold,
+    height: lineHeightTight,
+    letterSpacing: letterSpacingTight,
+    color: ColorTokens.formPrimaryDark,
+    fontFeatures: const [FontFeature.tabularFigures()],
+  );
+
+  /// Form title style
+  static TextStyle get formTitleStyle => TextStyle(
+    fontFamily: fontFamilyPrimary,
+    fontSize: fontSize4xl, // 28px
+    fontWeight: weightBold,
+    height: lineHeightSnug,
+    letterSpacing: letterSpacingTight,
+    color: ColorTokens.formPrimaryDark,
+  );
+
+  /// Form body style
+  static TextStyle get formBodyStyle => TextStyle(
+    fontFamily: fontFamilyPrimary,
+    fontSize: fontSizeLg, // 16px
+    fontWeight: weightRegular,
+    height: lineHeightRelaxed,
+    letterSpacing: letterSpacingNormal,
+    color: ColorTokens.formPrimaryDark,
+  );
+
+  /// Form caption style
+  static TextStyle get formCaptionStyle => TextStyle(
+    fontFamily: fontFamilyPrimary,
+    fontSize: fontSizeXs, // 12px
+    fontWeight: weightRegular,
+    height: lineHeightNormal,
+    letterSpacing: letterSpacingWide,
+    color: ColorTokens.formTextSecondary,
+  );
+
+  // ============================================================================
   // HELPER METHODS
   // ============================================================================
 

@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
-import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
+import '../../../../core/design_system/modern/modern.dart';
 import '../../domain/entities/income_source.dart';
 import '../providers/onboarding_providers.dart';
+import '../widgets/add_income_source_bottom_sheet.dart';
 
 class IncomeEntryScreen extends ConsumerStatefulWidget {
   const IncomeEntryScreen({super.key});
@@ -18,74 +16,6 @@ class IncomeEntryScreen extends ConsumerStatefulWidget {
 }
 
 class _IncomeEntryScreenState extends ConsumerState<IncomeEntryScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _amountController = TextEditingController();
-  PayFrequency _selectedFrequency = PayFrequency.monthly;
-  bool _isAddingIncome = false;
-
-  final _currencyFormatter = CurrencyTextInputFormatter.currency(
-    locale: 'en_US',
-    decimalDigits: 2,
-    symbol: '\$',
-  );
-
-  @override
-  void initState() {
-    super.initState();
-    // Add listeners to handle text changes properly
-    _nameController.addListener(_onTextChanged);
-    _amountController.addListener(_onTextChanged);
-  }
-
-  void _onTextChanged() {
-    // Handle text changes if needed
-  }
-
-  @override
-  void dispose() {
-    // Remove listeners first
-    _nameController.removeListener(_onTextChanged);
-    _amountController.removeListener(_onTextChanged);
-    // Clear focus to prevent EditableText issues
-    FocusManager.instance.primaryFocus?.unfocus();
-    // Dispose controllers
-    _nameController.dispose();
-    _amountController.dispose();
-    super.dispose();
-  }
-
-  void _addIncomeSource() {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _isAddingIncome = true);
-
-    try {
-      final name = _nameController.text.trim();
-      final amountText = _amountController.text.replaceAll('\$', '').replaceAll(',', '').trim();
-      final amount = double.tryParse(amountText) ?? 0.0;
-
-      if (amount <= 0) return;
-
-      final incomeSource = IncomeSource(
-        id: 'income_${DateTime.now().millisecondsSinceEpoch}',
-        name: name,
-        amount: amount,
-        frequency: _selectedFrequency,
-      );
-
-      ref.read(onboardingNotifierProvider.notifier).addIncomeSource(incomeSource);
-
-      // Clear form
-      _nameController.clear();
-      _amountController.clear();
-      setState(() => _selectedFrequency = PayFrequency.monthly);
-    } finally {
-      if (mounted) {
-        setState(() => _isAddingIncome = false);
-      }
-    }
-  }
 
   void _removeIncomeSource(String id) {
     ref.read(onboardingNotifierProvider.notifier).removeIncomeSource(id);
@@ -109,60 +39,60 @@ class _IncomeEntryScreenState extends ConsumerState<IncomeEntryScreen> {
         children: [
           Expanded(
             child: SingleChildScrollView(
-              padding: AppSpacing.screenPaddingAll,
+              padding: const EdgeInsets.all(spacing_lg),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Progress indicator
                   LinearProgressIndicator(
                     value: progress,
-                    backgroundColor: AppColors.border,
-                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    backgroundColor: ModernColors.borderColor,
+                    valueColor: AlwaysStoppedAnimation<Color>(ModernColors.accentGreen),
                   ).animate().fadeIn(duration: 300.ms),
 
-                  Gap(AppSpacing.xxl),
+                  const SizedBox(height: spacing_xl),
 
                   // Header
                   Text(
                     'Tell us about your income',
-                    style: AppTypography.headlineMedium.copyWith(
-                      color: AppColors.textPrimary,
+                    style: ModernTypography.titleLarge.copyWith(
+                      color: ModernColors.textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ).animate().slideY(begin: 0.3, duration: 400.ms).fadeIn(),
 
-                  Gap(AppSpacing.md),
+                  Gap(spacing_md),
 
                   Text(
                     'Add all your income sources to help us create the perfect budget for you.',
-                    style: AppTypography.bodyLarge.copyWith(
-                      color: AppColors.textSecondary,
+                    style: ModernTypography.bodyLarge.copyWith(
+                      color: ModernColors.textSecondary,
                     ),
                   ).animate().slideY(begin: 0.2, duration: 500.ms).fadeIn(),
 
-                  Gap(AppSpacing.lg),
+                  Gap(spacing_lg),
 
                   // Total monthly income display
                   if (totalMonthlyIncome > 0)
                     Container(
-                      padding: AppSpacing.cardPaddingAll,
+                      padding: const EdgeInsets.all(spacing_md),
                       decoration: BoxDecoration(
-                        color: AppColors.success.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                        border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+                        color: ModernColors.success.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(radius_md),
+                        border: Border.all(color: ModernColors.success.withOpacity(0.3)),
                       ),
                       child: Row(
                         children: [
                           Icon(
                             Icons.account_balance_wallet,
-                            color: AppColors.success,
-                            size: AppSpacing.iconMd,
+                            color: ModernColors.success,
+                            size: 20,
                           ),
-                          Gap(AppSpacing.sm),
+                          const SizedBox(width: spacing_sm),
                           Text(
                             'Monthly Income: \$${totalMonthlyIncome.toStringAsFixed(2)}',
-                            style: AppTypography.titleMedium.copyWith(
-                              color: AppColors.success,
+                            style: ModernTypography.bodyLarge.copyWith(
+                              color: ModernColors.success,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -170,22 +100,22 @@ class _IncomeEntryScreenState extends ConsumerState<IncomeEntryScreen> {
                       ),
                     ).animate().slideY(begin: 0.1, duration: 600.ms).fadeIn(),
 
-                  Gap(AppSpacing.xl),
+                  Gap(spacing_lg),
 
                   // Existing income sources
                   if (onboardingData.incomeSources.isNotEmpty) ...[
                     Text(
                       'Your Income Sources',
-                      style: AppTypography.titleMedium.copyWith(
-                        color: AppColors.textPrimary,
+                      style: ModernTypography.bodyLarge.copyWith(
+                        color: ModernColors.textPrimary,
                         fontWeight: FontWeight.w500,
                       ),
                     ).animate().fadeIn(duration: 700.ms),
 
-                    Gap(AppSpacing.md),
+                    Gap(spacing_md),
 
                     ...onboardingData.incomeSources.map((source) => Padding(
-                          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                          padding: const EdgeInsets.only(bottom: spacing_sm),
                           child: IncomeSourceCard(
                             source: source,
                             onRemove: () => _removeIncomeSource(source.id),
@@ -193,154 +123,33 @@ class _IncomeEntryScreenState extends ConsumerState<IncomeEntryScreen> {
                         ).animate().slideX(begin: 0.1, duration: 800.ms).fadeIn()),
                   ],
 
-                  Gap(AppSpacing.xl),
+                  Gap(spacing_lg),
 
-                  // Add new income form
+                  // Add new income button
                   Text(
                     'Add Income Source',
-                    style: AppTypography.titleMedium.copyWith(
-                      color: AppColors.textPrimary,
+                    style: ModernTypography.bodyLarge.copyWith(
+                      color: ModernColors.textPrimary,
                       fontWeight: FontWeight.w500,
                     ),
                   ).animate().fadeIn(duration: 900.ms),
 
-                  Gap(AppSpacing.md),
+                  Gap(spacing_md),
 
-                  Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        // Income name
-                        TextFormField(
-                          controller: _nameController,
-                          decoration: InputDecoration(
-                            labelText: 'Income Source Name',
-                            hintText: 'e.g., Salary, Freelance, Business',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                            ),
-                            contentPadding: AppSpacing.inputPaddingAll,
-                          ),
-                          style: AppTypography.bodyLarge,
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Please enter an income source name';
-                            }
-                            return null;
-                          },
-                        ).animate().slideX(begin: 0.1, duration: 1000.ms).fadeIn(),
-
-                        Gap(AppSpacing.md),
-
-                        // Amount and frequency row
-                        Row(
-                          children: [
-                            // Amount
-                            Expanded(
-                              flex: 2,
-                              child: TextFormField(
-                                controller: _amountController,
-                                keyboardType: TextInputType.number,
-                                inputFormatters: [_currencyFormatter],
-                                decoration: InputDecoration(
-                                  labelText: 'Amount',
-                                  hintText: '\$0.00',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                                  ),
-                                  contentPadding: AppSpacing.inputPaddingAll,
-                                ),
-                                style: AppTypography.bodyLarge,
-                                validator: (value) {
-                                  if (value == null || value.trim().isEmpty) {
-                                    return 'Please enter an amount';
-                                  }
-                                  final amountText = value.replaceAll('\$', '').replaceAll(',', '').trim();
-                                  final amount = double.tryParse(amountText) ?? 0.0;
-                                  if (amount <= 0) {
-                                    return 'Amount must be greater than 0';
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ),
-
-                            Gap(AppSpacing.sm),
-
-                            // Frequency
-                            Expanded(
-                              flex: 2,
-                              child: DropdownButtonFormField<PayFrequency>(
-                                initialValue: _selectedFrequency,
-                                decoration: InputDecoration(
-                                  labelText: 'Frequency',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                                  ),
-                                  contentPadding: AppSpacing.inputPaddingAll,
-                                ),
-                                items: PayFrequency.values.map((frequency) {
-                                  return DropdownMenuItem(
-                                    value: frequency,
-                                    child: Text(
-                                      frequency.displayName,
-                                      style: AppTypography.bodyMedium,
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: (value) {
-                                  if (value != null) {
-                                    setState(() => _selectedFrequency = value);
-                                  }
-                                },
-                              ),
-                            ),
-                          ],
-                        ).animate().slideX(begin: 0.1, duration: 1100.ms).fadeIn(),
-
-                        Gap(AppSpacing.md),
-
-                        // Add button
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton(
-                            onPressed: _isAddingIncome ? null : _addIncomeSource,
-                            style: OutlinedButton.styleFrom(
-                              padding: AppSpacing.buttonPaddingAll,
-                              side: BorderSide(color: AppColors.primary),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                              ),
-                            ),
-                            child: _isAddingIncome
-                                ? SizedBox(
-                                    width: AppSpacing.iconMd,
-                                    height: AppSpacing.iconMd,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-                                    ),
-                                  )
-                                : Text(
-                                    'Add Income Source',
-                                    style: AppTypography.buttonMedium.copyWith(
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                          ),
-                        ).animate().slideY(begin: 0.1, duration: 1200.ms).fadeIn(),
-                      ],
-                    ),
-                  ),
+                  ModernActionButton(
+                    text: 'Add Income Source',
+                    onPressed: () => AddIncomeSourceBottomSheet.show(context),
+                    isPrimary: false,
+                  ).animate().slideY(begin: 0.1, duration: 1000.ms).fadeIn(),
 
                   // Add bottom padding to ensure content doesn't get cut off
-                  Gap(AppSpacing.xxxl),
+                  const SizedBox(height: 48),
                 ],
               ),
             ),
           ),
           Container(
-            padding: AppSpacing.screenPaddingAll,
+            padding: const EdgeInsets.all(spacing_lg),
             decoration: BoxDecoration(
               color: Theme.of(context).scaffoldBackgroundColor,
               boxShadow: [
@@ -354,27 +163,13 @@ class _IncomeEntryScreenState extends ConsumerState<IncomeEntryScreen> {
             child: Column(
               children: [
                 // Continue button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: onboardingData.incomeSources.isNotEmpty ? _handleContinue : null,
-                    style: ElevatedButton.styleFrom(
-                      padding: AppSpacing.buttonPaddingAll,
-                      backgroundColor: onboardingData.incomeSources.isNotEmpty ? AppColors.primary : AppColors.secondary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                      ),
-                      elevation: AppSpacing.elevationSm,
-                    ),
-                    child: Text(
-                      'Continue to Budget Setup',
-                      style: AppTypography.buttonLarge,
-                    ),
-                  ),
+                ModernActionButton(
+                  text: 'Continue to Budget Setup',
+                  onPressed: onboardingData.incomeSources.isNotEmpty ? _handleContinue : null,
+                  isPrimary: true,
                 ).animate().slideY(begin: 0.2, duration: 1300.ms).fadeIn(),
 
-                Gap(AppSpacing.md),
+                Gap(spacing_md),
               ],
             ),
           ),
@@ -398,12 +193,12 @@ class IncomeSourceCard extends StatelessWidget {
   Widget build(BuildContext context) {
 
     return Card(
-      elevation: AppSpacing.elevationXs,
+      elevation: 2,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        borderRadius: BorderRadius.circular(radius_md),
       ),
       child: Padding(
-        padding: AppSpacing.cardPaddingAll,
+        padding: const EdgeInsets.all(spacing_md),
         child: Row(
           children: [
             Expanded(
@@ -412,22 +207,22 @@ class IncomeSourceCard extends StatelessWidget {
                 children: [
                   Text(
                     source.name,
-                    style: AppTypography.titleSmall.copyWith(
-                      color: AppColors.textPrimary,
+                    style: ModernTypography.labelMedium.copyWith(
+                      color: ModernColors.textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  Gap(AppSpacing.xs),
+                  const SizedBox(height: spacing_xs),
                   Text(
                     '\$${source.amount.toStringAsFixed(2)} ${source.frequency.displayName.toLowerCase()}',
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.textSecondary,
+                    style: ModernTypography.bodyLarge.copyWith(
+                      color: ModernColors.textSecondary,
                     ),
                   ),
                   Text(
                     'Monthly: \$${source.monthlyAmount.toStringAsFixed(2)}',
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.success,
+                    style: ModernTypography.labelSmall.copyWith(
+                      color: ModernColors.success,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -438,8 +233,8 @@ class IncomeSourceCard extends StatelessWidget {
               onPressed: onRemove,
               icon: Icon(
                 Icons.delete_outline,
-                color: AppColors.danger,
-                size: AppSpacing.iconMd,
+                color: ModernColors.error,
+                size: 20,
               ),
             ),
           ],

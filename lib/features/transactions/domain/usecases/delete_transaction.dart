@@ -73,14 +73,14 @@ class DeleteTransaction {
   Future<Result<void>> _handleRelationshipUpdates(Transaction transaction) async {
     try {
       // Check if this is an income transaction (created by recurring income)
-      if (transaction.isIncome && transaction.title?.contains('Income') == true) {
+      if (transaction.isIncome && transaction.title.contains('Income') == true) {
         final incomeResult = await _updateIncomeOnTransactionDeletion(transaction);
         if (incomeResult.isError) {
           return incomeResult;
         }
       }
       // Check if this is a bill payment transaction (created by bill payment)
-      else if (!transaction.isIncome && transaction.title?.contains('Payment') == true) {
+      else if (!transaction.isIncome && transaction.title.contains('Payment') == true) {
         final billResult = await _updateBillOnTransactionDeletion(transaction);
         if (billResult.isError) {
           return billResult;

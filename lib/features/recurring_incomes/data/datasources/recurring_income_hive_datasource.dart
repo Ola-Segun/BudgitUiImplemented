@@ -6,7 +6,6 @@ import '../../../../core/error/result.dart';
 import '../../../../core/storage/hive_storage.dart';
 import '../../../transactions/domain/entities/transaction.dart';
 import '../../../transactions/domain/usecases/add_transaction.dart';
-import '../../../transactions/domain/usecases/delete_transaction.dart';
 import '../models/recurring_income_dto.dart';
 import '../../domain/entities/recurring_income.dart';
 

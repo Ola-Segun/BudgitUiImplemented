@@ -1,7 +1,6 @@
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../entities/goal.dart';
-import '../entities/goal_contribution.dart';
 import '../repositories/goal_repository.dart';
 
 /// Use case for creating a new goal

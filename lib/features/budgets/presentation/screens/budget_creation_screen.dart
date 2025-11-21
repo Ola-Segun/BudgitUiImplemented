@@ -10,10 +10,10 @@ import '../../../../core/design_system/design_tokens.dart';
 import '../../../../core/design_system/color_tokens.dart';
 import '../../../../core/design_system/typography_tokens.dart';
 import '../../../../core/design_system/form_tokens.dart';
-import '../../../../core/design_system/components/enhanced_text_field.dart';
-import '../../../../core/design_system/components/enhanced_dropdown_field.dart';
 import '../../../../core/design_system/components/category_button_selector.dart';
 import '../../../../core/design_system/components/optional_fields_toggle.dart';
+import '../../../../core/design_system/modern/modern.dart';
+import '../../../../core/design_system/modern/modern_dropdown_selector.dart' as modern_dropdown;
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../transactions/domain/entities/transaction.dart';
@@ -104,17 +104,13 @@ class _BudgetCreationScreenState extends ConsumerState<BudgetCreationScreen> {
       child: ListView(
         padding: EdgeInsets.all(DesignTokens.screenPaddingH),
         children: [
-          // Optional Fields Toggle
-          OptionalFieldsToggle(
-            onChanged: (show) {
-              setState(() {
-                _showOptionalFields = show;
-              });
-            },
-            label: 'Show optional fields',
+          // Total Budget Display (moved to very top)
+          ModernAmountDisplay(
+            amount: _totalBudget,
+            isEditable: false,
           ).animate()
             .fadeIn(duration: DesignTokens.durationNormal)
-            .slideY(begin: 0.1, duration: DesignTokens.durationNormal),
+            .scale(begin: const Offset(0.95, 0.95), duration: DesignTokens.durationNormal),
 
           SizedBox(height: FormTokens.sectionGap),
 
@@ -154,6 +150,25 @@ class _BudgetCreationScreenState extends ConsumerState<BudgetCreationScreen> {
             ).animate()
               .fadeIn(duration: DesignTokens.durationNormal, delay: 100.ms)
               .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 100.ms),
+
+          // Budget Categories Section (split-style UI)
+          _buildCategoriesSection(expenseCategories, categoryIconColorService),
+
+          SizedBox(height: FormTokens.sectionGap),
+
+          // Optional Fields Toggle
+          OptionalFieldsToggle(
+            onChanged: (show) {
+              setState(() {
+                _showOptionalFields = show;
+              });
+            },
+            label: 'Show optional fields',
+          ).animate()
+            .fadeIn(duration: DesignTokens.durationNormal, delay: 200.ms)
+            .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 200.ms),
+
+          SizedBox(height: FormTokens.sectionGap),
           // Show name field error highlighting if there's a duplicate name error
           // if (budgetState.value?.error != null &&
           //     budgetState.value!.error!.contains('Budget names must be unique'))
@@ -184,49 +199,47 @@ class _BudgetCreationScreenState extends ConsumerState<BudgetCreationScreen> {
           //     ),
           //   ),
           // Template Selector
-          if (_showOptionalFields) ...[
-            EnhancedDropdownField<String>(
-              label: 'Template',
-              hint: 'Choose a budget template',
-              items: [
-                DropdownItem<String>(
-                  value: 'None (Custom)',
-                  label: 'None (Custom)',
-                  subtitle: 'Create a custom budget from scratch',
-                  icon: Icons.edit,
-                  iconColor: ColorTokens.neutral500,
-                ),
-                DropdownItem<String>(
-                  value: '50/30/20 Rule',
-                  label: '50/30/20 Rule',
-                  subtitle: 'Needs 50%, Wants 30%, Savings 20%',
-                  icon: Icons.account_balance_wallet,
-                  iconColor: ColorTokens.success500,
-                ),
-              ],
-              value: _selectedTemplate,
-              onChanged: (value) {
-                if (value != null && !_isLoadingTemplate) {
-                  HapticFeedback.lightImpact();
-                  setState(() {
-                    _selectedTemplate = value;
-                  });
-                  _onTemplateChanged(value);
-                }
-              },
-            ).animate()
-              .fadeIn(duration: DesignTokens.durationNormal, delay: 200.ms)
-              .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 200.ms),
+         if (_showOptionalFields) ...[
+           modern_dropdown.ModernDropdownSelector<String>(
+             label: 'Template',
+             placeholder: 'Choose a budget template',
+             selectedValue: _selectedTemplate,
+             items: [
+               modern_dropdown.ModernDropdownItem<String>(
+                 value: 'None (Custom)',
+                 label: 'None (Custom)',
+                 icon: Icons.edit,
+                 color: ColorTokens.neutral500,
+               ),
+               modern_dropdown.ModernDropdownItem<String>(
+                 value: '50/30/20 Rule',
+                 label: '50/30/20 Rule',
+                 icon: Icons.account_balance_wallet,
+                 color: ColorTokens.success500,
+               ),
+             ],
+             onChanged: (value) {
+               if (value != null && !_isLoadingTemplate) {
+                 HapticFeedback.lightImpact();
+                 setState(() {
+                   _selectedTemplate = value;
+                 });
+                 _onTemplateChanged(value);
+               }
+             },
+           ).animate()
+             .fadeIn(duration: DesignTokens.durationNormal, delay: 200.ms)
+             .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 200.ms),
 
-            SizedBox(height: FormTokens.sectionGap),
-          ],
+           SizedBox(height: FormTokens.sectionGap),
+         ],
 
           SizedBox(height: FormTokens.sectionGap),
           // Budget Name with async validation
-          EnhancedTextField(
+          ModernTextField(
             controller: _nameController,
             label: 'Budget Name',
-            hint: 'e.g., Monthly Expenses',
+            placeholder: 'e.g., Monthly Expenses',
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
                 return 'Please enter a budget name';
@@ -237,42 +250,38 @@ class _BudgetCreationScreenState extends ConsumerState<BudgetCreationScreen> {
               }
               return null;
             },
-            autofocus: true,
           ).animate()
-            .fadeIn(duration: DesignTokens.durationNormal, delay: _showOptionalFields ? 300.ms : 200.ms)
-            .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: _showOptionalFields ? 300.ms : 200.ms),
+            .fadeIn(duration: DesignTokens.durationNormal, delay: _showOptionalFields ? 800.ms : 400.ms)
+            .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: _showOptionalFields ? 800.ms : 400.ms),
 
           SizedBox(height: FormTokens.fieldGapMd),
           // Description
           if (_showOptionalFields) ...[
-            EnhancedTextField(
+            ModernTextField(
               controller: _descriptionController,
               label: 'Description (optional)',
-              hint: 'Describe your budget...',
-              maxLines: 2,
+              placeholder: 'Describe your budget...',
               maxLength: 200,
             ).animate()
-              .fadeIn(duration: DesignTokens.durationNormal, delay: 400.ms)
-              .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 400.ms),
+              .fadeIn(duration: DesignTokens.durationNormal, delay: 900.ms)
+              .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 900.ms),
 
             SizedBox(height: FormTokens.fieldGapMd),
           ],
 
-          SizedBox(height: FormTokens.fieldGapMd),
-
           // Budget Type
           if (_showOptionalFields) ...[
-            EnhancedDropdownField<BudgetType>(
+            modern_dropdown.ModernDropdownSelector<BudgetType>(
               label: 'Budget Type',
+              selectedValue: _selectedType,
               items: BudgetType.values.map((type) {
-                return DropdownItem<BudgetType>(
+                return modern_dropdown.ModernDropdownItem<BudgetType>(
                   value: type,
                   label: type.displayName,
                   icon: _getBudgetTypeIcon(type),
-                  iconColor: ColorTokens.purple600,
+                  color: ColorTokens.purple600,
                 );
               }).toList(),
-              value: _selectedType,
               onChanged: (value) {
                 if (value != null) {
                   HapticFeedback.lightImpact();
@@ -288,117 +297,68 @@ class _BudgetCreationScreenState extends ConsumerState<BudgetCreationScreen> {
             SizedBox(height: FormTokens.sectionGap),
           ],
 
-          SizedBox(height: FormTokens.sectionGap),
-          
           // Date Range
           if (_showOptionalFields) ...[
-            Row(
-              children: [
-                Expanded(
-                  child: _buildDateTimePicker(
-                    label: 'Start Date & Time',
-                    date: _createdAt,
-                    onDateSelected: (date) {
-                      setState(() {
-                        _createdAt = date;
-                        if (_endDate.isBefore(_createdAt)) {
-                          _endDate = _createdAt.add(const Duration(days: 30));
-                        }
-                      });
-                    },
-                    firstDate: DateTime.now().subtract(const Duration(days: 365)),
-                    lastDate: DateTime.now().add(const Duration(days: 365)),
-                  ),
-                ),
-                SizedBox(width: DesignTokens.spacing3),
-                Expanded(
-                  child: _buildDateTimePicker(
-                    label: 'End Date & Time',
-                    date: _endDate,
-                    onDateSelected: (date) {
-                      setState(() {
-                        _endDate = date;
-                      });
-                    },
-                    firstDate: _createdAt,
-                    lastDate: _createdAt.add(const Duration(days: 365)),
-                  ),
-                ),
-              ],
+            ModernDateTimePicker(
+              selectedDate: _createdAt,
+              selectedTime: TimeOfDay.fromDateTime(_createdAt),
+              onDateChanged: (date) {
+                if (date != null) {
+                  setState(() {
+                    _createdAt = DateTime(
+                      date.year,
+                      date.month,
+                      date.day,
+                      _createdAt.hour,
+                      _createdAt.minute,
+                    );
+                    if (_endDate.isBefore(_createdAt)) {
+                      _endDate = _createdAt.add(const Duration(days: 30));
+                    }
+                  });
+                }
+              },
+              onTimeChanged: (time) {
+                if (time != null) {
+                  setState(() {
+                    _createdAt = DateTime(
+                      _createdAt.year,
+                      _createdAt.month,
+                      _createdAt.day,
+                      time.hour,
+                      time.minute,
+                    );
+                    if (_endDate.isBefore(_createdAt)) {
+                      _endDate = _createdAt.add(const Duration(days: 30));
+                    }
+                  });
+                }
+              },
             ).animate()
-              .fadeIn(duration: DesignTokens.durationNormal, delay: 600.ms)
-              .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 600.ms),
+              .fadeIn(duration: DesignTokens.durationNormal, delay: 700.ms)
+              .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 700.ms),
 
             SizedBox(height: FormTokens.sectionGap),
           ],
 
           SizedBox(height: FormTokens.sectionGap),
 
-          // // Fixed Creation Date/Time Picker
-          // TextFormField(
-          //   readOnly: true,
-          //   controller: TextEditingController(
-          //     text: DateFormat('MMM dd, yyyy hh:mm a').format(_createdAt),
-          //   ),
-          //   decoration: const InputDecoration(
-          //     labelText: 'Budget Creation Date & Time',
-          //     hintText: 'When should transaction tracking start?',
-          //     suffixIcon: Icon(Icons.calendar_today, size: 20),
-          //   ),
-          //   onTap: () async {
-          //     final date = await showDatePicker(
-          //       context: context,
-          //       initialDate: _createdAt,
-          //       firstDate: DateTime.now().subtract(const Duration(days: 365)),
-          //       lastDate: DateTime.now().add(const Duration(days: 1)),
-          //     );
-          //     if (date != null) {
-          //       final time = await showTimePicker(
-          //         context: context,
-          //         initialTime: TimeOfDay.fromDateTime(_createdAt),
-          //       );
-          //       setState(() {
-          //         _createdAt = DateTime(
-          //           date.year,
-          //           date.month,
-          //           date.day,
-          //           time?.hour ?? _createdAt.hour,
-          //           time?.minute ?? _createdAt.minute,
-          //         );
-          //       });
-          //     }
-          //   },
-          // ),
-          // const SizedBox(height: 8),
-          // Text(
-          //   'Transactions made after this date/time will be tracked against this budget.',
-          //   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          //     color: Theme.of(context).colorScheme.onSurfaceVariant,
-          //   ),
-          // ),
-          // const SizedBox(height: 24),
-          // Budget Categories Section
-          _buildCategoriesSection(expenseCategories, categoryIconColorService),
-
-          SizedBox(height: FormTokens.sectionGap),
-
-          // Total Budget Display
-          _buildTotalBudgetCard().animate()
-            .fadeIn(duration: DesignTokens.durationNormal, delay: _showOptionalFields ? 800.ms : 300.ms)
-            .scale(begin: const Offset(0.95, 0.95), duration: DesignTokens.durationNormal, delay: _showOptionalFields ? 800.ms : 300.ms),
-
-          SizedBox(height: FormTokens.sectionGap),
-
           // Action Buttons
           Row(
             children: [
-              Expanded(child: _buildCancelButton()),
+              Expanded(
+                child: ModernActionButton(
+                  text: 'Cancel',
+                  isPrimary: false,
+                  onPressed: _isSubmitting ? null : () => Navigator.pop(context),
+                ),
+              ),
               SizedBox(width: DesignTokens.spacing3),
               Expanded(child: _buildSubmitButton()),
             ],
           ).animate()
-            .fadeIn(duration: DesignTokens.durationNormal, delay: _showOptionalFields ? 900.ms : 400.ms)
-            .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: _showOptionalFields ? 900.ms : 400.ms),
+            .fadeIn(duration: DesignTokens.durationNormal, delay: _showOptionalFields ? 1000.ms : 700.ms)
+            .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: _showOptionalFields ? 1000.ms : 700.ms),
         ],
       ),
     );
@@ -406,20 +366,47 @@ class _BudgetCreationScreenState extends ConsumerState<BudgetCreationScreen> {
 
   Widget _buildCategoryItem(BudgetCategoryFormData category, List<TransactionCategory> expenseCategories, CategoryIconColorService categoryIconColorService, int index) {
     return Container(
-      margin: EdgeInsets.only(bottom: DesignTokens.spacing3),
       padding: EdgeInsets.all(DesignTokens.spacing3),
       decoration: BoxDecoration(
         color: ColorTokens.surfacePrimary,
         borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
         border: Border.all(
           color: ColorTokens.borderSecondary,
-          width: 1.5,
+          width: 1.0,
         ),
-        boxShadow: DesignTokens.elevationLow,
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header with remove button
+          Row(
+            children: [
+              Text(
+                'Category ${index + 1}',
+                style: TypographyTokens.bodySm.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: ColorTokens.textPrimary,
+                ),
+              ),
+              const Spacer(),
+              if (_categories.length > 1)
+                IconButton(
+                  onPressed: () => _removeCategory(category),
+                  icon: Icon(
+                    Icons.close,
+                    size: 16,
+                    color: ColorTokens.textSecondary,
+                  ),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  tooltip: 'Remove Category',
+                ),
+            ],
+          ),
+
+          SizedBox(height: DesignTokens.spacing2),
+
+          // Category selection
           CategoryButtonSelector(
             categories: expenseCategories,
             selectedCategoryId: category.selectedCategoryId,
@@ -441,55 +428,25 @@ class _BudgetCreationScreenState extends ConsumerState<BudgetCreationScreen> {
 
           SizedBox(height: DesignTokens.spacing3),
 
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: EnhancedTextField(
-                  controller: category.amountController,
-                  label: 'Amount',
-                  hint: '0.00',
-                  prefix: Icon(
-                    Icons.attach_money,
-                    color: FormTokens.iconColor,
-                    size: DesignTokens.iconMd,
-                  ),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-                  ],
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Required';
-                    }
-                    final amount = double.tryParse(value);
-                    if (amount == null || amount < 0) {
-                      return 'Invalid';
-                    }
-                    return null;
-                  },
-                ),
-              ),
-              if (_categories.length > 1) ...[
-                SizedBox(width: DesignTokens.spacing2),
-                Container(
-                  margin: EdgeInsets.only(top: DesignTokens.spacing3),
-                  decoration: BoxDecoration(
-                    color: ColorTokens.critical500.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                  ),
-                  child: IconButton(
-                    icon: Icon(
-                      Icons.delete_outline,
-                      size: DesignTokens.iconMd,
-                      color: ColorTokens.critical500,
-                    ),
-                    onPressed: () => _removeCategory(category),
-                    tooltip: 'Remove Category',
-                  ),
-                ),
-              ],
+          // Amount input
+          ModernTextField(
+            controller: category.amountController,
+            placeholder: 'Amount',
+            prefixIcon: Icons.attach_money,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
             ],
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Required';
+              }
+              final amount = double.tryParse(value);
+              if (amount == null || amount < 0) {
+                return 'Invalid';
+              }
+              return null;
+            },
           ),
         ],
       ),
@@ -570,290 +527,88 @@ class _BudgetCreationScreenState extends ConsumerState<BudgetCreationScreen> {
     }
   }
 
-  Widget _buildDateTimePicker({
-    required String label,
-    required DateTime date,
-    required ValueChanged<DateTime> onDateSelected,
-    required DateTime firstDate,
-    required DateTime lastDate,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () async {
-          final selectedDate = await showDatePicker(
-            context: context,
-            initialDate: date,
-            firstDate: firstDate,
-            lastDate: lastDate,
-          );
-          if (selectedDate != null) {
-            final selectedTime = await showTimePicker(
-              context: context,
-              initialTime: TimeOfDay.fromDateTime(date),
-            );
-            onDateSelected(DateTime(
-              selectedDate.year,
-              selectedDate.month,
-              selectedDate.day,
-              selectedTime?.hour ?? date.hour,
-              selectedTime?.minute ?? date.minute,
-            ));
-          }
-        },
+
+  Widget _buildCategoriesSection(List<TransactionCategory> expenseCategories, CategoryIconColorService categoryIconColorService) {
+    return Container(
+      padding: const EdgeInsets.all(DesignTokens.spacing3),
+      decoration: BoxDecoration(
+        color: ColorTokens.surfacePrimary,
         borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-        child: Container(
-          padding: EdgeInsets.all(DesignTokens.spacing3),
-          decoration: BoxDecoration(
-            color: FormTokens.fieldBackground,
-            borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-            border: Border.all(
-              color: FormTokens.fieldBorder,
-              width: 1.5,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+        border: Border.all(
+          color: ColorTokens.borderSecondary,
+          width: 1.5,
+        ),
+        boxShadow: DesignTokens.elevationLow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
             children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.calendar_today,
-                    size: DesignTokens.iconSm,
-                    color: FormTokens.iconColor,
-                  ),
-                  SizedBox(width: DesignTokens.spacing1),
-                  Text(
-                    label,
-                    style: TypographyTokens.captionMd.copyWith(
-                      color: FormTokens.labelColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+              Icon(
+                Icons.account_balance_wallet,
+                size: 20,
+                color: ColorTokens.teal500,
               ),
-              SizedBox(height: DesignTokens.spacing1),
+              SizedBox(width: DesignTokens.spacing2),
               Text(
-                DateFormat('MMM dd, yyyy\nhh:mm a').format(date),
-                style: TypographyTokens.labelSm.copyWith(
-                  height: 1.3,
+                'Budget Categories',
+                style: TypographyTokens.heading6.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: ColorTokens.textPrimary,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                decoration: BoxDecoration(
+                  color: ColorTokens.teal500.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                ),
+                child: IconButton(
+                  icon: Icon(
+                    Icons.add,
+                    size: DesignTokens.iconMd,
+                    color: ColorTokens.teal500,
+                  ),
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    _addCategory();
+                  },
+                  tooltip: 'Add Category',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
                 ),
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildCategoriesSection(List<TransactionCategory> expenseCategories, CategoryIconColorService categoryIconColorService) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                'Budget Categories',
-                style: TypographyTokens.heading6.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                color: ColorTokens.teal500.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-              ),
-              child: IconButton(
-                icon: Icon(
-                  Icons.add,
-                  size: DesignTokens.iconMd,
-                  color: ColorTokens.teal500,
-                ),
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                  _addCategory();
-                },
-                tooltip: 'Add Category',
-              ),
-            ),
-          ],
-        ).animate()
-          .fadeIn(duration: DesignTokens.durationNormal, delay: 600.ms)
-          .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 600.ms),
+          SizedBox(height: FormTokens.groupGap),
 
-        SizedBox(height: FormTokens.groupGap),
-
-        ..._categories.asMap().entries.map((entry) {
-          final index = entry.key;
-          final category = entry.value;
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: DesignTokens.spacing3,
-            ),
-            child: _buildCategoryItem(category, expenseCategories, categoryIconColorService, index),
-          ).animate()
-            .fadeIn(
-              duration: DesignTokens.durationNormal,
-              delay: Duration(milliseconds: 700 + (index * 50)),
-            )
-            .slideX(
-              begin: 0.1,
-              duration: DesignTokens.durationNormal,
-              delay: Duration(milliseconds: 700 + (index * 50)),
+          // Category items
+          ..._categories.asMap().entries.map((entry) {
+            final index = entry.key;
+            final category = entry.value;
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: index < _categories.length - 1 ? DesignTokens.spacing3 : 0,
+              ),
+              child: _buildCategoryItem(category, expenseCategories, categoryIconColorService, index),
             );
-        }),
-      ],
-    );
-  }
-
-  Widget _buildTotalBudgetCard() {
-    return AnimatedContainer(
-      duration: DesignTokens.durationNormal,
-      curve: DesignTokens.curveEaseOut,
-      padding: EdgeInsets.all(DesignTokens.spacing4),
-      decoration: BoxDecoration(
-        gradient: _isTotalUpdating
-            ? LinearGradient(
-                colors: [
-                  ColorTokens.teal500.withValues(alpha: 0.15),
-                  ColorTokens.purple600.withValues(alpha: 0.15),
-                ],
-              )
-            : null,
-        color: _isTotalUpdating ? null : ColorTokens.surfaceSecondary,
-        borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-        border: Border.all(
-          color: _isTotalUpdating
-              ? ColorTokens.teal500.withValues(alpha: 0.3)
-              : ColorTokens.borderSecondary,
-          width: _isTotalUpdating ? 2 : 1.5,
-        ),
-        boxShadow: _isTotalUpdating
-            ? DesignTokens.elevationGlow(
-                ColorTokens.teal500,
-                alpha: 0.2,
-                spread: 0,
-              )
-            : null,
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(DesignTokens.spacing2),
-            decoration: BoxDecoration(
-              color: ColorTokens.teal500.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-            ),
-            child: Icon(
-              Icons.account_balance_wallet,
-              size: DesignTokens.iconLg,
-              color: ColorTokens.teal500,
-            ),
-          ),
-          SizedBox(width: DesignTokens.spacing3),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Total Budget',
-                  style: TypographyTokens.labelMd.copyWith(
-                    color: ColorTokens.textSecondary,
-                  ),
-                ),
-                SizedBox(height: DesignTokens.spacing05),
-                AnimatedDefaultTextStyle(
-                  duration: DesignTokens.durationNormal,
-                  curve: DesignTokens.curveEaseOut,
-                  style: TypographyTokens.heading4.copyWith(
-                    color: _isTotalUpdating
-                        ? ColorTokens.teal500
-                        : ColorTokens.textPrimary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  child: Text(
-                    NumberFormat.currency(
-                      symbol: '\$',
-                      decimalDigits: 2,
-                    ).format(_totalBudget),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (_isTotalUpdating)
-            SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(ColorTokens.teal500),
-              ),
-            ),
+          }),
         ],
       ),
     );
   }
 
-  Widget _buildCancelButton() {
-    return OutlinedButton(
-      onPressed: _isSubmitting ? null : () => Navigator.pop(context),
-      style: OutlinedButton.styleFrom(
-        minimumSize: Size(0, FormTokens.fieldHeightMd),
-        side: BorderSide(
-          color: ColorTokens.borderPrimary,
-          width: 1.5,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-        ),
-      ),
-      child: Text('Cancel', style: TypographyTokens.labelMd),
-    ).animate()
-      .fadeIn(duration: DesignTokens.durationNormal, delay: 800.ms)
-      .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 800.ms);
-  }
+
 
   Widget _buildSubmitButton() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: ColorTokens.gradientPrimary,
-        borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-        boxShadow: _isSubmitting
-            ? []
-            : DesignTokens.elevationColored(ColorTokens.teal500, alpha: 0.3),
-      ),
-      child: ElevatedButton(
-        onPressed: _isSubmitting ? null : () => _submitBudget(_expenseCategories),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          minimumSize: Size(0, FormTokens.fieldHeightMd),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-          ),
-        ),
-        child: _isSubmitting
-            ? SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
-            : Text(
-                'Create Budget',
-                style: TypographyTokens.labelMd.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-      ),
+    return ModernActionButton(
+      text: 'Create Budget',
+      isPrimary: true,
+      isLoading: _isSubmitting,
+      onPressed: _isSubmitting ? null : () => _submitBudget(_expenseCategories),
     ).animate()
       .fadeIn(duration: DesignTokens.durationNormal, delay: 900.ms)
       .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 900.ms)

@@ -3,9 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/design_system/design_tokens.dart';
+import '../../../../core/design_system/color_tokens.dart';
+import '../../../../core/design_system/typography_tokens.dart';
+import '../../../../core/design_system/form_tokens.dart';
+import '../../../../core/design_system/components/category_button_selector.dart';
+import '../../../../core/design_system/modern/modern.dart';
+import '../../../../core/design_system/modern/modern_dropdown_selector.dart' as modern_dropdown;
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../transactions/domain/entities/transaction.dart';
@@ -43,7 +48,6 @@ class _BudgetEditScreenState extends ConsumerState<BudgetEditScreen> {
 
    // Reactive validation state
    String? _nameValidationError;
-   bool _isValidatingName = false;
    Timer? _nameValidationTimer;
    String _lastValidatedName = '';
 
@@ -140,35 +144,43 @@ class _BudgetEditScreenState extends ConsumerState<BudgetEditScreen> {
     return Form(
       key: _formKey,
       child: ListView(
-        padding: AppTheme.screenPaddingAll,
+        padding: EdgeInsets.all(DesignTokens.screenPaddingH),
         children: [
+          // Total Budget Display (moved to very top)
+          ModernAmountDisplay(
+            amount: _calculateTotalBudget(),
+            isEditable: false,
+          ),
+
+          SizedBox(height: FormTokens.sectionGap),
+
           // Show error message if there's a budget update error (but not duplicate name error)
           if (budgetState.value?.error != null &&
               !budgetState.value!.error!.contains('Budget names must be unique'))
             Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              padding: const EdgeInsets.all(12),
+              margin: EdgeInsets.only(bottom: FormTokens.sectionGap),
+              padding: EdgeInsets.all(DesignTokens.spacing3),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.errorContainer,
-                borderRadius: BorderRadius.circular(8),
+                color: ColorTokens.critical500.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.error,
-                  width: 1,
+                  color: ColorTokens.critical500.withValues(alpha: 0.3),
+                  width: 1.5,
                 ),
               ),
               child: Row(
                 children: [
                   Icon(
                     Icons.error_outline,
-                    color: Theme.of(context).colorScheme.error,
-                    size: 20,
+                    color: ColorTokens.critical500,
+                    size: DesignTokens.iconMd,
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: DesignTokens.spacing2),
                   Expanded(
                     child: Text(
                       budgetState.value!.error!,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onErrorContainer,
+                      style: TypographyTokens.bodyMd.copyWith(
+                        color: ColorTokens.textPrimary,
                         fontSize: 14,
                       ),
                     ),
@@ -176,151 +188,44 @@ class _BudgetEditScreenState extends ConsumerState<BudgetEditScreen> {
                 ],
               ),
             ),
-          // Show name field error highlighting if there's a duplicate name error
-          if (budgetState.value?.error != null &&
-              budgetState.value!.error!.contains('Budget names must be unique'))
-            Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.error.withValues(alpha: 0.3),
-                  width: 1,
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.warning,
-                        color: Theme.of(context).colorScheme.error,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Please choose a different budget name',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Existing budgets: ${_getExistingBudgetNames(budgetState, widget.budget.id)}',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      fontSize: 11,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
+
+          // Budget Categories Section (split-style UI)
+          _buildCategoriesSection(expenseCategories, categoryIconColorService),
+
+          SizedBox(height: FormTokens.sectionGap),
+
           // Budget Name
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  labelText: 'Budget Name',
-                  hintText: 'e.g., Monthly Expenses',
-                  errorStyle: const TextStyle(height: 0.8),
-                  errorBorder: (_nameValidationError != null ||
-                          (budgetState.value?.error != null &&
-                              budgetState.value!.error!.contains('Budget names must be unique')))
-                      ? OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Theme.of(context).colorScheme.error,
-                            width: 2,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                        )
-                      : null,
-                  focusedErrorBorder: (_nameValidationError != null ||
-                          (budgetState.value?.error != null &&
-                              budgetState.value!.error!.contains('Budget names must be unique')))
-                      ? OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Theme.of(context).colorScheme.error,
-                            width: 2,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                        )
-                      : null,
-                  suffixIcon: _isValidatingName
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: Padding(
-                            padding: EdgeInsets.all(12),
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        )
-                      : null,
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a budget name';
-                  }
-                  // Basic client-side validation - full uniqueness check happens in use case
-                  if (value.trim().length < 2) {
-                    return 'Budget name must be at least 2 characters';
-                  }
-                  return null;
-                },
-                autofocus: false,
-              ),
-              // Show instant validation feedback
-              if (_nameValidationError != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4, left: 12),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        color: Theme.of(context).colorScheme.error,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          _nameValidationError!,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
+          ModernTextField(
+            controller: _nameController,
+            label: 'Budget Name',
+            placeholder: 'e.g., Monthly Expenses',
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Please enter a budget name';
+              }
+              // Basic client-side validation - full uniqueness check happens in use case
+              if (value.trim().length < 2) {
+                return 'Budget name must be at least 2 characters';
+              }
+              return null;
+            },
+            errorText: _nameValidationError ?? (budgetState.value?.error != null &&
+                    budgetState.value!.error!.contains('Budget names must be unique')
+                ? 'A budget with this name already exists'
+                : null),
           ),
-          const SizedBox(height: 16),
+
+          SizedBox(height: FormTokens.fieldGapMd),
 
           // Description
-          TextFormField(
+          ModernTextField(
             controller: _descriptionController,
-            decoration: const InputDecoration(
-              labelText: 'Description (optional)',
-              hintText: 'Describe your budget...',
-            ),
+            label: 'Description (optional)',
+            placeholder: 'Describe your budget...',
             maxLength: 200,
-            maxLines: 2,
           ),
-          const SizedBox(height: 16),
+
+          SizedBox(height: FormTokens.fieldGapMd),
 
           // Allow Rollover Toggle
           SwitchListTile(
@@ -334,281 +239,115 @@ class _BudgetEditScreenState extends ConsumerState<BudgetEditScreen> {
               });
             },
           ),
-          const SizedBox(height: 16),
+
+          SizedBox(height: FormTokens.fieldGapMd),
 
           // Budget Type
-          DropdownButtonFormField<BudgetType>(
-            initialValue: _selectedType,
-            decoration: const InputDecoration(
-              labelText: 'Budget Type',
-            ),
+          modern_dropdown.ModernDropdownSelector<BudgetType>(
+            label: 'Budget Type',
+            selectedValue: _selectedType,
             items: BudgetType.values.map((type) {
-              return DropdownMenuItem(
+              return modern_dropdown.ModernDropdownItem<BudgetType>(
                 value: type,
-                child: Text(type.displayName),
+                label: type.displayName,
+                icon: _getBudgetTypeIcon(type),
+                color: ColorTokens.purple600,
               );
             }).toList(),
             onChanged: (value) {
               if (value != null) {
+                HapticFeedback.lightImpact();
                 setState(() {
                   _selectedType = value;
                 });
               }
             },
           ),
-          const SizedBox(height: 16),
+
+          SizedBox(height: FormTokens.fieldGapMd),
 
           // Budget Period (Creation Date to End Date)
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  readOnly: true,
-                  controller: TextEditingController(
-                    text: DateFormat('MMM dd, yyyy hh:mm a').format(_createdAt),
-                  ),
-                  decoration: const InputDecoration(
-                    labelText: 'Budget Creation Date & Time',
-                    suffixIcon: Icon(Icons.calendar_today, size: 18),
-                  ),
-                  onTap: () async {
-                    final confirmed = await showDialog<bool>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Warning'),
-                        content: const Text(
-                            'Changing the budget creation date will affect which transactions are tracked. '
-                            'Only transactions made after the new creation date will be included in budget calculations. '
-                            'This may significantly change your budget status. Are you sure you want to continue?'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, false),
-                            child: const Text('Cancel'),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, true),
-                            child: const Text('Continue'),
-                          ),
-                        ],
+          ModernDateTimePicker(
+            selectedDate: _createdAt,
+            selectedTime: TimeOfDay.fromDateTime(_createdAt),
+            onDateChanged: (date) async {
+              if (date != null) {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Warning'),
+                    content: const Text(
+                        'Changing the budget creation date will affect which transactions are tracked. '
+                        'Only transactions made after the new creation date will be included in budget calculations. '
+                        'This may significantly change your budget status. Are you sure you want to continue?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
                       ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Continue'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirmed == true) {
+                  setState(() {
+                    _createdAt = DateTime(
+                      date.year,
+                      date.month,
+                      date.day,
+                      _createdAt.hour,
+                      _createdAt.minute,
                     );
-
-                    if (confirmed == true) {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: _createdAt,
-                        firstDate:
-                            DateTime.now().subtract(const Duration(days: 365)),
-                        lastDate: DateTime.now().add(const Duration(days: 365)),
-                      );
-                      if (date != null) {
-                        final time = await showTimePicker(
-                          context: context,
-                          initialTime: TimeOfDay.fromDateTime(_createdAt),
-                        );
-                        setState(() {
-                          _createdAt = DateTime(
-                            date.year,
-                            date.month,
-                            date.day,
-                            time?.hour ?? _createdAt.hour,
-                            time?.minute ?? _createdAt.minute,
-                          );
-                          // Auto-adjust end date if it's before creation date
-                          if (_endDate.isBefore(_createdAt)) {
-                            _endDate = _createdAt.add(const Duration(days: 30));
-                          }
-                        });
-                      }
+                    // Auto-adjust end date if it's before creation date
+                    if (_endDate.isBefore(_createdAt)) {
+                      _endDate = _createdAt.add(const Duration(days: 30));
                     }
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextFormField(
-                  readOnly: true,
-                  controller: TextEditingController(
-                    text: DateFormat('MMM dd, yyyy hh:mm a').format(_endDate),
-                  ),
-                  decoration: const InputDecoration(
-                    labelText: 'Budget End Date & Time',
-                    suffixIcon: Icon(Icons.calendar_today, size: 18),
-                  ),
-                  onTap: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: _endDate,
-                      firstDate: _createdAt,
-                      lastDate: _createdAt.add(const Duration(days: 365)),
-                    );
-                    if (date != null) {
-                      final time = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay.fromDateTime(_endDate),
-                      );
-                      setState(() {
-                        _endDate = DateTime(
-                          date.year,
-                          date.month,
-                          date.day,
-                          time?.hour ?? _endDate.hour,
-                          time?.minute ?? _endDate.minute,
-                        );
-                      });
-                    }
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Creation Date/Time Picker (with warning)
-          // TextFormField(
-          //   readOnly: true,
-          //   controller: TextEditingController(
-          //     text: DateFormat('MMM dd, yyyy hh:mm a').format(_createdAt),
-          //   ),
-          //   decoration: const InputDecoration(
-          //     labelText: 'Budget Creation Date & Time',
-          //     hintText: 'When should transaction tracking start?',
-          //     suffixIcon: Icon(Icons.calendar_today, size: 20),
-          //   ),
-          //   onTap: () async {
-          //     final confirmed = await showDialog<bool>(
-          //       context: context,
-          //       builder: (context) => AlertDialog(
-          //         title: const Text('Warning'),
-          //         content: const Text(
-          //             'Changing the budget creation date will affect which transactions are tracked. '
-          //             'Only transactions made after the new creation date will be included in budget calculations. '
-          //             'This may significantly change your budget status. Are you sure you want to continue?'),
-          //         actions: [
-          //           TextButton(
-          //             onPressed: () => Navigator.pop(context, false),
-          //             child: const Text('Cancel'),
-          //           ),
-          //           TextButton(
-          //             onPressed: () => Navigator.pop(context, true),
-          //             child: const Text('Continue'),
-          //           ),
-          //         ],
-          //       ),
-          //     );
-
-          //     if (confirmed == true) {
-          //       final date = await showDatePicker(
-          //         context: context,
-          //         initialDate: _createdAt,
-          //         firstDate: DateTime.now().subtract(const Duration(days: 365)),
-          //         lastDate: DateTime.now().add(const Duration(days: 1)),
-          //       );
-          //       if (date != null) {
-          //         final time = await showTimePicker(
-          //           context: context,
-          //           initialTime: TimeOfDay.fromDateTime(_createdAt),
-          //         );
-          //         setState(() {
-          //           _createdAt = DateTime(
-          //             date.year,
-          //             date.month,
-          //             date.day,
-          //             time?.hour ?? _createdAt.hour,
-          //             time?.minute ?? _createdAt.minute,
-          //           );
-          //         });
-          //       }
-          //     }
-          //   },
-          // ),
-          // const SizedBox(height: 8),
-          // Text(
-          //   '⚠️ Changing this date will affect which transactions are tracked against this budget.',
-          //   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          //         color: Theme.of(context).colorScheme.error,
-          //       ),
-          // ),
-          // const SizedBox(height: 24),
-
-          // Categories Section
-          Row(
-            children: [
-              Text(
-                'Budget Categories',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-              const Spacer(),
-              TextButton.icon(
-                onPressed: _addCategory,
-                icon: const Icon(Icons.add),
-                label: const Text('Add Category'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Category List
-          ..._categories.map((category) => _buildCategoryItem(
-              category, expenseCategories, categoryIconColorService)),
-          const SizedBox(height: 16),
-
-          // Total Budget Display
-          Card(
-            color: Theme.of(context)
-                .colorScheme
-                .surfaceContainerHighest
-                .withValues(alpha: 0.5),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Text(
-                    'Total Budget:',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '\$${NumberFormat('#,##0.00').format(_calculateTotalBudget())}',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                  ),
-                ],
-              ),
-            ),
+                  });
+                }
+              }
+            },
+            onTimeChanged: (time) {
+              if (time != null) {
+                setState(() {
+                  _createdAt = DateTime(
+                    _createdAt.year,
+                    _createdAt.month,
+                    _createdAt.day,
+                    time.hour,
+                    time.minute,
+                  );
+                  // Auto-adjust end date if it's before creation date
+                  if (_endDate.isBefore(_createdAt)) {
+                    _endDate = _createdAt.add(const Duration(days: 30));
+                  }
+                });
+              }
+            },
           ),
 
-          const SizedBox(height: 32),
+          SizedBox(height: FormTokens.sectionGap),
 
           // Action Buttons
           Row(
             children: [
               Expanded(
-                child: OutlinedButton(
-                  onPressed:
-                      _isSubmitting ? null : () => Navigator.pop(context),
-                  child: const Text('Cancel'),
+                child: ModernActionButton(
+                  text: 'Cancel',
+                  isPrimary: false,
+                  onPressed: _isSubmitting ? null : () => Navigator.pop(context),
                 ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: DesignTokens.spacing3),
               Expanded(
-                child: ElevatedButton(
-                  onPressed: _isSubmitting
-                      ? null
-                      : () => _submitBudget(expenseCategories),
-                  child: _isSubmitting
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Update Budget'),
+                child: ModernActionButton(
+                  text: 'Update Budget',
+                  isPrimary: true,
+                  isLoading: _isSubmitting,
+                  onPressed: _isSubmitting ? null : () => _submitBudget(expenseCategories),
                 ),
               ),
             ],
@@ -622,110 +361,90 @@ class _BudgetEditScreenState extends ConsumerState<BudgetEditScreen> {
       BudgetCategoryFormData category,
       List<TransactionCategory> expenseCategories,
       CategoryIconColorService categoryIconColorService) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Category Dropdown
-            DropdownButtonFormField<String>(
-              initialValue: category.selectedCategoryId,
-              isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: 'Category',
-                contentPadding:
-                    EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-              ),
-              items: expenseCategories.map((cat) {
-                return DropdownMenuItem(
-                  value: cat.id,
-                  child: Row(
-                    children: [
-                      Icon(
-                        categoryIconColorService.getIconForCategory(cat.id),
-                        size: 20,
-                        color: categoryIconColorService
-                            .getColorForCategory(cat.id),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          cat.name,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() {
-                    category.selectedCategoryId = value;
-                  });
-                }
-              },
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please select a category';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 12),
-            // Amount Field and Delete Button Row
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: category.amountController,
-                    decoration: const InputDecoration(
-                      labelText: 'Amount',
-                      prefixText: '\$',
-                      hintText: '0.00',
-                      contentPadding:
-                          EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-                    ),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(
-                          RegExp(r'^\d+\.?\d{0,2}')),
-                    ],
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Required';
-                      }
-                      final amount = double.tryParse(value);
-                      if (amount == null || amount < 0) {
-                        return 'Invalid';
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-                if (_categories.length > 1) ...[
-                  const SizedBox(width: 8),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: IconButton(
-                      onPressed: () => _removeCategory(category),
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      tooltip: 'Remove Category',
-                      constraints: const BoxConstraints(
-                        minWidth: 40,
-                        minHeight: 40,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ],
+    return Container(
+      padding: EdgeInsets.all(DesignTokens.spacing3),
+      decoration: BoxDecoration(
+        color: ColorTokens.surfacePrimary,
+        borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
+        border: Border.all(
+          color: ColorTokens.borderSecondary,
+          width: 1.0,
         ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with remove button
+          Row(
+            children: [
+              Text(
+                'Category ${_categories.indexOf(category) + 1}',
+                style: TypographyTokens.bodySm.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: ColorTokens.textPrimary,
+                ),
+              ),
+              const Spacer(),
+              if (_categories.length > 1)
+                IconButton(
+                  onPressed: () => _removeCategory(category),
+                  icon: Icon(
+                    Icons.close,
+                    size: 16,
+                    color: ColorTokens.textSecondary,
+                  ),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  tooltip: 'Remove Category',
+                ),
+            ],
+          ),
+
+          SizedBox(height: DesignTokens.spacing2),
+
+          // Category selection
+          CategoryButtonSelector(
+            categories: expenseCategories,
+            selectedCategoryId: category.selectedCategoryId,
+            onCategorySelected: (value) {
+              if (value != null) {
+                setState(() {
+                  category.selectedCategoryId = value;
+                });
+              }
+            },
+            categoryIconColorService: categoryIconColorService,
+            validator: (value) {
+              if (value == null) {
+                return 'Please select a category';
+              }
+              return null;
+            },
+          ),
+
+          SizedBox(height: DesignTokens.spacing3),
+
+          // Amount input
+          ModernTextField(
+            controller: category.amountController,
+            placeholder: 'Amount',
+            prefixIcon: Icons.attach_money,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+            ],
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Required';
+              }
+              final amount = double.tryParse(value);
+              if (amount == null || amount < 0) {
+                return 'Invalid';
+              }
+              return null;
+            },
+          ),
+        ],
       ),
     );
   }
@@ -750,6 +469,92 @@ class _BudgetEditScreenState extends ConsumerState<BudgetEditScreen> {
     });
   }
 
+  Widget _buildCategoriesSection(List<TransactionCategory> expenseCategories, CategoryIconColorService categoryIconColorService) {
+    return Container(
+      padding: const EdgeInsets.all(DesignTokens.spacing3),
+      decoration: BoxDecoration(
+        color: ColorTokens.surfacePrimary,
+        borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
+        border: Border.all(
+          color: ColorTokens.borderSecondary,
+          width: 1.5,
+        ),
+        boxShadow: DesignTokens.elevationLow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              Icon(
+                Icons.account_balance_wallet,
+                size: 20,
+                color: ColorTokens.teal500,
+              ),
+              SizedBox(width: DesignTokens.spacing2),
+              Text(
+                'Budget Categories',
+                style: TypographyTokens.heading6.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: ColorTokens.textPrimary,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                decoration: BoxDecoration(
+                  color: ColorTokens.teal500.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                ),
+                child: IconButton(
+                  icon: Icon(
+                    Icons.add,
+                    size: DesignTokens.iconMd,
+                    color: ColorTokens.teal500,
+                  ),
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    _addCategory();
+                  },
+                  tooltip: 'Add Category',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ),
+            ],
+          ),
+
+          SizedBox(height: FormTokens.groupGap),
+
+          // Category items
+          ..._categories.asMap().entries.map((entry) {
+            final index = entry.key;
+            final category = entry.value;
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: index < _categories.length - 1 ? DesignTokens.spacing3 : 0,
+              ),
+              child: _buildCategoryItem(category, expenseCategories, categoryIconColorService),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  IconData _getBudgetTypeIcon(BudgetType type) {
+    switch (type) {
+      case BudgetType.zeroBased:
+        return Icons.account_balance_wallet;
+      case BudgetType.fiftyThirtyTwenty:
+        return Icons.pie_chart;
+      case BudgetType.envelope:
+        return Icons.mail;
+      case BudgetType.custom:
+        return Icons.tune;
+    }
+  }
+
   void _setupNameValidationListener() {
     _nameController.addListener(_onNameChanged);
   }
@@ -761,7 +566,6 @@ class _BudgetEditScreenState extends ConsumerState<BudgetEditScreen> {
      if (name.isEmpty) {
        setState(() {
          _nameValidationError = null;
-         _isValidatingName = false;
        });
        _nameValidationTimer?.cancel();
        return;
@@ -777,7 +581,6 @@ class _BudgetEditScreenState extends ConsumerState<BudgetEditScreen> {
 
      // Set validating state
      setState(() {
-       _isValidatingName = true;
        _nameValidationError = null;
      });
 
@@ -808,7 +611,6 @@ class _BudgetEditScreenState extends ConsumerState<BudgetEditScreen> {
 
        if (mounted) {
          setState(() {
-           _isValidatingName = false;
            _lastValidatedName = name;
            _nameValidationError = isDuplicate
                ? 'A budget with this name already exists'
@@ -820,7 +622,6 @@ class _BudgetEditScreenState extends ConsumerState<BudgetEditScreen> {
        debugPrint('DEBUG: Validation error (edit): $e');
        if (mounted) {
          setState(() {
-           _isValidatingName = false;
            _nameValidationError = null; // Clear error on failure
          });
        }

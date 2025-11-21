@@ -6,7 +6,6 @@ import '../../../../core/error/result.dart';
 import '../../../../core/storage/hive_storage.dart';
 import '../../../transactions/domain/entities/transaction.dart';
 import '../../../transactions/domain/usecases/add_transaction.dart';
-import '../../../transactions/domain/usecases/delete_transaction.dart';
 import '../models/bill_dto.dart';
 import '../../domain/entities/bill.dart';
 
@@ -376,6 +375,8 @@ class BillHiveDataSource {
   /// Calculate next due date based on frequency
   DateTime _calculateNextDueDate(DateTime currentDueDate, BillFrequency frequency) {
     switch (frequency) {
+      case BillFrequency.daily:
+        return currentDueDate.add(const Duration(days: 1));
       case BillFrequency.weekly:
         return currentDueDate.add(const Duration(days: 7));
       case BillFrequency.biWeekly:
@@ -385,6 +386,8 @@ class BillHiveDataSource {
       case BillFrequency.quarterly:
         return DateTime(currentDueDate.year, currentDueDate.month + 3, currentDueDate.day);
       case BillFrequency.annually:
+        return DateTime(currentDueDate.year + 1, currentDueDate.month, currentDueDate.day);
+      case BillFrequency.yearly:
         return DateTime(currentDueDate.year + 1, currentDueDate.month, currentDueDate.day);
       case BillFrequency.custom:
         return currentDueDate; // Custom logic needed

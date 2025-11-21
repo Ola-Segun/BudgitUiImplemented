@@ -4,7 +4,6 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../../../accounts/domain/repositories/account_repository.dart';
 import '../../../transactions/domain/usecases/add_transaction.dart';
-import '../../../transactions/domain/usecases/delete_transaction.dart';
 import '../../domain/entities/recurring_income.dart';
 import '../../domain/repositories/recurring_income_repository.dart';
 import '../datasources/recurring_income_hive_datasource.dart';

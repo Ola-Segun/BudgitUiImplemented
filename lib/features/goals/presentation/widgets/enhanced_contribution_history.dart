@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_colors_extended.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../theme/goals_theme_extended.dart';
 import '../widgets/enhanced_contribution_card.dart';

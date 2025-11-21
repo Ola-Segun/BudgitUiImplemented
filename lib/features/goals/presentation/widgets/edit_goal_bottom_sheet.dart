@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
+import '../../../../core/design_system/modern/modern.dart';
+import '../../../../core/design_system/widgets/custom_numeric_keyboard.dart';
 import '../../../transactions/domain/services/category_icon_color_service.dart';
 import '../../../transactions/presentation/providers/transaction_providers.dart';
 import '../../domain/entities/goal.dart';
@@ -26,24 +27,55 @@ class _EditGoalBottomSheetState extends ConsumerState<EditGoalBottomSheet> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
-  late final TextEditingController _targetAmountController;
-  late final TextEditingController _currentAmountController;
 
-  late GoalPriority _selectedPriority;
+  // Amount variables with editing flags to prevent controller interference
+  late double _targetAmount;
+  late double _currentAmount;
+  int? _editingTargetAmountIndex;
+  int? _editingCurrentAmountIndex;
+
+  late PriorityLevel _selectedPriority;
   late String _selectedCategoryId;
   late DateTime _selectedDeadline;
 
   bool _isSubmitting = false;
+
+  // Convert GoalPriority to PriorityLevel for the widget
+  PriorityLevel _goalPriorityToPriorityLevel(GoalPriority priority) {
+    switch (priority) {
+      case GoalPriority.low:
+        return PriorityLevel.low;
+      case GoalPriority.medium:
+        return PriorityLevel.medium;
+      case GoalPriority.high:
+        return PriorityLevel.high;
+    }
+  }
+
+  // Convert PriorityLevel to GoalPriority for storage
+  GoalPriority _priorityLevelToGoalPriority(PriorityLevel priority) {
+    switch (priority) {
+      case PriorityLevel.low:
+        return GoalPriority.low;
+      case PriorityLevel.medium:
+        return GoalPriority.medium;
+      case PriorityLevel.high:
+      case PriorityLevel.urgent:
+        return GoalPriority.high; // Map high and urgent to high
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.goal.title);
     _descriptionController = TextEditingController(text: widget.goal.description);
-    _targetAmountController = TextEditingController(text: widget.goal.targetAmount.toString());
-    _currentAmountController = TextEditingController(text: widget.goal.currentAmount.toString());
 
-    _selectedPriority = widget.goal.priority;
+    // Initialize amount variables
+    _targetAmount = widget.goal.targetAmount;
+    _currentAmount = widget.goal.currentAmount;
+
+    _selectedPriority = _goalPriorityToPriorityLevel(widget.goal.priority);
     _selectedCategoryId = widget.goal.categoryId;
     _selectedDeadline = widget.goal.deadline;
   }
@@ -52,34 +84,25 @@ class _EditGoalBottomSheetState extends ConsumerState<EditGoalBottomSheet> {
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
-    _targetAmountController.dispose();
-    _currentAmountController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.9,
-      ),
+    return ModernBottomSheet(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Header
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: spacing_md),
             child: Row(
               children: [
                 Text(
                   'Edit Goal',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: ModernTypography.titleLarge.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const Spacer(),
                 IconButton(
@@ -91,218 +114,190 @@ class _EditGoalBottomSheetState extends ConsumerState<EditGoalBottomSheet> {
           ),
 
           // Form
-          Flexible(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Goal Title
-                    TextFormField(
-                      controller: _titleController,
-                      decoration: const InputDecoration(
-                        labelText: 'Goal Title',
-                        hintText: 'e.g., Emergency Fund',
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Please enter a goal title';
+          Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Target Amount
+                ModernAmountDisplay(
+                  amount: _targetAmount,
+                  isEditable: true,
+                  onAmountChanged: (value) {
+                    _editingTargetAmountIndex = 0;
+                    setState(() {
+                      _targetAmount = value ?? 0.0;
+                    });
+                    Future.delayed(const Duration(milliseconds: 10), () {
+                      _editingTargetAmountIndex = null;
+                    });
+                  },
+                  onTap: () async {
+                    final result = await showCustomNumericKeyboard(
+                      context: context,
+                      initialValue: _targetAmount.toStringAsFixed(2),
+                      showDecimal: true,
+                    );
+                    if (result != null) {
+                      setState(() {
+                        _targetAmount = double.tryParse(result) ?? 0.0;
+                      });
+                    }
+                  },
+                  currencySymbol: '\$',
+                ),
+                const SizedBox(height: spacing_md),
+
+                // Category
+                Consumer(
+                  builder: (context, ref, child) {
+                    final categoryStateAsync = ref.watch(categoryNotifierProvider);
+                    final categoryService = CategoryIconColorService(ref.read(categoryNotifierProvider.notifier));
+
+                    return categoryStateAsync.when(
+                      data: (categoryState) {
+                        final categories = categoryState.expenseCategories;
+                        if (categories.isEmpty) {
+                          return const Text('No categories available');
                         }
-                        return null;
-                      },
-                      autofocus: true,
-                    ),
-                    const SizedBox(height: 16),
 
-                    // Description
-                    TextFormField(
-                      controller: _descriptionController,
-                      decoration: const InputDecoration(
-                        labelText: 'Description',
-                        hintText: 'Describe your goal...',
-                      ),
-                      maxLength: 200,
-                      maxLines: 3,
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Please enter a description';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Target Amount
-                    TextFormField(
-                      controller: _targetAmountController,
-                      decoration: const InputDecoration(
-                        labelText: 'Target Amount',
-                        prefixText: '\$',
-                        hintText: '0.00',
-                      ),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-                      ],
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter a target amount';
-                        }
-                        final amount = double.tryParse(value);
-                        if (amount == null || amount <= 0) {
-                          return 'Please enter a valid amount';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Current Amount
-                    TextFormField(
-                      controller: _currentAmountController,
-                      decoration: const InputDecoration(
-                        labelText: 'Current Amount (optional)',
-                        prefixText: '\$',
-                        hintText: '0.00',
-                      ),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Category
-                    Consumer(
-                      builder: (context, ref, child) {
-                        final categoryStateAsync = ref.watch(categoryNotifierProvider);
-                        final categoryService = CategoryIconColorService(ref.read(categoryNotifierProvider.notifier));
-
-                        return categoryStateAsync.when(
-                          data: (categoryState) {
-                            final categories = categoryState.expenseCategories;
-                            return DropdownButtonFormField<String>(
-                              initialValue: _selectedCategoryId,
-                              decoration: const InputDecoration(
-                                labelText: 'Category',
-                              ),
-                              items: categories.map((category) {
-                                final iconAndColor = categoryService.getIconAndColorForCategory(category.id);
-                                return DropdownMenuItem(
-                                  value: category.id,
-                                  child: Row(
-                                    children: [
-                                      Icon(iconAndColor.icon, size: 20, color: iconAndColor.color),
-                                      const SizedBox(width: 8),
-                                      Text(category.name),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
-                              onChanged: (value) {
-                                if (value != null) {
-                                  setState(() {
-                                    _selectedCategoryId = value;
-                                  });
-                                }
-                              },
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please select a category';
-                                }
-                                return null;
-                              },
+                        return ModernCategorySelector(
+                          categories: categories.map((category) {
+                            final iconAndColor = categoryService.getIconAndColorForCategory(category.id);
+                            return CategoryItem(
+                              id: category.id,
+                              name: category.name,
+                              icon: iconAndColor.icon,
+                              color: iconAndColor.color.toARGB32(),
                             );
+                          }).toList(),
+                          selectedId: _selectedCategoryId,
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() {
+                                _selectedCategoryId = value;
+                              });
+                            }
                           },
-                          loading: () => const CircularProgressIndicator(),
-                          error: (error, stack) => Text('Error loading categories: $error'),
                         );
                       },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Priority
-                    DropdownButtonFormField<GoalPriority>(
-                      initialValue: _selectedPriority,
-                      decoration: const InputDecoration(
-                        labelText: 'Priority',
+                      loading: () => const SizedBox(
+                        height: 100,
+                        child: Center(child: CircularProgressIndicator()),
                       ),
-                      items: GoalPriority.values.map((priority) {
-                        return DropdownMenuItem(
-                          value: priority,
-                          child: Text(priority.displayName),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() {
-                            _selectedPriority = value;
-                          });
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Deadline
-                    InkWell(
-                      onTap: () async {
-                        final date = await showDatePicker(
-                          context: context,
-                          initialDate: _selectedDeadline,
-                          firstDate: DateTime.now(),
-                          lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
-                        );
-                        if (date != null) {
-                          setState(() {
-                            _selectedDeadline = date;
-                          });
-                        }
-                      },
-                      child: InputDecorator(
-                        decoration: const InputDecoration(
-                          labelText: 'Target Date',
+                      error: (error, stack) => Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: ModernColors.error.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(radius_md),
                         ),
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(DateFormat('MMM dd, yyyy').format(_selectedDeadline)),
-                            const Icon(Icons.calendar_today),
+                            Icon(
+                              Icons.error_outline,
+                              color: ModernColors.error,
+                            ),
+                            const SizedBox(width: spacing_md),
+                            Expanded(
+                              child: Text(
+                                'Error loading categories: $error',
+                                style: TextStyle(
+                                  color: ModernColors.error,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ),
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Action Buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: _isSubmitting ? null : () => Navigator.pop(context),
-                            child: const Text('Cancel'),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: _isSubmitting ? null : _submitGoal,
-                            child: _isSubmitting
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  )
-                                : const Text('Update Goal'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                    );
+                  },
                 ),
-              ),
+                const SizedBox(height: spacing_md),
+
+                // Current Amount
+                ModernTextField(
+                  controller: TextEditingController(text: _currentAmount.toStringAsFixed(2)),
+                  label: 'Current Amount (optional)',
+                  placeholder: '0.00',
+                  prefixIcon: Icons.attach_money,
+                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                  onChanged: (value) {
+                    setState(() {
+                      _currentAmount = double.tryParse(value ?? '0') ?? 0.0;
+                    });
+                  },
+                ),
+                const SizedBox(height: spacing_md),
+
+                // Goal Title
+                ModernTextField(
+                  controller: _titleController,
+                  // label: 'Goal Title',
+                  placeholder: 'e.g., Emergency Fund',
+                  prefixIcon: Icons.flag,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter a goal title';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: spacing_md),
+
+                // Description
+                ModernTextField(
+                  controller: _descriptionController,
+                  // label: 'Description',
+                  prefixIcon: Icons.description,
+                  placeholder: 'Describe your goal...',
+                  maxLength: 200,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter a description';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: spacing_md),
+
+                // Deadline
+                ModernDateTimePicker(
+                  selectedDate: _selectedDeadline,
+                  onDateChanged: (date) {
+                    if (date != null) {
+                      setState(() {
+                        _selectedDeadline = date;
+                      });
+                    }
+                  },
+                  showTime: false,
+                ),
+                const SizedBox(height: spacing_md),
+
+                // Priority
+                ModernPrioritySelector(
+                  label: 'Priority',
+                  selectedPriority: _selectedPriority,
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        _selectedPriority = value;
+                      });
+                    }
+                  },
+                ),
+
+                const SizedBox(height: spacing_xl),
+
+                // Action Button
+                ModernActionButton(
+                  text: 'Update Goal',
+                  onPressed: _isSubmitting ? null : _submitGoal,
+                  isLoading: _isSubmitting,
+                ),
+                const SizedBox(height: spacing_lg),
+              ],
             ),
           ),
         ],
@@ -318,10 +313,8 @@ class _EditGoalBottomSheetState extends ConsumerState<EditGoalBottomSheet> {
     setState(() => _isSubmitting = true);
 
     try {
-      final targetAmount = double.parse(_targetAmountController.text);
-      final currentAmount = _currentAmountController.text.isNotEmpty
-          ? double.parse(_currentAmountController.text)
-          : 0.0;
+      final targetAmount = _targetAmount;
+      final currentAmount = _currentAmount;
 
       final updatedGoal = widget.goal.copyWith(
         title: _titleController.text.trim(),
@@ -329,7 +322,7 @@ class _EditGoalBottomSheetState extends ConsumerState<EditGoalBottomSheet> {
         targetAmount: targetAmount,
         currentAmount: currentAmount,
         deadline: _selectedDeadline,
-        priority: _selectedPriority,
+        priority: _priorityLevelToGoalPriority(_selectedPriority),
         categoryId: _selectedCategoryId,
         updatedAt: DateTime.now(),
       );
@@ -349,6 +342,7 @@ class _EditGoalBottomSheetState extends ConsumerState<EditGoalBottomSheet> {
         setState(() => _isSubmitting = false);
       }
     }
-  }
+   }
+
 
 }

@@ -5,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'lib/features/transactions/presentation/widgets/goal_allocation_section.dart';
 import 'lib/features/goals/domain/entities/goal.dart';
 import 'lib/features/goals/domain/entities/goal_contribution.dart';
-import 'lib/features/goals/presentation/providers/goal_providers.dart';
 import 'lib/features/transactions/domain/entities/transaction.dart';
 
 /// Test validation for goal allocation section fix

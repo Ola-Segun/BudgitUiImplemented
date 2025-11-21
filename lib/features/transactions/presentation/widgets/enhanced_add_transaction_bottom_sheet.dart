@@ -1,38 +1,35 @@
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
+import '../../../../core/design_system/modern/modern.dart';
 import '../../../../core/design_system/design_tokens.dart';
 import '../../../../core/design_system/color_tokens.dart';
-import '../../../../core/design_system/typography_tokens.dart';
-import '../../../../core/design_system/form_tokens.dart';
-import '../../../../core/design_system/components/enhanced_bottom_sheet.dart';
-import '../../../../core/design_system/components/enhanced_text_field.dart';
-import '../../../../core/design_system/components/enhanced_dropdown_field.dart';
-import '../../../../core/design_system/components/enhanced_switch_field.dart';
-import '../../../../core/design_system/components/category_button_selector.dart';
-import '../../../../core/design_system/components/optional_fields_toggle.dart';
 import '../../domain/entities/transaction.dart';
+import '../../domain/entities/split_transaction.dart';
+import '../../domain/services/category_icon_color_service.dart';
 import '../providers/transaction_providers.dart';
+import '../states/category_state.dart';
+import '../../../accounts/domain/entities/account.dart';
 import '../../../accounts/presentation/providers/account_providers.dart';
-import '../../../receipt_scanning/domain/entities/receipt_data.dart';
 import '../../../goals/domain/entities/goal_contribution.dart';
-import 'split_transaction_bottom_sheet.dart';
-import 'goal_allocation_section.dart';
+import '../../../receipt_scanning/domain/entities/receipt_data.dart';
 
 /// Enhanced add transaction bottom sheet with modern design
 class EnhancedAddTransactionBottomSheet extends ConsumerWidget {
   const EnhancedAddTransactionBottomSheet({
     super.key,
     required this.onSubmit,
+    this.onSplitSubmit,
     this.initialType,
   });
 
   final Future<void> Function(Transaction) onSubmit;
+  final Future<void> Function(dynamic)? onSplitSubmit; // Can handle SplitTransaction or Transaction
   final TransactionType? initialType;
 
   // Static flag to prevent multiple instances
@@ -42,6 +39,7 @@ class EnhancedAddTransactionBottomSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return _EnhancedAddTransactionBottomSheetContent(
       onSubmit: onSubmit,
+      onSplitSubmit: onSplitSubmit,
       initialType: initialType,
     );
   }
@@ -51,6 +49,7 @@ class EnhancedAddTransactionBottomSheet extends ConsumerWidget {
   static Future<T?> show<T>({
     required BuildContext context,
     required Future<void> Function(Transaction) onSubmit,
+    Future<void> Function(dynamic)? onSplitSubmit,
     TransactionType? initialType,
   }) async {
     // Prevent showing multiple instances
@@ -61,18 +60,13 @@ class EnhancedAddTransactionBottomSheet extends ConsumerWidget {
     _isShowing = true;
 
     try {
-      return await EnhancedBottomSheet.showForm<T>(
+      return await showModernBottomSheet<T>(
         context: context,
-        title: 'Add Transaction',
-        subtitle: initialType != null ? 'Track your ${initialType.displayName.toLowerCase()}' : 'Track your transaction',
-        child: EnhancedAddTransactionBottomSheet(
+        builder: (context) => EnhancedAddTransactionBottomSheet(
           onSubmit: onSubmit,
+          onSplitSubmit: onSplitSubmit,
           initialType: initialType,
         ),
-        actions: const [], // Actions are handled within the form
-        onClose: () {
-          _isShowing = false;
-        },
       );
     } finally {
       // Always reset the flag when the bottom sheet closes, regardless of how it was dismissed
@@ -84,10 +78,12 @@ class EnhancedAddTransactionBottomSheet extends ConsumerWidget {
 class _EnhancedAddTransactionBottomSheetContent extends ConsumerStatefulWidget {
   const _EnhancedAddTransactionBottomSheetContent({
     required this.onSubmit,
+    this.onSplitSubmit,
     this.initialType,
   });
 
   final Future<void> Function(Transaction) onSubmit;
+  final Future<void> Function(dynamic)? onSplitSubmit;
   final TransactionType? initialType;
 
   @override
@@ -99,6 +95,7 @@ class _EnhancedAddTransactionBottomSheetState
     extends ConsumerState<_EnhancedAddTransactionBottomSheetContent> {
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
+  final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _noteController = TextEditingController();
 
@@ -108,15 +105,20 @@ class _EnhancedAddTransactionBottomSheetState
   String? _selectedAccountId;
 
   bool _isSubmitting = false;
-  bool _showOptionalFields = false;
-  final bool _isRecurring = false;
+  // Remove recurring state since we're using transaction type toggle
 
   // Goal allocation state
   List<GoalContribution> _goalAllocations = [];
 
-  // Receipt scanning integration
-  ReceiptData? _scannedReceiptData;
-  bool _isProcessingReceipt = false;
+  // Split transaction mode
+  bool _isSplitMode = false;
+
+  // Split transaction state
+  final List<TransactionSplit> _splits = [];
+  final Map<int, TextEditingController> _amountControllers = {};
+  final Map<int, TextEditingController> _percentageControllers = {};
+  int? _editingAmountIndex;
+  int? _editingPercentageIndex;
 
   @override
   void initState() {
@@ -124,20 +126,346 @@ class _EnhancedAddTransactionBottomSheetState
     _selectedType = widget.initialType ?? TransactionType.expense;
     // Add listener to amount controller to trigger rebuilds when amount changes
     _amountController.addListener(_onAmountChanged);
+
+    // Initialize with one empty split
+    _addSplit();
   }
 
   @override
   void dispose() {
     _amountController.removeListener(_onAmountChanged);
     _amountController.dispose();
+    _titleController.dispose();
     _descriptionController.dispose();
     _noteController.dispose();
+    for (final controller in _amountControllers.values) {
+      controller.dispose();
+    }
+    for (final controller in _percentageControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
   void _onAmountChanged() {
     // Trigger rebuild when amount changes to show/hide goal allocation section
     setState(() {});
+  }
+
+  void _addSplit() {
+    setState(() {
+      _splits.add(TransactionSplit(
+        categoryId: '',
+        amount: 0.0,
+        percentage: 0.0,
+      ));
+      _amountControllers[_splits.length - 1] = TextEditingController();
+      _percentageControllers[_splits.length - 1] = TextEditingController();
+      _updateRemainingAmount();
+    });
+  }
+
+  void _removeSplit(int index) {
+    setState(() {
+      _splits.removeAt(index);
+      _amountControllers[index]?.dispose();
+      _percentageControllers[index]?.dispose();
+      _amountControllers.remove(index);
+      _percentageControllers.remove(index);
+
+      // Reindex controllers
+      final newAmountControllers = <int, TextEditingController>{};
+      final newPercentageControllers = <int, TextEditingController>{};
+      for (int i = 0; i < _splits.length; i++) {
+        newAmountControllers[i] = _amountControllers[i] ?? TextEditingController();
+        newPercentageControllers[i] = _percentageControllers[i] ?? TextEditingController();
+      }
+      _amountControllers.clear();
+      _percentageControllers.clear();
+      _amountControllers.addAll(newAmountControllers);
+      _percentageControllers.addAll(newPercentageControllers);
+
+      _updateRemainingAmount();
+    });
+  }
+
+  void _updateSplitAmount(int index, String value) {
+    _editingAmountIndex = index;
+
+    final amount = double.tryParse(value) ?? 0.0;
+    final totalAmount = double.tryParse(_amountController.text) ?? 0.0;
+    final percentage = totalAmount > 0 ? (amount / totalAmount) * 100 : 0.0;
+
+    final updatedSplit = _splits[index].copyWith(amount: amount, percentage: percentage);
+    setState(() {
+      _splits[index] = updatedSplit;
+      _updateRemainingAmount();
+    });
+
+    if (_editingPercentageIndex != index) {
+      _percentageControllers[index]?.text = percentage > 0 ? percentage.toStringAsFixed(1) : '';
+    }
+
+    Future.delayed(const Duration(milliseconds: 10), () {
+      _editingAmountIndex = null;
+    });
+  }
+
+  void _updateSplitPercentage(int index, String value) {
+    _editingPercentageIndex = index;
+
+    final percentage = double.tryParse(value) ?? 0.0;
+    final totalAmount = double.tryParse(_amountController.text) ?? 0.0;
+    final amount = (percentage / 100) * totalAmount;
+
+    final updatedSplit = _splits[index].copyWith(amount: amount, percentage: percentage);
+    setState(() {
+      _splits[index] = updatedSplit;
+      _updateRemainingAmount();
+    });
+
+    if (_editingAmountIndex != index) {
+      _amountControllers[index]?.text = amount > 0 ? amount.toStringAsFixed(0) : '';
+    }
+
+    Future.delayed(const Duration(milliseconds: 10), () {
+      _editingPercentageIndex = null;
+    });
+  }
+
+  void _updateRemainingAmount() {
+    final totalAmount = double.tryParse(_amountController.text) ?? 0.0;
+    if (totalAmount > 0) {
+      for (int i = 0; i < _splits.length; i++) {
+        final split = _splits[i];
+        final percentage = (split.amount / totalAmount) * 100;
+        _splits[i] = split.copyWith(percentage: percentage);
+
+        if (_editingAmountIndex != i) {
+          _amountControllers[i]?.text = split.amount > 0 ? split.amount.toStringAsFixed(0) : '';
+        }
+        if (_editingPercentageIndex != i) {
+          _percentageControllers[i]?.text = percentage > 0 ? percentage.toStringAsFixed(1) : '';
+        }
+      }
+    }
+  }
+
+  double get _remainingAmount {
+    final totalAmount = double.tryParse(_amountController.text) ?? 0.0;
+    final allocatedAmount = _splits.fold<double>(0.0, (sum, split) => sum + split.amount);
+    return totalAmount - allocatedAmount;
+  }
+
+  Widget _buildSplitConfiguration(
+    AsyncValue<CategoryState> categoryState,
+    AsyncValue<List<Account>> accountsAsync,
+    CategoryIconColorService categoryIconColorService,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(spacing_md),
+      decoration: BoxDecoration(
+        color: ModernColors.primaryGray,
+        borderRadius: BorderRadius.circular(radius_md),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              Icon(
+                Icons.call_split,
+                size: 20,
+                color: ModernColors.accentGreen,
+              ),
+              const SizedBox(width: spacing_sm),
+              Text(
+                'Split Details',
+                style: ModernTypography.bodyLarge.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: ModernColors.textPrimary,
+                ),
+              ),
+              const Spacer(),
+                        // Remaining amount indicator
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: spacing_sm, vertical: spacing_xs),
+            decoration: BoxDecoration(
+              color: _remainingAmount >= 0 ? ModernColors.accentGreen.withOpacity(0.1) : ModernColors.error.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(radius_sm),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  _remainingAmount >= 0 ? Icons.check_circle : Icons.warning,
+                  size: 16,
+                  color: _remainingAmount >= 0 ? ModernColors.accentGreen : ModernColors.error,
+                ),
+                const SizedBox(width: spacing_xs),
+                Text(
+                  'Remaining: \$${NumberFormat.currency(symbol: '', decimalDigits: 0).format(_remainingAmount.abs())}',
+                  style: ModernTypography.labelMedium.copyWith(
+                    color: _remainingAmount >= 0 ? ModernColors.accentGreen : ModernColors.error,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+              const SizedBox(width: spacing_sm),
+              Text(
+                // '${_splits.length} split${_splits.length == 1 ? '' : 's'}',
+                '${_splits.length}',
+                style: ModernTypography.labelMedium.copyWith(
+                  color: ModernColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+
+          // const SizedBox(height: spacing_md),
+
+          const SizedBox(height: spacing_md),
+
+          // Split items
+          ..._splits.asMap().entries.map((entry) {
+            final index = entry.key;
+            final split = entry.value;
+            return Padding(
+              padding: EdgeInsets.only(bottom: index < _splits.length - 1 ? spacing_sm : 0),
+              child: _buildSplitItem(index, split, categoryState, categoryIconColorService),
+            );
+          }),
+
+          const SizedBox(height: spacing_md),
+
+          // Add split button
+          OutlinedButton.icon(
+            onPressed: _splits.length >= 10 ? null : _addSplit,
+            icon: Icon(Icons.add, size: 18),
+            label: Text('Add Split', style: ModernTypography.labelMedium),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 40),
+              side: BorderSide(
+                color: _splits.length >= 10 ? ModernColors.borderColor : ModernColors.accentGreen,
+                width: 1.5,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(radius_md),
+              ),
+              foregroundColor: _splits.length >= 10 ? ModernColors.textSecondary : ModernColors.accentGreen,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSplitItem(
+    int index,
+    TransactionSplit split,
+    AsyncValue<CategoryState> categoryState,
+    CategoryIconColorService categoryIconColorService,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(spacing_sm),
+      decoration: BoxDecoration(
+        color: ModernColors.lightBackground,
+        borderRadius: BorderRadius.circular(radius_md),
+        border: Border.all(color: ModernColors.borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with remove button
+          Row(
+            children: [
+              Text(
+                'Split ${index + 1}',
+                style: ModernTypography.labelMedium.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: ModernColors.textPrimary,
+                ),
+              ),
+              const Spacer(),
+              if (_splits.length > 1)
+                IconButton(
+                  onPressed: () => _removeSplit(index),
+                  icon: Icon(
+                    Icons.close,
+                    size: 16,
+                    color: ModernColors.textSecondary,
+                  ),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+            ],
+          ),
+
+          const SizedBox(height: spacing_xs),
+
+          // Category selection
+          categoryState.when(
+            data: (state) {
+              final categories = state.getCategoriesByType(_selectedType).cast<TransactionCategory>();
+              final categoryItems = categories.map((cat) => CategoryItem(
+                id: cat.id,
+                name: cat.name,
+                icon: categoryIconColorService.getIconForCategory(cat.id),
+                color: categoryIconColorService.getColorForCategory(cat.id).value,
+              )).toList();
+
+              return ModernCategorySelector(
+                categories: categoryItems,
+                selectedId: split.categoryId.isNotEmpty ? split.categoryId : null,
+                onChanged: (categoryId) {
+                  if (categoryId != null) {
+                    final updatedSplit = split.copyWith(categoryId: categoryId);
+                    setState(() {
+                      _splits[index] = updatedSplit;
+                    });
+                  }
+                },
+              );
+            },
+            loading: () => const CircularProgressIndicator(),
+            error: (error, stack) => Text('Error loading categories: $error'),
+          ),
+
+          // const SizedBox(height: spacing_sm),
+
+          // Amount and percentage inputs
+          Row(
+            children: [
+              // Amount input
+              Expanded(
+                child: ModernTextField(
+                  controller: _amountControllers[index] ??= TextEditingController(text: split.amount > 0 ? split.amount.toStringAsFixed(0) : ''),
+                  placeholder: 'Amount',
+                  prefixIcon: Icons.attach_money,
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) => _updateSplitAmount(index, value ?? ''),
+                ),
+              ),
+
+              const SizedBox(width: spacing_sm),
+
+              // Percentage input
+              Expanded(
+                child: ModernTextField(
+                  controller: _percentageControllers[index] ??= TextEditingController(text: split.percentage > 0 ? split.percentage.toStringAsFixed(1) : ''),
+                  placeholder: 'Percentage',
+                  prefixIcon: Icons.attach_money,
+                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                  onChanged: (value) => _updateSplitPercentage(index, value ?? ''),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -193,559 +521,283 @@ class _EnhancedAddTransactionBottomSheetState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-          // Optional Fields Toggle
-          OptionalFieldsToggle(
-            onChanged: (show) {
-              setState(() {
-                _showOptionalFields = show;
-              });
-            },
-            label: 'Show optional fields',
-          ).animate()
-            .fadeIn(duration: DesignTokens.durationNormal)
-            .slideY(begin: 0.1, duration: DesignTokens.durationNormal),
+            // Transaction Type Selector (Income/Expense)
+            ModernToggleButton(
+              options: const ['Expense', 'Income'],
+              selectedIndex: _selectedType == TransactionType.expense ? 0 : 1,
+              onChanged: (index) {
+                setState(() {
+                  _selectedType = index == 0 ? TransactionType.expense : TransactionType.income;
+                  // Reset category when type changes so it gets the new default
+                  _selectedCategoryId = null;
+                });
+              },
+            ).animate()
+              .fadeIn(duration: DesignTokens.durationNormal)
+              .slideY(begin: 0.1, duration: DesignTokens.durationNormal),
 
-          SizedBox(height: FormTokens.sectionGap),
+            SizedBox(height: spacing_lg),
 
-          // Transaction Type Selector
-          _buildTypeSelector().animate()
-            .fadeIn(duration: DesignTokens.durationNormal, delay: 100.ms)
-            .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 100.ms),
+            // Amount Display (Amount-first design)
+ModernAmountDisplay(
+  amount: _amountController.text.isEmpty
+    ? 0
+    : double.parse(_amountController.text),
+  isEditable: true,
+  onAmountChanged: (newAmount) {
+    setState(() {
+      _amountController.text = newAmount.toStringAsFixed(0);
+    });
+  },
+).animate()
+              .fadeIn(duration: DesignTokens.durationNormal, delay: 100.ms)
+              .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 100.ms),
 
-          SizedBox(height: FormTokens.sectionGap),
+            SizedBox(height: spacing_lg),
 
-          // Amount Field
-          EnhancedTextField(
-            controller: _amountController,
-            label: 'Amount',
-            hint: '0.00',
-            prefix: Icon(
-              Icons.attach_money,
-              color: FormTokens.iconColor,
-              size: DesignTokens.iconMd,
-            ),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+            // Split Transaction Toggle (only show when amount is entered)
+            if (double.tryParse(_amountController.text) != null && double.tryParse(_amountController.text)! > 0) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: spacing_md, vertical: spacing_sm),
+                decoration: BoxDecoration(
+                  color: ModernColors.primaryGray,
+                  borderRadius: BorderRadius.circular(radius_md),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.call_split,
+                      size: 20,
+                      color: ModernColors.accentGreen,
+                    ),
+                    const SizedBox(width: spacing_sm),
+                    Expanded(
+                      child: Text(
+                        'Split across multiple categories',
+                        style: ModernTypography.bodyLarge.copyWith(
+                          color: ModernColors.textPrimary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Switch(
+                      value: _isSplitMode,
+                      onChanged: (value) {
+                        setState(() {
+                          _isSplitMode = value;
+                          if (value) {
+                            // Reset category and account when switching to split mode
+                            _selectedCategoryId = null;
+                            _selectedAccountId = null;
+                          }
+                        });
+                      },
+                      activeThumbColor: ModernColors.accentGreen,
+                      activeTrackColor: ModernColors.accentGreen.withOpacity(0.3),
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: spacing_lg),
             ],
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter an amount';
-              }
-              final amount = double.tryParse(value);
-              if (amount == null || amount <= 0) {
-                return 'Please enter a valid amount';
-              }
-              return null;
-            },
-            autofocus: true,
-          ).animate()
-            .fadeIn(duration: DesignTokens.durationNormal, delay: 200.ms)
-            .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 200.ms),
 
-          SizedBox(height: FormTokens.fieldGapMd),
+            // Split Configuration (only show when in split mode)
+            if (_isSplitMode) ...[
+              _buildSplitConfiguration(categoryState, accountsAsync, categoryIconColorService),
+              SizedBox(height: spacing_lg),
+            ],
 
-          // Category Selection
+            // Category Selection (only show when not in split mode)
+            if (!_isSplitMode) ...[
           categoryState.when(
             data: (state) {
-              final categories = state.getCategoriesByType(_selectedType);
+              final categories = state.getCategoriesByType(_selectedType).cast<TransactionCategory>();
+              final categoryItems = categories.map((cat) => CategoryItem(
+                id: cat.id,
+                name: cat.name,
+                icon: categoryIconColorService.getIconForCategory(cat.id),
+                color: categoryIconColorService.getColorForCategory(cat.id).value,
+              )).toList();
 
-              return CategoryButtonSelector(
-                categories: categories,
-                selectedCategoryId: _selectedCategoryId,
-                onCategorySelected: (value) {
+              return ModernCategorySelector(
+                categories: categoryItems,
+                selectedId: _selectedCategoryId,
+                onChanged: (value) {
                   developer.log('Category selected: $value');
                   setState(() {
                     _selectedCategoryId = value;
                   });
                 },
-                categoryIconColorService: categoryIconColorService,
-                validator: (value) {
-                  if (value == null) {
-                    return 'Please select a category';
-                  }
-                  return null;
-                },
               ).animate()
-                .fadeIn(duration: DesignTokens.durationNormal, delay: 300.ms)
-                .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 300.ms);
+                .fadeIn(duration: DesignTokens.durationNormal, delay: 200.ms)
+                .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 200.ms);
             },
             loading: () => const CircularProgressIndicator(),
             error: (error, stack) => Text('Error loading categories: $error'),
           ),
 
-          SizedBox(height: FormTokens.fieldGapMd),
-
-          // Account Dropdown
-          accountsAsync.when(
-            data: (accounts) {
-              return EnhancedDropdownField<String>(
-                label: 'Account',
-                hint: 'Select an account',
-                items: accounts.map((account) {
-                  return DropdownItem<String>(
-                    value: account.id,
-                    label: account.displayName,
-                    subtitle: account.formattedAvailableBalance,
-                    icon: Icons.account_balance_wallet,
-                    iconColor: Color(account.type.color),
-                  );
-                }).toList(),
-                value: _selectedAccountId,
-                onChanged: (value) {
-                  developer.log('Account selected: $value');
-                  setState(() {
-                    _selectedAccountId = value;
-                  });
-                },
-                selectedItemBuilder: (item) => Text(
-                  item.label,
-                  style: TypographyTokens.bodyMd,
-                ),
-                validator: (value) {
-                  if (value == null) {
-                    return 'Please select an account';
-                  }
-                  return null;
-                },
-              ).animate()
-                .fadeIn(duration: DesignTokens.durationNormal, delay: 400.ms)
-                .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 400.ms);
-            },
-            loading: () => const CircularProgressIndicator(),
-            error: (error, stack) => Text('Error loading accounts: $error'),
-          ),
-
-          SizedBox(height: FormTokens.fieldGapMd),
-
-          // Optional Fields Section
-          if (_showOptionalFields) ...[
-            // Date Picker
-            _buildDatePicker().animate()
-              .fadeIn(duration: DesignTokens.durationNormal, delay: 500.ms)
-              .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 500.ms),
-
-            SizedBox(height: FormTokens.fieldGapMd),
-
-            // Description Field
-            EnhancedTextField(
-              controller: _descriptionController,
-              label: 'Title (optional)',
-              hint: 'e.g., Grocery shopping at Walmart',
-              prefix: Icon(
-                Icons.description_outlined,
-                color: FormTokens.iconColor,
-                size: DesignTokens.iconMd,
-              ),
-              maxLength: 100,
-            ).animate()
-              .fadeIn(duration: DesignTokens.durationNormal, delay: 600.ms)
-              .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 600.ms),
-
-            SizedBox(height: FormTokens.fieldGapMd),
-
-            // Receipt Scanning Button
-            _buildReceiptButton().animate()
-              .fadeIn(duration: DesignTokens.durationNormal, delay: 700.ms)
-              .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 700.ms),
-
-            SizedBox(height: FormTokens.fieldGapMd),
-
-            // Receipt Data Display (if available)
-            if (_scannedReceiptData != null) ...[
-              _buildReceiptDataCard().animate()
-                .fadeIn(duration: DesignTokens.durationNormal, delay: 750.ms)
-                .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 750.ms),
+          SizedBox(height: spacing_md),
             ],
 
-            SizedBox(height: FormTokens.fieldGapMd),
-
-            // Note Field
-            EnhancedTextField(
-              controller: _noteController,
-              label: 'Description (optional)',
-              hint: 'Additional details...',
-              maxLines: 3,
-              maxLength: 200,
-            ).animate()
-              .fadeIn(duration: DesignTokens.durationNormal, delay: 800.ms)
-              .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 800.ms),
-
-            SizedBox(height: FormTokens.fieldGapMd),
-          ],
-
-          SizedBox(height: FormTokens.fieldGapMd),
-
-          // Goal Allocation Section (only for income transactions with valid amount)
-          if (_selectedType == TransactionType.income) ...[
-            Builder(
-              builder: (context) {
-                final amount = double.tryParse(_amountController.text) ?? 0;
-                // Only show goal allocation if amount is valid and positive
-                if (amount <= 0) {
-                  return const SizedBox.shrink();
-                }
-                return GoalAllocationSection(
-                  transactionAmount: amount,
-                  transactionType: _selectedType,
-                  onAllocationsChanged: (allocations) {
-                    setState(() {
-                      _goalAllocations = allocations;
-                    });
+            // Account Selection (show in both regular and split modes)
+            accountsAsync.when(
+              data: (accounts) {
+                return ModernDropdownSelector<String>(
+                  label: '',
+                  selectedValue: _selectedAccountId,
+                  items: accounts.map((account) => ModernDropdownItem<String>(
+                    value: account.id,
+                    label: '${account.displayName} - \$${(account.balance ?? 0).toStringAsFixed(2)}',
+                  )).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => _selectedAccountId = value);
+                    }
                   },
                 ).animate()
-                  .fadeIn(duration: DesignTokens.durationNormal, delay: 800.ms)
-                  .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 800.ms);
+                  .fadeIn(duration: DesignTokens.durationNormal, delay: 300.ms)
+                  .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 300.ms);
               },
+              loading: () => const CircularProgressIndicator(),
+              error: (error, stack) => Text('Error loading accounts: $error'),
             ),
 
-            SizedBox(height: FormTokens.fieldGapMd),
-          ],
+            SizedBox(height: spacing_lg),
 
-          // Split Transaction Toggle
-          EnhancedSwitchField(
-            title: 'Split Transaction',
-            subtitle: 'Split this transaction across multiple categories',
-            value: false,
-            onChanged: (value) {
-              if (value) {
-                // Navigate to split transaction flow
-                Navigator.pop(context); // Close current sheet
-                SplitTransactionBottomSheet.show(
-                  context: context,
-                  onSubmit: (splitTransaction) async {
-                    // Convert split transaction to regular transaction for now
-                    // TODO: Handle split transactions properly in the repository
-                    final regularTransaction = Transaction(
-                      id: splitTransaction.id,
-                      title: splitTransaction.title,
-                      amount: splitTransaction.totalAmount,
-                      type: splitTransaction.type,
-                      date: splitTransaction.date,
-                      categoryId: splitTransaction.splits.first.categoryId, // Use first split's category
-                      accountId: splitTransaction.accountId,
-                      description: splitTransaction.description,
+            // Date and Time Picker (show in both regular and split modes)
+            ModernDateTimePicker(
+              selectedDate: _selectedDate,
+              selectedTime: TimeOfDay.fromDateTime(_selectedDate),
+              onDateChanged: (date) {
+                if (date != null) {
+                  setState(() {
+                    _selectedDate = date;
+                  });
+                }
+              },
+              onTimeChanged: (time) {
+                if (time != null) {
+                  setState(() {
+                    _selectedDate = DateTime(
+                      _selectedDate.year,
+                      _selectedDate.month,
+                      _selectedDate.day,
+                      time.hour,
+                      time.minute,
                     );
-                    await widget.onSubmit(regularTransaction);
-                  },
-                  initialType: _selectedType,
-                );
-              }
-            },
-          ).animate()
-            .fadeIn(duration: DesignTokens.durationNormal, delay: 900.ms)
-            .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 900.ms),
+                  });
+                }
+              },
+            ).animate()
+              .fadeIn(duration: DesignTokens.durationNormal, delay: 400.ms)
+              .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 400.ms),
 
-          SizedBox(height: FormTokens.fieldGapMd),
+            SizedBox(height: spacing_lg),
 
-          // Submit Button
-          ElevatedButton(
-            onPressed: _isSubmitting ? null : _submitTransaction,
-            style: ElevatedButton.styleFrom(
-              minimumSize: Size(double.infinity, FormTokens.fieldHeightMd),
-              backgroundColor: ColorTokens.teal500,
-              foregroundColor: ColorTokens.surfacePrimary,
-              disabledBackgroundColor: ColorTokens.teal500.withValues(alpha: 0.5),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
+            // Title Field (show in both regular and split modes)
+            ModernTextField(
+              controller: _titleController,
+              placeholder: 'Title',
+              prefixIcon: Icons.title,
+              maxLength: 100,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Title is required';
+                }
+                return null;
+              },
+            ).animate()
+              .fadeIn(duration: DesignTokens.durationNormal, delay: 400.ms)
+              .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 400.ms),
+
+            SizedBox(height: spacing_lg),
+
+            // Description Field (show in both regular and split modes)
+            ModernTextField(
+              controller: _descriptionController,
+              placeholder: 'Description (optional)',
+              prefixIcon: Icons.description_outlined,
+              maxLength: 200,
+            ).animate()
+              .fadeIn(duration: DesignTokens.durationNormal, delay: 450.ms)
+              .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 450.ms),
+
+            SizedBox(height: spacing_lg),
+
+            // Goal Allocation Selector (only for income transactions and regular mode)
+            if (_selectedType == TransactionType.income && !_isSplitMode) ...[
+              Builder(
+                builder: (context) {
+                  final amount = double.tryParse(_amountController.text) ?? 0;
+                  // Only show goal allocation if amount is valid and positive
+                  if (amount <= 0) {
+                    return const SizedBox.shrink();
+                  }
+                  return ModernGoalAllocationSelector(
+                    transactionAmount: amount,
+                    transactionType: _selectedType,
+                    onAllocationsChanged: (allocations) {
+                      setState(() {
+                        _goalAllocations = allocations;
+                      });
+                    },
+                  ).animate()
+                    .fadeIn(duration: DesignTokens.durationNormal, delay: 600.ms)
+                    .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 600.ms);
+                },
               ),
-              elevation: 0,
-            ),
-            child: _isSubmitting
-                ? SizedBox(
-                    height: DesignTokens.iconMd,
-                    width: DesignTokens.iconMd,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(ColorTokens.surfacePrimary),
-                    ),
-                  )
-                : Text(
-                    'Add Transaction',
-                    style: TypographyTokens.labelMd.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-          ).animate()
-            .fadeIn(duration: DesignTokens.durationNormal, delay: _showOptionalFields ? 900.ms : 500.ms)
-            .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: _showOptionalFields ? 900.ms : 500.ms),
 
-          // Extra bottom padding to ensure button visibility
-          SizedBox(height: FormTokens.sectionGap),
-        ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTypeSelector() {
-    return Container(
-      decoration: BoxDecoration(
-        color: ColorTokens.surfaceSecondary,
-        borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-        border: Border.all(
-          color: ColorTokens.borderSecondary,
-          width: 1.5,
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildTypeButton(
-              type: TransactionType.expense,
-              icon: Icons.remove_circle_outline,
-              label: 'Expense',
-              color: ColorTokens.critical500,
-            ),
-          ),
-          Container(
-            width: 1.5,
-            height: 48,
-            color: ColorTokens.borderSecondary,
-          ),
-          Expanded(
-            child: _buildTypeButton(
-              type: TransactionType.income,
-              icon: Icons.add_circle_outline,
-              label: 'Income',
-              color: ColorTokens.success500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTypeButton({
-    required TransactionType type,
-    required IconData icon,
-    required String label,
-    required Color color,
-  }) {
-    final isSelected = _selectedType == type;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          setState(() {
-            _selectedType = type;
-            _selectedCategoryId = null; // Reset category when type changes
-          });
-        },
-        borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-        child: AnimatedContainer(
-          duration: DesignTokens.durationSm,
-          curve: DesignTokens.curveEaseOut,
-          padding: EdgeInsets.symmetric(
-            vertical: DesignTokens.spacing3,
-          ),
-          decoration: BoxDecoration(
-            color: isSelected ? color.withValues(alpha: 0.1) : Colors.transparent,
-            borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: DesignTokens.iconMd,
-                color: isSelected ? color : ColorTokens.textSecondary,
-              ),
-              SizedBox(width: DesignTokens.spacing2),
-              Text(
-                label,
-                style: TypographyTokens.labelMd.copyWith(
-                  color: isSelected ? color : ColorTokens.textSecondary,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                ),
-              ),
+              SizedBox(height: spacing_lg),
             ],
-          ),
-        ),
-      ),
-    ).animate(target: isSelected ? 1 : 0)
-      .scaleXY(
-        begin: 1.0,
-        end: 1.02,
-        duration: DesignTokens.durationSm,
-      );
-  }
 
-  Widget _buildDatePicker() {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () async {
-          final date = await showDatePicker(
-            context: context,
-            initialDate: _selectedDate,
-            firstDate: DateTime(2000),
-            lastDate: DateTime.now().add(const Duration(days: 365)),
-          );
-          if (date != null) {
-            setState(() {
-              _selectedDate = date;
-            });
-          }
-        },
-        borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: FormTokens.fieldPaddingH,
-            vertical: FormTokens.fieldPaddingV,
-          ),
-          decoration: BoxDecoration(
-            color: FormTokens.fieldBackground,
-            borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-            border: Border.all(
-              color: FormTokens.fieldBorder,
-              width: 1.5,
-            ),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.calendar_today,
-                size: DesignTokens.iconMd,
-                color: FormTokens.iconColor,
-              ),
-              SizedBox(width: DesignTokens.spacing3),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Date',
-                      style: TypographyTokens.captionMd.copyWith(
-                        color: FormTokens.labelColor,
+            // Scan Receipt and Confirm Buttons Row (show in both regular and split modes)
+            Row(
+              children: [
+                // Scan Receipt Button (30% - icon only)
+                Expanded(
+                  flex: 2,
+                  child: IconButton(
+                    onPressed: _scanReceipt,
+                    icon: const Icon(Icons.camera_alt),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.surface,
+                      foregroundColor: Theme.of(context).colorScheme.primary,
+                      minimumSize: const Size(48, 48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    SizedBox(height: DesignTokens.spacing05),
-                    Text(
-                      DateFormat('EEEE, MMMM dd, yyyy').format(_selectedDate),
-                      style: TypographyTokens.labelMd,
-                    ),
-                  ],
+                    tooltip: 'Scan Receipt',
+                  ).animate()
+                    .fadeIn(duration: DesignTokens.durationNormal, delay: 600.ms)
+                    .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 600.ms),
                 ),
-              ),
-              Icon(
-                Icons.chevron_right,
-                size: DesignTokens.iconMd,
-                color: FormTokens.iconColor,
-              ),
-            ],
-          ),
+
+                SizedBox(width: spacing_md),
+
+                // Slide to Confirm (70%)
+                Expanded(
+                  flex: 7,
+                  child: ModernSlideToConfirm(
+                    text: 'Slide to Save',
+                    onSlideComplete: _isSubmitting ? null : _handleSlideComplete,
+                  ).animate()
+                    .fadeIn(duration: DesignTokens.durationNormal, delay: 700.ms)
+                    .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 700.ms),
+                ),
+              ],
+            ),
+
+            // Extra bottom padding to ensure button visibility
+            SizedBox(height: spacing_xl),
+          ],
         ),
-      ),
+        ),
     );
   }
 
-  Widget _buildReceiptButton() {
-    return OutlinedButton.icon(
-      onPressed: _isProcessingReceipt ? null : _scanReceipt,
-      icon: _isProcessingReceipt
-          ? SizedBox(
-              width: DesignTokens.iconMd,
-              height: DesignTokens.iconMd,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(ColorTokens.teal500),
-              ),
-            )
-          : Icon(Icons.camera_alt, size: DesignTokens.iconMd),
-      label: Text(
-        _isProcessingReceipt ? 'Processing...' : 'Scan Receipt',
-        style: TypographyTokens.labelMd,
-      ),
-      style: OutlinedButton.styleFrom(
-        minimumSize: Size(double.infinity, FormTokens.fieldHeightMd),
-        side: BorderSide(
-          color: ColorTokens.borderPrimary,
-          width: 1.5,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-        ),
-        foregroundColor: ColorTokens.teal500,
-      ),
-    );
-  }
 
-  Widget _buildReceiptDataCard() {
-    if (_scannedReceiptData == null) return const SizedBox.shrink();
-
-    return Container(
-      padding: EdgeInsets.all(FormTokens.fieldPaddingH),
-      decoration: BoxDecoration(
-        color: ColorTokens.success500.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-        border: Border.all(
-          color: ColorTokens.success500.withValues(alpha: 0.3),
-          width: 1.0,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.receipt_long,
-                size: DesignTokens.iconMd,
-                color: ColorTokens.success500,
-              ),
-              SizedBox(width: DesignTokens.spacing2),
-              Text(
-                'Receipt Data',
-                style: TypographyTokens.labelMd.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: ColorTokens.success500,
-                ),
-              ),
-              const Spacer(),
-              IconButton(
-                onPressed: () {
-                  setState(() {
-                    _scannedReceiptData = null;
-                  });
-                },
-                icon: Icon(
-                  Icons.close,
-                  size: DesignTokens.iconSm,
-                  color: ColorTokens.textSecondary,
-                ),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-            ],
-          ),
-          SizedBox(height: DesignTokens.spacing2),
-          Text(
-            'Merchant: ${_scannedReceiptData!.merchant}',
-            style: TypographyTokens.captionMd.copyWith(
-              color: ColorTokens.textPrimary,
-            ),
-          ),
-          Text(
-            'Date: ${DateFormat('MMM dd, yyyy').format(_scannedReceiptData!.date)}',
-            style: TypographyTokens.captionMd.copyWith(
-              color: ColorTokens.textPrimary,
-            ),
-          ),
-          Text(
-            'Amount: \$${NumberFormat.currency(symbol: '', decimalDigits: 2).format(_scannedReceiptData!.amount)}',
-            style: TypographyTokens.captionMd.copyWith(
-              color: ColorTokens.textPrimary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
 
 
@@ -768,161 +820,71 @@ class _EnhancedAddTransactionBottomSheetState
   }
 
   Future<void> _scanReceipt() async {
-    // TODO: Implement actual camera integration
-    // For now, show a mock receipt scanning dialog
-    await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
-        ),
-        title: Text(
-          'Receipt Scanner',
-          style: TypographyTokens.heading5,
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: EdgeInsets.all(DesignTokens.spacing5),
-              decoration: BoxDecoration(
-                color: ColorTokens.teal500.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.camera_alt,
-                size: 64,
-                color: ColorTokens.teal500,
-              ),
-            ),
-            SizedBox(height: DesignTokens.spacing4),
-            Text(
-              'Receipt scanning feature is coming soon!\n\nFor now, you can manually enter transaction details.',
-              textAlign: TextAlign.center,
-              style: TypographyTokens.bodyMd,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('OK', style: TypographyTokens.labelMd),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _populateFromReceipt(ReceiptData receiptData) async {
-    setState(() {
-      _scannedReceiptData = receiptData;
-      _isProcessingReceipt = true;
-    });
-
     try {
-      // Auto-populate amount
-      if (_amountController.text.isEmpty) {
-        _amountController.text = receiptData.amount.toStringAsFixed(2);
-      }
+      // Navigate to receipt scanning screen and wait for result
+      final result = await context.push('/scan-receipt');
 
-      // Auto-populate description with merchant name
-      if (_descriptionController.text.isEmpty) {
-        _descriptionController.text = receiptData.merchant;
-      }
+      if (result != null && result is ReceiptData && mounted) {
+        // Populate form fields with receipt data
+        setState(() {
+          _amountController.text = result.amount.toStringAsFixed(2);
+          _titleController.text = result.merchant;
+          _selectedDate = result.date;
 
-      // Auto-populate date if available
-      setState(() {
-        _selectedDate = receiptData.date;
-      });
-    
-      // Auto-suggest category
-      if (_selectedCategoryId == null && receiptData.suggestedCategory != null && receiptData.suggestedCategory!.isNotEmpty) {
-        final categories = ref.read(transactionCategoriesProvider);
-        final suggestedCategory = categories.firstWhere(
-          (cat) => cat.id == receiptData.suggestedCategory,
-          orElse: () => categories.firstWhere(
-            (cat) => cat.type == _selectedType,
-            orElse: () => categories.first,
-          ),
-        );
+          // Set category if suggested category is available
+          if (result.suggestedCategory != null) {
+            _selectedCategoryId = result.suggestedCategory;
+          }
+        });
 
+        // Show success message
         if (mounted) {
-          setState(() {
-            _selectedCategoryId = suggestedCategory.id;
-          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Receipt data loaded successfully'),
+              backgroundColor: ColorTokens.success500,
+            ),
+          );
         }
-      }
-
-      // Show success message
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Receipt data populated successfully!'),
-            backgroundColor: ColorTokens.success500,
-          ),
-        );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error processing receipt data: $e'),
+            content: Text('Error scanning receipt: $e'),
             backgroundColor: ColorTokens.critical500,
           ),
         );
       }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isProcessingReceipt = false;
-        });
-      }
     }
   }
 
-  Future<void> _submitTransaction() async {
+
+  Future<bool> _handleSlideComplete() async {
     if (!_formKey.currentState!.validate()) {
-      return;
+      return false;
     }
 
-    developer.log('Validation check - selectedAccountId: $_selectedAccountId, selectedCategoryId: $_selectedCategoryId');
-    if (_selectedAccountId == null || _selectedCategoryId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Please select an account and category'),
-          backgroundColor: ColorTokens.critical500,
-        ),
-      );
-      return;
+    // Validate amount is a valid double
+    if (_amountController.text.isEmpty || double.tryParse(_amountController.text) == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter a valid amount')),
+        );
+      }
+      return false;
     }
 
     setState(() => _isSubmitting = true);
 
     try {
-      final amount = double.parse(_amountController.text);
-
-      // Create regular transaction
-      final transaction = Transaction(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        title: _descriptionController.text.isNotEmpty
-            ? _descriptionController.text
-            : 'Transaction',
-        amount: amount,
-        type: _selectedType,
-        date: _selectedDate,
-        categoryId: _selectedCategoryId!,
-        accountId: _selectedAccountId!,
-        description: _noteController.text.isNotEmpty
-            ? _noteController.text
-            : null,
-        goalAllocations: _goalAllocations.isNotEmpty ? _goalAllocations : null,
-      );
-
-      await widget.onSubmit(transaction);
-
-      if (mounted) {
-        Navigator.pop(context);
+      bool success;
+      if (_isSplitMode) {
+        success = await _submitSplitTransaction();
+      } else {
+        success = await _submitRegularTransaction();
       }
+      return success;
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -932,10 +894,145 @@ class _EnhancedAddTransactionBottomSheetState
           ),
         );
       }
+      return false;
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);
       }
     }
+  }
+
+
+  Future<bool> _submitRegularTransaction() async {
+    developer.log('Validation check - selectedAccountId: $_selectedAccountId, selectedCategoryId: $_selectedCategoryId');
+    if (_selectedAccountId == null || _selectedCategoryId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please select an account and category'),
+          backgroundColor: ColorTokens.critical500,
+        ),
+      );
+      return false;
+    }
+
+    final amount = double.parse(_amountController.text);
+
+    // Create regular transaction
+    final transaction = Transaction(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      title: _titleController.text.isNotEmpty
+          ? _titleController.text
+          : 'Transaction',
+      amount: amount,
+      type: _selectedType,
+      date: _selectedDate,
+      categoryId: _selectedCategoryId!,
+      accountId: _selectedAccountId!,
+      description: _descriptionController.text.isNotEmpty
+          ? _descriptionController.text
+          : null,
+      goalAllocations: _goalAllocations.isNotEmpty ? _goalAllocations : null,
+    );
+
+    await widget.onSubmit(transaction);
+
+    if (mounted) {
+      Navigator.pop(context);
+    }
+    return true;
+  }
+
+  Future<bool> _submitSplitTransaction() async {
+    // Validate splits
+    if (_splits.length < 2) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Split transactions require at least 2 splits')),
+      );
+      return false;
+    }
+
+    if (_splits.length > 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Maximum 10 splits allowed')),
+      );
+      return false;
+    }
+
+    // Check categories
+    for (final split in _splits) {
+      if (split.categoryId.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a category for all splits')),
+        );
+        return false;
+      }
+    }
+
+    // Check amounts
+    for (int i = 0; i < _splits.length; i++) {
+      if (_splits[i].amount <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Split ${i + 1} must have a positive amount')),
+        );
+        return false;
+      }
+    }
+
+    // Check total
+    if (_remainingAmount.abs() > 0.01) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Split amounts must total the transaction amount')),
+      );
+      return false;
+    }
+
+    if (_selectedAccountId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select an account')),
+      );
+      return false;
+    }
+
+    final totalAmount = double.parse(_amountController.text);
+
+    final splitTransaction = SplitTransaction(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      title: _titleController.text.isNotEmpty
+          ? _titleController.text
+          : 'Split Transaction',
+      totalAmount: totalAmount,
+      type: _selectedType,
+      date: _selectedDate,
+      accountId: _selectedAccountId!,
+      splits: _splits,
+      description: _descriptionController.text.isNotEmpty
+          ? _descriptionController.text
+          : null,
+    );
+
+    if (widget.onSplitSubmit != null) {
+      await widget.onSplitSubmit!(splitTransaction);
+    } else {
+      // Use the transaction notifier to handle split transactions
+      final success = await ref
+          .read(transactionNotifierProvider.notifier)
+          .addSplitTransaction(splitTransaction);
+
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Split transaction added successfully')),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to add split transaction')),
+        );
+        return false;
+      }
+    }
+
+    if (mounted) {
+      Navigator.pop(context);
+    }
+    return true;
   }
 }

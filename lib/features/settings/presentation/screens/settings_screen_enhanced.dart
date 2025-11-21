@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/design_system/design_tokens.dart';
 import '../../../../core/design_system/color_tokens.dart';
 import '../../../../core/design_system/typography_tokens.dart';
-import '../../../../core/design_system/patterns/info_card_pattern.dart';
-import '../../../../core/design_system/patterns/action_button_pattern.dart';
+import '../../../../core/design_system/modern/modern.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../providers/settings_providers.dart';
-import '../widgets/settings_toggle_tile.dart';
 import '../widgets/settings_slider_tile.dart';
-import '../widgets/settings_selection_tile.dart';
 import '../widgets/theme_selector_sheet.dart';
 import '../widgets/currency_selector_sheet.dart';
 import '../widgets/date_format_selector_sheet.dart';
@@ -230,101 +226,157 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
       label: 'User profile card',
       hint: 'Displays user information and edit option',
       child: Container(
-        padding: EdgeInsets.all(DesignTokens.cardPaddingLg),
+        padding: EdgeInsets.all(spacing_lg),
         decoration: BoxDecoration(
-          gradient: ColorTokens.gradientPrimary,
-          borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
-          boxShadow: DesignTokens.elevationColored(
-            ColorTokens.teal500,
-            alpha: 0.3,
+          gradient: LinearGradient(
+            colors: [ModernColors.accentGreen, ModernColors.categoryBlue],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
+          borderRadius: BorderRadius.circular(radius_xl),
+          boxShadow: [ModernShadows.medium],
         ),
-        child: Row(
+        child: Column(
           children: [
-            // Avatar
-            Semantics(
-              label: 'User avatar',
-              child: Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-                ),
-                child: Icon(
-                  Icons.person,
-                  size: DesignTokens.iconXl,
-                  color: Colors.white,
-                  semanticLabel: 'User profile icon',
-                ),
-              ).animate()
-                .scale(
-                  begin: const Offset(0.8, 0.8),
-                  end: const Offset(1.0, 1.0),
-                  duration: DesignTokens.durationNormal,
-                  delay: 200.ms,
-                  curve: DesignTokens.curveElastic,
-                ),
-            ),
-
-            SizedBox(width: DesignTokens.spacing4),
-
-            // User Info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'John Doe',
-                    style: TypographyTokens.heading5.copyWith(
-                      color: AccessibilityUtils.getAccessibleTextColor(ColorTokens.teal500),
+            Row(
+              children: [
+                // Avatar
+                Semantics(
+                  label: 'User avatar',
+                  child: Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(radius_lg),
                     ),
-                    semanticsLabel: 'User name: John Doe',
-                  ).animate()
-                    .fadeIn(duration: DesignTokens.durationNormal, delay: 300.ms)
-                    .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 300.ms),
-
-                  const SizedBox(height: 4),
-                  Text(
-                    'john.doe@example.com',
-                    style: TypographyTokens.bodyMd.copyWith(
-                      color: AccessibilityUtils.getAccessibleTextColor(ColorTokens.teal500).withValues(alpha: 0.9),
+                    child: Icon(
+                      Icons.person,
+                      size: 32,
+                      color: Colors.white,
+                      semanticLabel: 'User profile icon',
                     ),
-                    semanticsLabel: 'User email: john.doe@example.com',
                   ).animate()
-                    .fadeIn(duration: DesignTokens.durationNormal, delay: 400.ms)
-                    .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 400.ms),
-                ],
-              ),
+                    .scale(
+                      begin: const Offset(0.8, 0.8),
+                      end: const Offset(1.0, 1.0),
+                      duration: ModernAnimations.normal,
+                      delay: 200.ms,
+                      curve: ModernCurves.bounceOut,
+                    ),
+                ),
+
+                SizedBox(width: spacing_md),
+
+                // User Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'John Doe',
+                        style: ModernTypography.titleLarge.copyWith(
+                          color: ModernColors.lightText,
+                        ),
+                        semanticsLabel: 'User name: John Doe',
+                      ).animate()
+                        .fadeIn(duration: ModernAnimations.normal, delay: 300.ms)
+                        .slideX(begin: 0.1, duration: ModernAnimations.normal, delay: 300.ms),
+
+                      const SizedBox(height: 4),
+                      Text(
+                        'john.doe@example.com',
+                        style: ModernTypography.bodyLarge.copyWith(
+                          color: ModernColors.lightText.withValues(alpha: 0.9),
+                        ),
+                        semanticsLabel: 'User email: john.doe@example.com',
+                      ).animate()
+                        .fadeIn(duration: ModernAnimations.normal, delay: 400.ms)
+                        .slideX(begin: 0.1, duration: ModernAnimations.normal, delay: 400.ms),
+                    ],
+                  ),
+                ),
+
+                // Edit Button
+                Semantics(
+                  button: true,
+                  label: 'Edit profile',
+                  hint: 'Double tap to edit user profile information',
+                  child: Container(
+                    padding: EdgeInsets.all(spacing_xs),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(radius_md),
+                    ),
+                    child: Icon(
+                      Icons.edit,
+                      size: 20,
+                      color: Colors.white,
+                      semanticLabel: 'Edit profile icon',
+                    ),
+                  ).animate()
+                    .fadeIn(duration: ModernAnimations.normal, delay: 500.ms)
+                    .scale(
+                      begin: const Offset(0.8, 0.8),
+                      end: const Offset(1.0, 1.0),
+                      duration: ModernAnimations.normal,
+                      delay: 500.ms,
+                      curve: ModernCurves.bounceOut,
+                    ),
+                ),
+              ],
             ),
 
-            // Edit Button
-            Semantics(
-              button: true,
-              label: 'Edit profile',
-              hint: 'Double tap to edit user profile information',
-              child: Container(
-                padding: EdgeInsets.all(DesignTokens.spacing2),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                ),
-                child: Icon(
-                  Icons.edit,
-                  size: DesignTokens.iconMd,
-                  color: Colors.white,
-                  semanticLabel: 'Edit profile icon',
-                ),
-              ).animate()
-                .fadeIn(duration: DesignTokens.durationNormal, delay: 500.ms)
-                .scale(
-                  begin: const Offset(0.8, 0.8),
-                  end: const Offset(1.0, 1.0),
-                  duration: DesignTokens.durationNormal,
-                  delay: 500.ms,
-                  curve: DesignTokens.curveElastic,
-                ),
-            ),
+            SizedBox(height: spacing_lg),
+
+            // Editable Profile Fields
+            ModernTextField(
+              label: 'Name',
+              placeholder: 'Enter your name',
+              prefixIcon: Icons.person,
+              initialValue: 'John Doe',
+            ).animate()
+              .fadeIn(duration: ModernAnimations.normal, delay: 600.ms)
+              .slideY(begin: 0.1, duration: ModernAnimations.normal, delay: 600.ms),
+
+            SizedBox(height: spacing_md),
+
+            ModernTextField(
+              label: 'Email',
+              placeholder: 'Enter your email',
+              prefixIcon: Icons.email,
+              keyboardType: TextInputType.emailAddress,
+              initialValue: 'john.doe@example.com',
+            ).animate()
+              .fadeIn(duration: ModernAnimations.normal, delay: 700.ms)
+              .slideY(begin: 0.1, duration: ModernAnimations.normal, delay: 700.ms),
+
+            SizedBox(height: spacing_md),
+
+            ModernTextField(
+              label: 'Phone',
+              placeholder: 'Enter your phone number',
+              prefixIcon: Icons.phone,
+              keyboardType: TextInputType.phone,
+              initialValue: '+1 (555) 123-4567',
+            ).animate()
+              .fadeIn(duration: ModernAnimations.normal, delay: 800.ms)
+              .slideY(begin: 0.1, duration: ModernAnimations.normal, delay: 800.ms),
+
+            SizedBox(height: spacing_lg),
+
+            ModernActionButton(
+              text: 'Save Profile',
+              icon: Icons.save,
+              onPressed: () {
+                // TODO: Implement profile save functionality
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Profile saved successfully!')),
+                );
+              },
+            ).animate()
+              .fadeIn(duration: ModernAnimations.normal, delay: 900.ms)
+              .slideY(begin: 0.1, duration: ModernAnimations.normal, delay: 900.ms),
           ],
         ),
       ),
@@ -332,501 +384,823 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
   }
 
   Widget _buildAppearanceSection(BuildContext context, AppSettings settings) {
-    return InfoCardPattern(
-      title: 'Appearance',
-      icon: Icons.palette,
-      iconColor: ColorTokens.purple600,
-      children: [
-        Semantics(
-          label: 'Theme selection',
-          hint: 'Double tap to change app theme',
-          child: SettingsSelectionTile(
-            title: 'Theme',
-            subtitle: _getThemeDisplayName(settings.themeMode),
-            icon: Icons.dark_mode,
-            onTap: () => _showThemeSelector(context, settings.themeMode),
+    return Container(
+      padding: EdgeInsets.all(spacing_lg),
+      decoration: BoxDecoration(
+        color: ModernColors.lightBackground,
+        borderRadius: BorderRadius.circular(radius_lg),
+        border: Border.all(color: ModernColors.borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(spacing_xs),
+                decoration: BoxDecoration(
+                  color: ModernColors.categoryPurple.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(radius_md),
+                ),
+                child: Icon(
+                  Icons.palette,
+                  color: ModernColors.categoryPurple,
+                  size: 20,
+                ),
+              ),
+              SizedBox(width: spacing_sm),
+              Text(
+                'Appearance',
+                style: ModernTypography.titleLarge,
+              ),
+            ],
+          ),
+          SizedBox(height: spacing_lg),
+
+          // Theme Selection
+          Semantics(
+            label: 'Theme selection',
+            hint: 'Double tap to change app theme',
+            child: ModernActionButton(
+              text: 'Theme: ${_getThemeDisplayName(settings.themeMode)}',
+              icon: Icons.dark_mode,
+              isPrimary: false,
+              onPressed: () => _showThemeSelector(context, settings.themeMode),
+            ),
           ).animate()
-            .fadeIn(duration: DesignTokens.durationNormal)
-            .slideX(begin: -0.1, duration: DesignTokens.durationNormal),
-        ),
+            .fadeIn(duration: ModernAnimations.normal)
+            .slideX(begin: -0.1, duration: ModernAnimations.normal),
 
-        SizedBox(height: DesignTokens.spacing2),
+          SizedBox(height: spacing_md),
 
-        Semantics(
-          label: 'Currency selection',
-          hint: 'Double tap to change currency',
-          child: SettingsSelectionTile(
-            title: 'Currency',
-            subtitle: settings.currencyCode ?? 'USD',
-            icon: Icons.attach_money,
-            onTap: () => _showCurrencySelector(context, settings.currencyCode ?? 'USD'),
+          // Currency Selection
+          Semantics(
+            label: 'Currency selection',
+            hint: 'Double tap to change currency',
+            child: ModernActionButton(
+              text: 'Currency: ${settings.currencyCode ?? 'USD'}',
+              icon: Icons.attach_money,
+              isPrimary: false,
+              onPressed: () => _showCurrencySelector(context, settings.currencyCode ?? 'USD'),
+            ),
           ).animate()
-            .fadeIn(duration: DesignTokens.durationNormal, delay: 50.ms)
-            .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 50.ms),
-        ),
+            .fadeIn(duration: ModernAnimations.normal, delay: 50.ms)
+            .slideX(begin: -0.1, duration: ModernAnimations.normal, delay: 50.ms),
 
-        SizedBox(height: DesignTokens.spacing2),
+          SizedBox(height: spacing_md),
 
-        Semantics(
-          label: 'Date format selection',
-          hint: 'Double tap to change date format',
-          child: SettingsSelectionTile(
-            title: 'Date Format',
-            subtitle: settings.dateFormat,
-            icon: Icons.calendar_today,
-            onTap: () => _showDateFormatSelector(context, settings.dateFormat),
+          // Date Format Selection
+          Semantics(
+            label: 'Date format selection',
+            hint: 'Double tap to change date format',
+            child: ModernActionButton(
+              text: 'Date Format: ${settings.dateFormat}',
+              icon: Icons.calendar_today,
+              isPrimary: false,
+              onPressed: () => _showDateFormatSelector(context, settings.dateFormat),
+            ),
           ).animate()
-            .fadeIn(duration: DesignTokens.durationNormal, delay: 100.ms)
-            .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 100.ms),
-        ),
-      ],
+            .fadeIn(duration: ModernAnimations.normal, delay: 100.ms)
+            .slideX(begin: -0.1, duration: ModernAnimations.normal, delay: 100.ms),
+        ],
+      ),
     );
   }
 
   Widget _buildAccountThemesSection(BuildContext context, AppSettings settings) {
-    return InfoCardPattern(
-      title: 'Account Themes',
-      icon: Icons.account_balance_wallet,
-      iconColor: ColorTokens.teal600,
-      children: [
-        Semantics(
-          label: 'Account themes customization',
-          hint: 'Double tap to customize account type themes',
-          child: SettingsSelectionTile(
-            title: 'Customize Account Themes',
-            subtitle: 'Change colors and icons for account types',
-            icon: Icons.color_lens,
-            onTap: () => _showAccountThemesEditor(context, settings.accountTypeThemes),
+    return Container(
+      padding: EdgeInsets.all(spacing_lg),
+      decoration: BoxDecoration(
+        color: ModernColors.lightBackground,
+        borderRadius: BorderRadius.circular(radius_lg),
+        border: Border.all(color: ModernColors.borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(spacing_xs),
+                decoration: BoxDecoration(
+                  color: ModernColors.accentGreen.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(radius_md),
+                ),
+                child: Icon(
+                  Icons.account_balance_wallet,
+                  color: ModernColors.accentGreen,
+                  size: 20,
+                ),
+              ),
+              SizedBox(width: spacing_sm),
+              Text(
+                'Account Themes',
+                style: ModernTypography.titleLarge,
+              ),
+            ],
+          ),
+          SizedBox(height: spacing_lg),
+
+          // Account Themes Customization
+          Semantics(
+            label: 'Account themes customization',
+            hint: 'Double tap to customize account type themes',
+            child: ModernActionButton(
+              text: 'Customize Account Themes',
+              icon: Icons.color_lens,
+              isPrimary: false,
+              onPressed: () => _showAccountThemesEditor(context, settings.accountTypeThemes),
+            ),
           ).animate()
-            .fadeIn(duration: DesignTokens.durationNormal)
-            .slideX(begin: -0.1, duration: DesignTokens.durationNormal),
-        ),
-      ],
+            .fadeIn(duration: ModernAnimations.normal)
+            .slideX(begin: -0.1, duration: ModernAnimations.normal),
+        ],
+      ),
     );
   }
 
   Widget _buildNotificationsSection(BuildContext context, AppSettings settings) {
-    return InfoCardPattern(
-      title: 'Notifications',
-      icon: Icons.notifications,
-      iconColor: ColorTokens.warning500,
-      children: [
-        Semantics(
-          label: 'Push notifications toggle',
-          hint: 'Double tap to enable or disable push notifications',
-          child: SettingsToggleTile(
-            title: 'Push Notifications',
-            subtitle: 'Receive app notifications',
-            value: settings.notificationsEnabled,
-            onChanged: (value) {
-              ref.read(settingsNotifierProvider.notifier)
-                  .updateNotificationsEnabled(value);
-            },
-          ).animate()
-            .fadeIn(duration: DesignTokens.durationNormal)
-            .slideX(begin: -0.1, duration: DesignTokens.durationNormal),
-        ),
-
-        if (settings.notificationsEnabled) ...[
-          SizedBox(height: DesignTokens.spacing2),
-          Semantics(
-            label: 'Budget alerts toggle',
-            hint: 'Double tap to enable or disable budget alerts',
-            child: SettingsToggleTile(
-              title: 'Budget Alerts',
-              subtitle: 'Notify when approaching budget limits',
-              value: settings.budgetAlertsEnabled,
-              onChanged: (value) {
-                ref.read(settingsNotifierProvider.notifier)
-                    .updateBudgetAlertsEnabled(value);
-              },
-            ).animate()
-              .fadeIn(duration: DesignTokens.durationNormal, delay: 50.ms)
-              .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 50.ms),
-          ),
-
-          SizedBox(height: DesignTokens.spacing2),
-          Semantics(
-            label: 'Budget alert threshold slider',
-            hint: 'Adjust the percentage at which budget alerts trigger',
-            child: SettingsSliderTile(
-              title: 'Budget Alert Threshold',
-              subtitle: '${settings.budgetAlertThreshold}% of budget',
-              value: settings.budgetAlertThreshold.toDouble(),
-              min: 50,
-              max: 100,
-              divisions: 10,
-              enabled: settings.budgetAlertsEnabled,
-              onChanged: (value) {
-                ref.read(settingsNotifierProvider.notifier)
-                    .updateBudgetAlertThreshold(value.round());
-              },
-            ).animate()
-              .fadeIn(duration: DesignTokens.durationNormal, delay: 100.ms)
-              .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 100.ms),
-          ),
-
-          SizedBox(height: DesignTokens.spacing2),
-          Semantics(
-            label: 'Bill reminders toggle',
-            hint: 'Double tap to enable or disable bill reminders',
-            child: SettingsToggleTile(
-              title: 'Bill Reminders',
-              subtitle: 'Remind about upcoming bills',
-              value: settings.billRemindersEnabled,
-              onChanged: (value) {
-                ref.read(settingsNotifierProvider.notifier)
-                    .updateBillRemindersEnabled(value);
-              },
-            ).animate()
-              .fadeIn(duration: DesignTokens.durationNormal, delay: 150.ms)
-              .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 150.ms),
-          ),
-
-          SizedBox(height: DesignTokens.spacing2),
-          Semantics(
-            label: 'Bill reminder days slider',
-            hint: 'Adjust how many days before due date to send reminders',
-            child: SettingsSliderTile(
-              title: 'Bill Reminder Days',
-              subtitle: '${settings.billReminderDays} days before due',
-              value: settings.billReminderDays.toDouble(),
-              min: 1,
-              max: 14,
-              divisions: 13,
-              enabled: settings.billRemindersEnabled,
-              onChanged: (value) {
-                ref.read(settingsNotifierProvider.notifier)
-                    .updateBillReminderDays(value.round());
-              },
-            ).animate()
-              .fadeIn(duration: DesignTokens.durationNormal, delay: 200.ms)
-              .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 200.ms),
-          ),
-
-          SizedBox(height: DesignTokens.spacing2),
-          Semantics(
-            label: 'Income reminders toggle',
-            hint: 'Double tap to enable or disable income reminders',
-            child: SettingsToggleTile(
-              title: 'Income Reminders',
-              subtitle: 'Remind about expected income',
-              value: settings.incomeRemindersEnabled,
-              onChanged: (value) {
-                ref.read(settingsNotifierProvider.notifier)
-                    .updateIncomeRemindersEnabled(value);
-              },
-            ).animate()
-              .fadeIn(duration: DesignTokens.durationNormal, delay: 250.ms)
-              .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 250.ms),
-          ),
-
-          SizedBox(height: DesignTokens.spacing2),
-          Semantics(
-            label: 'Income reminder days slider',
-            hint: 'Adjust how many days before expected income to send reminders',
-            child: SettingsSliderTile(
-              title: 'Income Reminder Days',
-              subtitle: '${settings.incomeReminderDays} days before',
-              value: settings.incomeReminderDays.toDouble(),
-              min: 0,
-              max: 7,
-              divisions: 7,
-              enabled: settings.incomeRemindersEnabled,
-              onChanged: (value) {
-                ref.read(settingsNotifierProvider.notifier)
-                    .updateIncomeReminderDays(value.round());
-              },
-            ).animate()
-              .fadeIn(duration: DesignTokens.durationNormal, delay: 300.ms)
-              .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 300.ms),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildSecuritySection(BuildContext context, AppSettings settings) {
-    return InfoCardPattern(
-      title: 'Security & Privacy',
-      icon: Icons.security,
-      iconColor: ColorTokens.critical500,
-      children: [
-        FutureBuilder<bool>(
-          future: ref.read(settingsRepositoryProvider)
-              .isBiometricAvailable()
-              .then((result) => result.getOrDefault(false)),
-          builder: (context, snapshot) {
-            final isAvailable = snapshot.data ?? false;
-            return SettingsToggleTile(
-              title: 'Biometric Authentication',
-              subtitle: isAvailable
-                  ? 'Use fingerprint or face unlock'
-                  : 'Not available on this device',
-              value: settings.biometricEnabled && isAvailable,
-              enabled: isAvailable,
-              onChanged: (value) {
-                ref.read(settingsNotifierProvider.notifier)
-                    .updateSetting('biometricEnabled', value);
-              },
-            ).animate()
-              .fadeIn(duration: DesignTokens.durationNormal)
-              .slideX(begin: -0.1, duration: DesignTokens.durationNormal);
-          },
-        ),
-        SizedBox(height: DesignTokens.spacing2),
-        SettingsToggleTile(
-          title: 'Auto Backup',
-          subtitle: 'Automatically backup data to cloud',
-          value: settings.autoBackupEnabled,
-          onChanged: (value) {
-            ref.read(settingsNotifierProvider.notifier)
-                .updateSetting('autoBackupEnabled', value);
-          },
-        ).animate()
-          .fadeIn(duration: DesignTokens.durationNormal, delay: 50.ms)
-          .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 50.ms),
-
-        SizedBox(height: DesignTokens.spacing2),
-
-        Semantics(
-          button: true,
-          label: 'Two-factor authentication setup button',
-          hint: 'Double tap to setup two-factor authentication',
-          child: SettingsSelectionTile(
-            title: 'Two-Factor Authentication',
-            subtitle: settings.twoFactorEnabled
-                ? 'Enabled (${_getMethodDisplayName(settings.twoFactorMethod)})'
-                : 'Add an extra layer of security',
-            icon: Icons.security,
-            onTap: () => _navigateToTwoFactorSetup(context),
-          ).animate()
-            .fadeIn(duration: DesignTokens.durationNormal, delay: 100.ms)
-            .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 100.ms),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPrivacySection(BuildContext context, AppSettings settings) {
-    return InfoCardPattern(
-      title: 'Privacy Mode',
-      icon: Icons.visibility_off,
-      iconColor: ColorTokens.purple600,
-      children: [
-        Semantics(
-          label: 'Privacy mode toggle',
-          hint: 'Double tap to enable or disable privacy mode',
-          child: SettingsToggleTile(
-            title: 'Privacy Mode',
-            subtitle: 'Hide sensitive information like balances and account numbers',
-            value: settings.privacyModeEnabled,
-            onChanged: (value) {
-              ref.read(settingsNotifierProvider.notifier)
-                  .updateSetting('privacyModeEnabled', value);
-            },
-          ).animate()
-            .fadeIn(duration: DesignTokens.durationNormal)
-            .slideX(begin: -0.1, duration: DesignTokens.durationNormal),
-        ),
-
-        SizedBox(height: DesignTokens.spacing2),
-
-        Semantics(
-          label: 'Privacy mode gesture toggle',
-          hint: 'Double tap to enable or disable three-finger double tap gesture',
-          child: SettingsToggleTile(
-            title: 'Gesture Activation',
-            subtitle: 'Activate privacy mode with three-finger double tap',
-            value: settings.privacyModeGestureEnabled,
-            onChanged: (value) {
-              ref.read(settingsNotifierProvider.notifier)
-                  .updateSetting('privacyModeGestureEnabled', value);
-            },
-          ).animate()
-            .fadeIn(duration: DesignTokens.durationNormal, delay: 50.ms)
-            .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 50.ms),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDataManagementSection(BuildContext context) {
-    return InfoCardPattern(
-      title: 'Data Management',
-      icon: Icons.storage,
-      iconColor: ColorTokens.info500,
-      children: [
-        Semantics(
-          button: true,
-          label: 'Export data button',
-          hint: 'Double tap to export your data as JSON file',
-          child: _buildActionTile(
-            context,
-            icon: Icons.download,
-            title: 'Export Data',
-            subtitle: 'Download your data as JSON',
-            color: ColorTokens.success500,
-            onTap: () => _showExportDialog(context),
-          ).animate()
-            .fadeIn(duration: DesignTokens.durationNormal)
-            .slideX(begin: -0.1, duration: DesignTokens.durationNormal),
-        ),
-
-        SizedBox(height: DesignTokens.spacing2),
-
-        Semantics(
-          button: true,
-          label: 'Import data button',
-          hint: 'Double tap to import data from JSON file',
-          child: _buildActionTile(
-            context,
-            icon: Icons.upload,
-            title: 'Import Data',
-            subtitle: 'Import from JSON file',
-            color: ColorTokens.info500,
-            onTap: () => _showImportDialog(context),
-          ).animate()
-            .fadeIn(duration: DesignTokens.durationNormal, delay: 50.ms)
-            .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 50.ms),
-        ),
-
-        SizedBox(height: DesignTokens.spacing2),
-
-        Semantics(
-          button: true,
-          label: 'Clear all data button',
-          hint: 'Double tap to permanently delete all app data',
-          child: _buildActionTile(
-            context,
-            icon: Icons.delete_forever,
-            title: 'Clear All Data',
-            subtitle: 'Permanently delete all app data',
-            color: ColorTokens.critical500,
-            onTap: () => _showClearDataDialog(context),
-          ).animate()
-            .fadeIn(duration: DesignTokens.durationNormal, delay: 100.ms)
-            .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 100.ms),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAboutSection(BuildContext context) {
-    return InfoCardPattern(
-      title: 'About',
-      icon: Icons.info,
-      iconColor: ColorTokens.neutral500,
-      children: [
-        FutureBuilder<String>(
-          future: ref.read(settingsRepositoryProvider)
-              .getAppVersion()
-              .then((result) => result.getOrDefault('1.0.0')),
-          builder: (context, snapshot) {
-            final version = snapshot.data ?? '1.0.0';
-            return _buildInfoRow('App Version', version).animate()
-              .fadeIn(duration: DesignTokens.durationNormal)
-              .slideX(begin: -0.1, duration: DesignTokens.durationNormal);
-          },
-        ),
-        SizedBox(height: DesignTokens.spacing2),
-        _buildInfoRow('Build Number', '100').animate()
-          .fadeIn(duration: DesignTokens.durationNormal, delay: 50.ms)
-          .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 50.ms),
-
-        SizedBox(height: DesignTokens.spacing4),
-
-        Row(
-          children: [
-            Expanded(
-              child: ActionButtonPattern(
-                label: 'Terms of Service',
-                variant: ButtonVariant.tertiary,
-                size: ButtonSize.small,
-                onPressed: () {},
-              ).animate()
-                .fadeIn(duration: DesignTokens.durationNormal, delay: 100.ms)
-                .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 100.ms),
-            ),
-            SizedBox(width: DesignTokens.spacing2),
-            Expanded(
-              child: ActionButtonPattern(
-                label: 'Privacy Policy',
-                variant: ButtonVariant.tertiary,
-                size: ButtonSize.small,
-                onPressed: () {},
-              ).animate()
-                .fadeIn(duration: DesignTokens.durationNormal, delay: 150.ms)
-                .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 150.ms),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionTile(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap();
-        },
-        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            minHeight: AccessibilityUtils.minTouchTargetSize,
-          ),
-          child: Container(
-            padding: EdgeInsets.all(DesignTokens.spacing3),
-            decoration: BoxDecoration(
-              color: ColorTokens.surfaceSecondary,
-              borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(DesignTokens.spacing2),
-                  decoration: BoxDecoration(
-                    color: ColorTokens.withOpacity(color, 0.1),
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                  ),
-                  child: Icon(icon, color: color, size: DesignTokens.iconMd, semanticLabel: '$title icon'),
+    return Container(
+      padding: EdgeInsets.all(spacing_lg),
+      decoration: BoxDecoration(
+        color: ModernColors.lightBackground,
+        borderRadius: BorderRadius.circular(radius_lg),
+        border: Border.all(color: ModernColors.borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(spacing_xs),
+                decoration: BoxDecoration(
+                  color: ModernColors.warning.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(radius_md),
                 ),
-                SizedBox(width: DesignTokens.spacing3),
+                child: Icon(
+                  Icons.notifications,
+                  color: ModernColors.warning,
+                  size: 20,
+                ),
+              ),
+              SizedBox(width: spacing_sm),
+              Text(
+                'Notifications',
+                style: ModernTypography.titleLarge,
+              ),
+            ],
+          ),
+          SizedBox(height: spacing_lg),
+
+          // Push Notifications Toggle
+          Semantics(
+            label: 'Push notifications toggle',
+            hint: 'Double tap to enable or disable push notifications',
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: TypographyTokens.bodyLg, semanticsLabel: title),
-                      const SizedBox(height: 2),
-                      Text(subtitle, style: TypographyTokens.captionMd, semanticsLabel: subtitle),
+                      Text(
+                        'Push Notifications',
+                        style: ModernTypography.bodyLarge,
+                      ),
+                      Text(
+                        'Receive app notifications',
+                        style: ModernTypography.labelMedium,
+                      ),
                     ],
                   ),
                 ),
-                Icon(
-                  Icons.chevron_right,
-                  color: ColorTokens.textSecondary,
-                  size: DesignTokens.iconMd,
-                  semanticLabel: 'Navigate to $title',
+                ModernToggleButton(
+                  options: ['Off', 'On'],
+                  selectedIndex: settings.notificationsEnabled ? 1 : 0,
+                  onChanged: (index) {
+                    ref.read(settingsNotifierProvider.notifier)
+                        .updateNotificationsEnabled(index == 1);
+                  },
                 ),
               ],
             ),
-          ),
-        ).animate()
-          .fadeIn(duration: DesignTokens.durationNormal)
-          .slideX(begin: -0.1, duration: DesignTokens.durationNormal),
+          ).animate()
+            .fadeIn(duration: ModernAnimations.normal)
+            .slideX(begin: -0.1, duration: ModernAnimations.normal),
+
+          if (settings.notificationsEnabled) ...[
+            SizedBox(height: spacing_md),
+
+            // Budget Alerts Toggle
+            Semantics(
+              label: 'Budget alerts toggle',
+              hint: 'Double tap to enable or disable budget alerts',
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Budget Alerts',
+                          style: ModernTypography.bodyLarge,
+                        ),
+                        Text(
+                          'Notify when approaching budget limits',
+                          style: ModernTypography.labelMedium,
+                        ),
+                      ],
+                    ),
+                  ),
+                  ModernToggleButton(
+                    options: ['Off', 'On'],
+                    selectedIndex: settings.budgetAlertsEnabled ? 1 : 0,
+                    onChanged: (index) {
+                      ref.read(settingsNotifierProvider.notifier)
+                          .updateBudgetAlertsEnabled(index == 1);
+                    },
+                  ),
+                ],
+              ),
+            ).animate()
+              .fadeIn(duration: ModernAnimations.normal, delay: 50.ms)
+              .slideX(begin: -0.1, duration: ModernAnimations.normal, delay: 50.ms),
+
+            if (settings.budgetAlertsEnabled) ...[
+              SizedBox(height: spacing_md),
+              // Budget Alert Threshold Slider (keeping as is for now)
+              Semantics(
+                label: 'Budget alert threshold slider',
+                hint: 'Adjust the percentage at which budget alerts trigger',
+                child: SettingsSliderTile(
+                  title: 'Budget Alert Threshold',
+                  subtitle: '${settings.budgetAlertThreshold}% of budget',
+                  value: settings.budgetAlertThreshold.toDouble(),
+                  min: 50,
+                  max: 100,
+                  divisions: 10,
+                  enabled: settings.budgetAlertsEnabled,
+                  onChanged: (value) {
+                    ref.read(settingsNotifierProvider.notifier)
+                        .updateBudgetAlertThreshold(value.round());
+                  },
+                ),
+              ).animate()
+                .fadeIn(duration: ModernAnimations.normal, delay: 100.ms)
+                .slideX(begin: -0.1, duration: ModernAnimations.normal, delay: 100.ms),
+            ],
+
+            SizedBox(height: spacing_md),
+
+            // Bill Reminders Toggle
+            Semantics(
+              label: 'Bill reminders toggle',
+              hint: 'Double tap to enable or disable bill reminders',
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Bill Reminders',
+                          style: ModernTypography.bodyLarge,
+                        ),
+                        Text(
+                          'Remind about upcoming bills',
+                          style: ModernTypography.labelMedium,
+                        ),
+                      ],
+                    ),
+                  ),
+                  ModernToggleButton(
+                    options: ['Off', 'On'],
+                    selectedIndex: settings.billRemindersEnabled ? 1 : 0,
+                    onChanged: (index) {
+                      ref.read(settingsNotifierProvider.notifier)
+                          .updateBillRemindersEnabled(index == 1);
+                    },
+                  ),
+                ],
+              ),
+            ).animate()
+              .fadeIn(duration: ModernAnimations.normal, delay: 150.ms)
+              .slideX(begin: -0.1, duration: ModernAnimations.normal, delay: 150.ms),
+
+            if (settings.billRemindersEnabled) ...[
+              SizedBox(height: spacing_md),
+              // Bill Reminder Days Slider (keeping as is for now)
+              Semantics(
+                label: 'Bill reminder days slider',
+                hint: 'Adjust how many days before due date to send reminders',
+                child: SettingsSliderTile(
+                  title: 'Bill Reminder Days',
+                  subtitle: '${settings.billReminderDays} days before due',
+                  value: settings.billReminderDays.toDouble(),
+                  min: 1,
+                  max: 14,
+                  divisions: 13,
+                  enabled: settings.billRemindersEnabled,
+                  onChanged: (value) {
+                    ref.read(settingsNotifierProvider.notifier)
+                        .updateBillReminderDays(value.round());
+                  },
+                ),
+              ).animate()
+                .fadeIn(duration: ModernAnimations.normal, delay: 200.ms)
+                .slideX(begin: -0.1, duration: ModernAnimations.normal, delay: 200.ms),
+            ],
+
+            SizedBox(height: spacing_md),
+
+            // Income Reminders Toggle
+            Semantics(
+              label: 'Income reminders toggle',
+              hint: 'Double tap to enable or disable income reminders',
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Income Reminders',
+                          style: ModernTypography.bodyLarge,
+                        ),
+                        Text(
+                          'Remind about expected income',
+                          style: ModernTypography.labelMedium,
+                        ),
+                      ],
+                    ),
+                  ),
+                  ModernToggleButton(
+                    options: ['Off', 'On'],
+                    selectedIndex: settings.incomeRemindersEnabled ? 1 : 0,
+                    onChanged: (index) {
+                      ref.read(settingsNotifierProvider.notifier)
+                          .updateIncomeRemindersEnabled(index == 1);
+                    },
+                  ),
+                ],
+              ),
+            ).animate()
+              .fadeIn(duration: ModernAnimations.normal, delay: 250.ms)
+              .slideX(begin: -0.1, duration: ModernAnimations.normal, delay: 250.ms),
+
+            if (settings.incomeRemindersEnabled) ...[
+              SizedBox(height: spacing_md),
+              // Income Reminder Days Slider (keeping as is for now)
+              Semantics(
+                label: 'Income reminder days slider',
+                hint: 'Adjust how many days before expected income to send reminders',
+                child: SettingsSliderTile(
+                  title: 'Income Reminder Days',
+                  subtitle: '${settings.incomeReminderDays} days before',
+                  value: settings.incomeReminderDays.toDouble(),
+                  min: 0,
+                  max: 7,
+                  divisions: 7,
+                  enabled: settings.incomeRemindersEnabled,
+                  onChanged: (value) {
+                    ref.read(settingsNotifierProvider.notifier)
+                        .updateIncomeReminderDays(value.round());
+                  },
+                ),
+              ).animate()
+                .fadeIn(duration: ModernAnimations.normal, delay: 300.ms)
+                .slideX(begin: -0.1, duration: ModernAnimations.normal, delay: 300.ms),
+            ],
+          ],
+        ],
       ),
     );
   }
+
+  Widget _buildSecuritySection(BuildContext context, AppSettings settings) {
+    return Container(
+      padding: EdgeInsets.all(spacing_lg),
+      decoration: BoxDecoration(
+        color: ModernColors.lightBackground,
+        borderRadius: BorderRadius.circular(radius_lg),
+        border: Border.all(color: ModernColors.borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(spacing_xs),
+                decoration: BoxDecoration(
+                  color: ModernColors.error.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(radius_md),
+                ),
+                child: Icon(
+                  Icons.security,
+                  color: ModernColors.error,
+                  size: 20,
+                ),
+              ),
+              SizedBox(width: spacing_sm),
+              Text(
+                'Security & Privacy',
+                style: ModernTypography.titleLarge,
+              ),
+            ],
+          ),
+          SizedBox(height: spacing_lg),
+
+          // Biometric Authentication Toggle
+          FutureBuilder<bool>(
+            future: ref.read(settingsRepositoryProvider)
+                .isBiometricAvailable()
+                .then((result) => result.getOrDefault(false)),
+            builder: (context, snapshot) {
+              final isAvailable = snapshot.data ?? false;
+              return Semantics(
+                label: 'Biometric authentication toggle',
+                hint: 'Double tap to enable or disable biometric authentication',
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Biometric Authentication',
+                            style: ModernTypography.bodyLarge,
+                          ),
+                          Text(
+                            isAvailable
+                                ? 'Use fingerprint or face unlock'
+                                : 'Not available on this device',
+                            style: ModernTypography.labelMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                    ModernToggleButton(
+                      options: ['Off', 'On'],
+                      selectedIndex: (settings.biometricEnabled && isAvailable) ? 1 : 0,
+                      onChanged: isAvailable ? (index) {
+                        ref.read(settingsNotifierProvider.notifier)
+                            .updateSetting('biometricEnabled', index == 1);
+                      } : (index) {},
+                    ),
+                  ],
+                ),
+              ).animate()
+                .fadeIn(duration: ModernAnimations.normal)
+                .slideX(begin: -0.1, duration: ModernAnimations.normal);
+            },
+          ),
+
+          SizedBox(height: spacing_md),
+
+          // Auto Backup Toggle
+          Semantics(
+            label: 'Auto backup toggle',
+            hint: 'Double tap to enable or disable automatic backup',
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Auto Backup',
+                        style: ModernTypography.bodyLarge,
+                      ),
+                      Text(
+                        'Automatically backup data to cloud',
+                        style: ModernTypography.labelMedium,
+                      ),
+                    ],
+                  ),
+                ),
+                ModernToggleButton(
+                  options: ['Off', 'On'],
+                  selectedIndex: settings.autoBackupEnabled ? 1 : 0,
+                  onChanged: (index) {
+                    ref.read(settingsNotifierProvider.notifier)
+                        .updateSetting('autoBackupEnabled', index == 1);
+                  },
+                ),
+              ],
+            ),
+          ).animate()
+            .fadeIn(duration: ModernAnimations.normal, delay: 50.ms)
+            .slideX(begin: -0.1, duration: ModernAnimations.normal, delay: 50.ms),
+
+          SizedBox(height: spacing_md),
+
+          // Two-Factor Authentication Button
+          Semantics(
+            button: true,
+            label: 'Two-factor authentication setup button',
+            hint: 'Double tap to setup two-factor authentication',
+            child: ModernActionButton(
+              text: settings.twoFactorEnabled
+                  ? 'Two-Factor Authentication (${_getMethodDisplayName(settings.twoFactorMethod)})'
+                  : 'Setup Two-Factor Authentication',
+              icon: Icons.security,
+              isPrimary: !settings.twoFactorEnabled,
+              onPressed: () => _navigateToTwoFactorSetup(context),
+            ),
+          ).animate()
+            .fadeIn(duration: ModernAnimations.normal, delay: 100.ms)
+            .slideX(begin: -0.1, duration: ModernAnimations.normal, delay: 100.ms),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPrivacySection(BuildContext context, AppSettings settings) {
+    return Container(
+      padding: EdgeInsets.all(spacing_lg),
+      decoration: BoxDecoration(
+        color: ModernColors.lightBackground,
+        borderRadius: BorderRadius.circular(radius_lg),
+        border: Border.all(color: ModernColors.borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(spacing_xs),
+                decoration: BoxDecoration(
+                  color: ModernColors.categoryPurple.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(radius_md),
+                ),
+                child: Icon(
+                  Icons.visibility_off,
+                  color: ModernColors.categoryPurple,
+                  size: 20,
+                ),
+              ),
+              SizedBox(width: spacing_sm),
+              Text(
+                'Privacy Mode',
+                style: ModernTypography.titleLarge,
+              ),
+            ],
+          ),
+          SizedBox(height: spacing_lg),
+
+          // Privacy Mode Toggle
+          Semantics(
+            label: 'Privacy mode toggle',
+            hint: 'Double tap to enable or disable privacy mode',
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Privacy Mode',
+                        style: ModernTypography.bodyLarge,
+                      ),
+                      Text(
+                        'Hide sensitive information like balances and account numbers',
+                        style: ModernTypography.labelMedium,
+                      ),
+                    ],
+                  ),
+                ),
+                ModernToggleButton(
+                  options: ['Off', 'On'],
+                  selectedIndex: settings.privacyModeEnabled ? 1 : 0,
+                  onChanged: (index) {
+                    ref.read(settingsNotifierProvider.notifier)
+                        .updateSetting('privacyModeEnabled', index == 1);
+                  },
+                ),
+              ],
+            ),
+          ).animate()
+            .fadeIn(duration: ModernAnimations.normal)
+            .slideX(begin: -0.1, duration: ModernAnimations.normal),
+
+          SizedBox(height: spacing_md),
+
+          // Gesture Activation Toggle
+          Semantics(
+            label: 'Privacy mode gesture toggle',
+            hint: 'Double tap to enable or disable three-finger double tap gesture',
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Gesture Activation',
+                        style: ModernTypography.bodyLarge,
+                      ),
+                      Text(
+                        'Activate privacy mode with three-finger double tap',
+                        style: ModernTypography.labelMedium,
+                      ),
+                    ],
+                  ),
+                ),
+                ModernToggleButton(
+                  options: ['Off', 'On'],
+                  selectedIndex: settings.privacyModeGestureEnabled ? 1 : 0,
+                  onChanged: (index) {
+                    ref.read(settingsNotifierProvider.notifier)
+                        .updateSetting('privacyModeGestureEnabled', index == 1);
+                  },
+                ),
+              ],
+            ),
+          ).animate()
+            .fadeIn(duration: ModernAnimations.normal, delay: 50.ms)
+            .slideX(begin: -0.1, duration: ModernAnimations.normal, delay: 50.ms),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDataManagementSection(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(spacing_lg),
+      decoration: BoxDecoration(
+        color: ModernColors.lightBackground,
+        borderRadius: BorderRadius.circular(radius_lg),
+        border: Border.all(color: ModernColors.borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(spacing_xs),
+                decoration: BoxDecoration(
+                  color: ModernColors.info.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(radius_md),
+                ),
+                child: Icon(
+                  Icons.storage,
+                  color: ModernColors.info,
+                  size: 20,
+                ),
+              ),
+              SizedBox(width: spacing_sm),
+              Text(
+                'Data Management',
+                style: ModernTypography.titleLarge,
+              ),
+            ],
+          ),
+          SizedBox(height: spacing_lg),
+
+          // Export Data Button
+          Semantics(
+            button: true,
+            label: 'Export data button',
+            hint: 'Double tap to export your data as JSON file',
+            child: ModernActionButton(
+              text: 'Export Data',
+              icon: Icons.download,
+              isPrimary: false,
+              onPressed: () => _showExportDialog(context),
+            ),
+          ).animate()
+            .fadeIn(duration: ModernAnimations.normal)
+            .slideX(begin: -0.1, duration: ModernAnimations.normal),
+
+          SizedBox(height: spacing_md),
+
+          // Import Data Button
+          Semantics(
+            button: true,
+            label: 'Import data button',
+            hint: 'Double tap to import data from JSON file',
+            child: ModernActionButton(
+              text: 'Import Data',
+              icon: Icons.upload,
+              isPrimary: false,
+              onPressed: () => _showImportDialog(context),
+            ),
+          ).animate()
+            .fadeIn(duration: ModernAnimations.normal, delay: 50.ms)
+            .slideX(begin: -0.1, duration: ModernAnimations.normal, delay: 50.ms),
+
+          SizedBox(height: spacing_md),
+
+          // Clear All Data Button
+          Semantics(
+            button: true,
+            label: 'Clear all data button',
+            hint: 'Double tap to permanently delete all app data',
+            child: ModernActionButton(
+              text: 'Clear All Data',
+              icon: Icons.delete_forever,
+              isPrimary: false,
+              onPressed: () => _showClearDataDialog(context),
+            ),
+          ).animate()
+            .fadeIn(duration: ModernAnimations.normal, delay: 100.ms)
+            .slideX(begin: -0.1, duration: ModernAnimations.normal, delay: 100.ms),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAboutSection(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(spacing_lg),
+      decoration: BoxDecoration(
+        color: ModernColors.lightBackground,
+        borderRadius: BorderRadius.circular(radius_lg),
+        border: Border.all(color: ModernColors.borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(spacing_xs),
+                decoration: BoxDecoration(
+                  color: ModernColors.textSecondary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(radius_md),
+                ),
+                child: Icon(
+                  Icons.info,
+                  color: ModernColors.textSecondary,
+                  size: 20,
+                ),
+              ),
+              SizedBox(width: spacing_sm),
+              Text(
+                'About',
+                style: ModernTypography.titleLarge,
+              ),
+            ],
+          ),
+          SizedBox(height: spacing_lg),
+
+          FutureBuilder<String>(
+            future: ref.read(settingsRepositoryProvider)
+                .getAppVersion()
+                .then((result) => result.getOrDefault('1.0.0')),
+            builder: (context, snapshot) {
+              final version = snapshot.data ?? '1.0.0';
+              return _buildInfoRow('App Version', version).animate()
+                .fadeIn(duration: ModernAnimations.normal)
+                .slideX(begin: -0.1, duration: ModernAnimations.normal);
+            },
+          ),
+          SizedBox(height: spacing_sm),
+          _buildInfoRow('Build Number', '100').animate()
+            .fadeIn(duration: ModernAnimations.normal, delay: 50.ms)
+            .slideX(begin: -0.1, duration: ModernAnimations.normal, delay: 50.ms),
+
+          SizedBox(height: spacing_md),
+
+          Row(
+            children: [
+              Expanded(
+                child: ModernActionButton(
+                  text: 'Terms of Service',
+                  isPrimary: false,
+                  onPressed: () {},
+                ).animate()
+                  .fadeIn(duration: ModernAnimations.normal, delay: 100.ms)
+                  .slideY(begin: 0.1, duration: ModernAnimations.normal, delay: 100.ms),
+              ),
+              SizedBox(width: spacing_sm),
+              Expanded(
+                child: ModernActionButton(
+                  text: 'Privacy Policy',
+                  isPrimary: false,
+                  onPressed: () {},
+                ).animate()
+                  .fadeIn(duration: ModernAnimations.normal, delay: 150.ms)
+                  .slideY(begin: 0.1, duration: ModernAnimations.normal, delay: 150.ms),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
 
   Widget _buildInfoRow(String label, String value) {
     return Row(

@@ -6,9 +6,7 @@ import '../../../../core/design_system/design_tokens.dart';
 import '../../../../core/design_system/color_tokens.dart';
 import '../../../../core/design_system/typography_tokens.dart';
 import '../../../../core/design_system/form_tokens.dart';
-import '../../../../core/design_system/components/enhanced_text_field.dart';
-import '../../../../core/design_system/components/enhanced_dropdown_field.dart';
-import '../../../../core/design_system/components/enhanced_switch_field.dart';
+import '../../../../core/design_system/modern/modern.dart';
 import '../../domain/entities/account.dart';
 import '../../domain/entities/account_type_theme.dart';
 
@@ -32,7 +30,7 @@ class _AddEditAccountBottomSheetState
     extends State<AddEditAccountBottomSheet> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _balanceController = TextEditingController();
+  double _balance = 0.0;
   final _descriptionController = TextEditingController();
   final _institutionController = TextEditingController();
   final _accountNumberController = TextEditingController();
@@ -53,7 +51,7 @@ class _AddEditAccountBottomSheetState
     if (widget.account != null) {
       final account = widget.account!;
       _nameController.text = account.name;
-      _balanceController.text = account.currentBalance.toStringAsFixed(2);
+      _balance = account.currentBalance;
       _descriptionController.text = account.description ?? '';
       _institutionController.text = account.institution ?? '';
       _accountNumberController.text = account.accountNumber ?? '';
@@ -76,7 +74,6 @@ class _AddEditAccountBottomSheetState
   @override
   void dispose() {
     _nameController.dispose();
-    _balanceController.dispose();
     _descriptionController.dispose();
     _institutionController.dispose();
     _accountNumberController.dispose();
@@ -222,22 +219,17 @@ class _AddEditAccountBottomSheetState
                     SizedBox(height: FormTokens.groupGap),
 
                     // Account Name
-                    EnhancedTextField(
+                    ModernTextField(
                       controller: _nameController,
                       label: 'Account Name',
-                      hint: 'e.g., Main Checking',
-                      prefix: Icon(
-                        Icons.account_balance_wallet,
-                        color: FormTokens.iconColor,
-                        size: DesignTokens.iconMd,
-                      ),
+                      placeholder: 'e.g., Main Checking',
+                      prefixIcon: Icons.account_balance_wallet,
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return 'Account name is required';
                         }
                         return null;
                       },
-                      autofocus: !isEditing,
                     ).animate()
                       .fadeIn(duration: DesignTokens.durationNormal, delay: 300.ms)
                       .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 300.ms),
@@ -245,29 +237,30 @@ class _AddEditAccountBottomSheetState
                     SizedBox(height: FormTokens.fieldGapMd),
 
                     // Balance
-                    EnhancedTextField(
-                      controller: _balanceController,
-                      label: 'Current Balance',
-                      hint: '0.00',
-                      prefix: Icon(
-                        Icons.attach_money,
-                        color: FormTokens.iconColor,
-                        size: DesignTokens.iconMd,
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Current Balance',
+                            style: TypographyTokens.labelMd.copyWith(
+                              color: ColorTokens.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          ModernAmountDisplay(
+                            amount: _balance,
+                            isEditable: true,
+                            currencySymbol: _selectedCurrency ?? 'USD',
+                            onAmountChanged: (value) {
+                              setState(() {
+                                _balance = value;
+                              });
+                            },
+                          ),
+                        ],
                       ),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'^-?\d+\.?\d{0,2}')),
-                      ],
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Balance is required';
-                        }
-                        final balance = double.tryParse(value);
-                        if (balance == null) {
-                          return 'Please enter a valid number';
-                        }
-                        return null;
-                      },
                     ).animate()
                       .fadeIn(duration: DesignTokens.durationNormal, delay: 400.ms)
                       .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 400.ms),
@@ -275,17 +268,17 @@ class _AddEditAccountBottomSheetState
                     SizedBox(height: FormTokens.fieldGapMd),
 
                     // Currency
-                    EnhancedDropdownField<String>(
+                    ModernDropdownSelector<String>(
                       label: 'Currency',
+                      selectedValue: _selectedCurrency ?? 'USD',
                       items: _currencies.map((currency) {
-                        return DropdownItem<String>(
+                        return ModernDropdownItem<String>(
                           value: currency,
                           label: currency,
                           icon: Icons.currency_exchange,
-                          iconColor: ColorTokens.teal500,
+                          color: ColorTokens.teal500,
                         );
                       }).toList(),
-                      value: _selectedCurrency ?? 'USD',
                       onChanged: (value) {
                         if (value != null) {
                           setState(() {
@@ -310,15 +303,11 @@ class _AddEditAccountBottomSheetState
                     SizedBox(height: FormTokens.groupGap),
 
                     // Institution
-                    EnhancedTextField(
+                    ModernTextField(
                       controller: _institutionController,
                       label: 'Institution (optional)',
-                      hint: 'e.g., Bank of America',
-                      prefix: Icon(
-                        Icons.business,
-                        color: FormTokens.iconColor,
-                        size: DesignTokens.iconMd,
-                      ),
+                      placeholder: 'e.g., Bank of America',
+                      prefixIcon: Icons.business,
                     ).animate()
                       .fadeIn(duration: DesignTokens.durationNormal, delay: 700.ms)
                       .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 700.ms),
@@ -326,15 +315,11 @@ class _AddEditAccountBottomSheetState
                     SizedBox(height: FormTokens.fieldGapMd),
 
                     // Account Number
-                    EnhancedTextField(
+                    ModernTextField(
                       controller: _accountNumberController,
                       label: 'Account Number (optional)',
-                      hint: 'e.g., ****1234',
-                      prefix: Icon(
-                        Icons.numbers,
-                        color: FormTokens.iconColor,
-                        size: DesignTokens.iconMd,
-                      ),
+                      placeholder: 'e.g., ****1234',
+                      prefixIcon: Icons.numbers,
                     ).animate()
                       .fadeIn(duration: DesignTokens.durationNormal, delay: 800.ms)
                       .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 800.ms),
@@ -342,11 +327,10 @@ class _AddEditAccountBottomSheetState
                     SizedBox(height: FormTokens.fieldGapMd),
 
                     // Description
-                    EnhancedTextField(
+                    ModernTextField(
                       controller: _descriptionController,
                       label: 'Description (optional)',
-                      hint: 'Additional notes about this account',
-                      maxLines: 2,
+                      placeholder: 'Additional notes about this account',
                     ).animate()
                       .fadeIn(duration: DesignTokens.durationNormal, delay: 900.ms)
                       .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 900.ms),
@@ -357,17 +341,46 @@ class _AddEditAccountBottomSheetState
                     SizedBox(height: FormTokens.sectionGap),
 
                     // Active Status
-                    EnhancedSwitchField(
-                      title: 'Account is Active',
-                      subtitle: 'Inactive accounts are hidden from calculations',
-                      value: _isActive,
-                      onChanged: (value) {
-                        setState(() {
-                          _isActive = value;
-                        });
-                      },
-                      icon: Icons.visibility,
-                      iconColor: ColorTokens.teal500,
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.visibility,
+                            color: ColorTokens.teal500,
+                            size: DesignTokens.iconMd,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Account is Active',
+                                  style: TypographyTokens.labelMd.copyWith(
+                                    color: ColorTokens.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  'Inactive accounts are hidden from calculations',
+                                  style: TypographyTokens.captionMd.copyWith(
+                                    color: ColorTokens.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Switch(
+                            value: _isActive,
+                            onChanged: (value) {
+                              setState(() {
+                                _isActive = value;
+                              });
+                            },
+                            activeThumbColor: ColorTokens.teal500,
+                          ),
+                        ],
+                      ),
                     ).animate()
                       .fadeIn(duration: DesignTokens.durationNormal, delay: 1000.ms)
                       .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 1000.ms),
@@ -536,15 +549,11 @@ class _AddEditAccountBottomSheetState
             .fadeIn(duration: DesignTokens.durationNormal, delay: 1100.ms)
             .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 1100.ms),
           SizedBox(height: FormTokens.groupGap),
-          EnhancedTextField(
+          ModernTextField(
             controller: _creditLimitController,
             label: 'Credit Limit',
-            hint: '5000.00',
-            prefix: Icon(
-              Icons.credit_card,
-              color: FormTokens.iconColor,
-              size: DesignTokens.iconMd,
-            ),
+            placeholder: '5000.00',
+            prefixIcon: Icons.credit_card,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
@@ -555,7 +564,7 @@ class _AddEditAccountBottomSheetState
                 if (limit == null || limit <= 0) {
                   return 'Please enter a valid credit limit';
                 }
-                final balance = double.tryParse(_balanceController.text) ?? 0;
+                final balance = _balance;
                 if (balance > limit) {
                   return 'Balance cannot exceed credit limit';
                 }
@@ -566,15 +575,11 @@ class _AddEditAccountBottomSheetState
             .fadeIn(duration: DesignTokens.durationNormal, delay: 1200.ms)
             .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 1200.ms),
           SizedBox(height: FormTokens.fieldGapMd),
-          EnhancedTextField(
+          ModernTextField(
             controller: _minimumPaymentController,
             label: 'Minimum Payment (optional)',
-            hint: '25.00',
-            prefix: Icon(
-              Icons.payment,
-              color: FormTokens.iconColor,
-              size: DesignTokens.iconMd,
-            ),
+            placeholder: '25.00',
+            prefixIcon: Icons.payment,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
@@ -594,19 +599,10 @@ class _AddEditAccountBottomSheetState
             .fadeIn(duration: DesignTokens.durationNormal, delay: 1100.ms)
             .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 1100.ms),
           SizedBox(height: FormTokens.groupGap),
-          EnhancedTextField(
+          ModernTextField(
             controller: _interestRateController,
             label: 'Interest Rate (%)',
-            hint: '5.5',
-            suffix: Padding(
-              padding: EdgeInsets.only(right: DesignTokens.spacing2),
-              child: Text(
-                '%',
-                style: TypographyTokens.labelMd.copyWith(
-                  color: ColorTokens.textSecondary,
-                ),
-              ),
-            ),
+            placeholder: '5.5',
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
@@ -624,15 +620,11 @@ class _AddEditAccountBottomSheetState
             .fadeIn(duration: DesignTokens.durationNormal, delay: 1200.ms)
             .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 1200.ms),
           SizedBox(height: FormTokens.fieldGapMd),
-          EnhancedTextField(
+          ModernTextField(
             controller: _minimumPaymentController,
             label: 'Monthly Payment (optional)',
-            hint: '150.00',
-            prefix: Icon(
-              Icons.payment,
-              color: FormTokens.iconColor,
-              size: DesignTokens.iconMd,
-            ),
+            placeholder: '150.00',
+            prefixIcon: Icons.payment,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
@@ -708,22 +700,6 @@ class _AddEditAccountBottomSheetState
       .scale(begin: const Offset(0.95, 0.95), duration: DesignTokens.durationSm, delay: 1500.ms);
   }
 
-  IconData _getIconData(String iconName) {
-    switch (iconName) {
-      case 'account_balance':
-        return Icons.account_balance;
-      case 'credit_card':
-        return Icons.credit_card;
-      case 'account_balance_wallet':
-        return Icons.account_balance_wallet;
-      case 'trending_up':
-        return Icons.trending_up;
-      case 'edit':
-        return Icons.edit;
-      default:
-        return Icons.account_balance_wallet;
-    }
-  }
 
   Future<void> _submitAccount() async {
     if (!_formKey.currentState!.validate()) {
@@ -733,7 +709,7 @@ class _AddEditAccountBottomSheetState
     setState(() => _isSubmitting = true);
 
     try {
-      final balance = double.parse(_balanceController.text);
+      final balance = _balance;
       final creditLimit = _creditLimitController.text.isNotEmpty
           ? double.tryParse(_creditLimitController.text)
           : null;

@@ -2,8 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/di/providers.dart' as core_providers;
 import '../../../../core/di/providers.dart';
-import '../../data/repositories/recurring_income_repository_impl.dart';
-import '../../domain/repositories/recurring_income_repository.dart';
 import '../../domain/usecases/create_recurring_income.dart';
 import '../../domain/usecases/get_recurring_incomes.dart';
 import '../../domain/usecases/record_income_receipt.dart';

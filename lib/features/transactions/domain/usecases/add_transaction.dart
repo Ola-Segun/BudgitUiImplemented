@@ -4,7 +4,6 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../../../accounts/domain/repositories/account_repository.dart';
 import '../../../goals/domain/entities/goal_contribution.dart';
-import '../../../goals/domain/repositories/goal_repository.dart';
 import '../../../goals/domain/usecases/add_goal_contribution.dart';
 import '../entities/transaction.dart';
 import '../repositories/transaction_repository.dart';

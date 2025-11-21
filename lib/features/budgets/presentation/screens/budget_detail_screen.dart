@@ -28,7 +28,7 @@ import '../widgets/budget_metric_cards.dart';
 import '../widgets/budget_stats_row.dart';
 import '../widgets/budget_bar_chart.dart';
 import '../widgets/budget_category_breakdown_enhanced.dart';
-import 'budget_edit_screen.dart';
+import '../widgets/budget_edit_bottom_sheet.dart';
 
 /// Enhanced Budget Detail Screen with advanced visualizations
 class BudgetDetailScreen extends ConsumerStatefulWidget {
@@ -1789,69 +1789,81 @@ class _BudgetDetailScreenState extends ConsumerState<BudgetDetailScreen>
     }
   }
 
-  void _showBudgetOptions(BuildContext context, WidgetRef ref, budget_entity.Budget budget) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 24),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(Icons.edit, color: Theme.of(context).colorScheme.primary),
-              ),
-              title: const Text('Edit Budget'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => BudgetEditScreen(budget: budget),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
-              ),
-              title: const Text('Delete Budget'),
-              onTap: () {
-                Navigator.pop(context);
-                _showDeleteConfirmation(context, ref, budget);
-              },
-            ),
-            SizedBox(height: MediaQuery.of(context).padding.bottom),
-          ],
-        ),
+void _showBudgetOptions(BuildContext context, WidgetRef ref, budget_entity.Budget budget) {
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (context) => Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
-    );
-  }
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 24),
+          ListTile(
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(Icons.edit, color: Theme.of(context).colorScheme.primary),
+            ),
+            title: const Text('Edit Budget'),
+            onTap: () {
+              // Close the options bottom sheet first
+              Navigator.pop(context);
+              
+              // Then show the edit bottom sheet
+              BudgetEditBottomSheet.show(
+                context: context,
+                budget: budget,
+                onSubmit: (updatedBudget) async {
+                  await ref
+                      .read(budgetNotifierProvider.notifier)
+                      .updateBudget(updatedBudget);
+
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Budget updated successfully')),
+                    );
+                  }
+                },
+              );
+            },
+          ),
+          ListTile(
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
+            ),
+            title: const Text('Delete Budget'),
+            onTap: () {
+              Navigator.pop(context);
+              _showDeleteConfirmation(context, ref, budget);
+            },
+          ),
+          SizedBox(height: MediaQuery.of(context).padding.bottom),
+        ],
+      ),
+    ),
+  );
+}
 
   Future<void> _showDeleteConfirmation(
     BuildContext context,

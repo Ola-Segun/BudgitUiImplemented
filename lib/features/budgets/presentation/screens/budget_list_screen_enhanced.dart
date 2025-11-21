@@ -19,7 +19,7 @@ import '../providers/budget_providers.dart';
 import '../states/budget_state.dart';
 import '../widgets/budget_category_breakdown_enhanced.dart';
 import '../widgets/budget_overview_enhanced.dart';
-import 'budget_creation_screen.dart';
+import '../widgets/budget_creation_bottom_sheet.dart';
 
 /// ✨ COMPLETELY REDESIGNED Budget List Screen
 /// Matches Home/Transaction design aesthetics with:
@@ -524,64 +524,64 @@ class _BudgetListScreenEnhancedState
     );
   }
 
-  Widget _buildEnhancedFAB() {
-    return Container(
-      height: 56,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColorsExtended.budgetPrimary,
-            AppColorsExtended.budgetPrimary.withValues(alpha: 0.8),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: AppColorsExtended.budgetPrimary.withValues(alpha: 0.4),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
+Widget _buildEnhancedFAB() {
+  return Container(
+    height: 56,
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          AppColorsExtended.budgetPrimary,
+          AppColorsExtended.budgetPrimary.withValues(alpha: 0.8),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            HapticFeedback.mediumImpact();
-            _navigateToBudgetCreation();
-          },
-          borderRadius: BorderRadius.circular(28),
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.add_rounded, color: Colors.white, size: 24),
-                SizedBox(width: 8),
-                Text(
-                  'New Budget',
-                  style: AppTypographyExtended.metricLabel.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                  ),
+      borderRadius: BorderRadius.circular(28),
+      boxShadow: [
+        BoxShadow(
+          color: AppColorsExtended.budgetPrimary.withValues(alpha: 0.4),
+          blurRadius: 16,
+          offset: const Offset(0, 6),
+        ),
+      ],
+    ),
+    child: Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.mediumImpact();
+          _navigateToBudgetCreation(); // Call the fixed method
+        },
+        borderRadius: BorderRadius.circular(28),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.add_rounded, color: Colors.white, size: 24),
+              SizedBox(width: 8),
+              Text(
+                'New Budget',
+                style: AppTypographyExtended.metricLabel.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
-    ).animate()
-      .fadeIn(duration: 300.ms, delay: 800.ms)
-      .slideY(
-        begin: 0.1,
-        duration: 300.ms,
-        delay: 800.ms,
-        curve: Curves.elasticOut,
-      );
-  }
+    ),
+  ).animate()
+    .fadeIn(duration: 300.ms, delay: 800.ms)
+    .slideY(
+      begin: 0.1,
+      duration: 300.ms,
+      delay: 800.ms,
+      curve: Curves.elasticOut,
+    );
+}
 
   // Helper methods
   List<BudgetChartData> _getDailyData(Budget budget, BudgetStatus? status) {
@@ -614,14 +614,23 @@ class _BudgetListScreenEnhancedState
     });
   }
 
-  void _navigateToBudgetCreation() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const BudgetCreationScreen(),
-      ),
-    );
-  }
+void _navigateToBudgetCreation() {
+  // Show bottom sheet directly instead of navigating to a route
+  BudgetCreationBottomSheet.show(
+    context: context,
+    onSubmit: (budget) async {
+      await ref
+          .read(budgetNotifierProvider.notifier)
+          .createBudget(budget);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Budget created successfully')),
+        );
+      }
+    },
+  );
+}
 
   void _showSearchSheet(BuildContext context) {
     // Implement search

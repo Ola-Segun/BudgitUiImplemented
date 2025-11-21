@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
+import '../../../../core/design_system/modern/modern.dart';
+import '../../../../core/design_system/design_tokens.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/notification_manager.dart';
 import '../../../accounts/presentation/providers/account_providers.dart';
@@ -11,7 +11,6 @@ import '../../domain/entities/transaction.dart';
 import '../providers/transaction_providers.dart';
 
 /// Bottom sheet for adding new transactions
-/// @deprecated Use EnhancedAddTransactionBottomSheet instead
 class AddTransactionBottomSheet extends ConsumerStatefulWidget {
   const AddTransactionBottomSheet({
     super.key,
@@ -67,13 +66,6 @@ class _AddTransactionBottomSheetState extends ConsumerState<AddTransactionBottom
     debugPrint('AddTransactionBottomSheet: Screen size: ${screenWidth}x$screenHeight');
     debugPrint('DEBUG: AddTransactionBottomSheet is building with selectedType: $_selectedType');
 
-    final buttonChild = _isSubmitting
-        ? SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(),
-          )
-        : const Text('Add Transaction');
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -113,237 +105,156 @@ class _AddTransactionBottomSheetState extends ConsumerState<AddTransactionBottom
                 ),
               ],
             ).animate()
-              .fadeIn(duration: 200.ms)
-              .slideY(begin: 0.1, duration: 200.ms, curve: Curves.easeOutCubic),
-            const SizedBox(height: 24),
+              .fadeIn(duration: DesignTokens.durationNormal)
+              .slideY(begin: 0.1, duration: DesignTokens.durationNormal),
+
+            SizedBox(height: spacing_lg),
 
             // Transaction Type Toggle with animation
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: SegmentedButton<TransactionType>(
-                segments: [
-                  ButtonSegment(
-                    value: TransactionType.expense,
-                    label: Text('Expense'),
-                    icon: Icon(Icons.remove_circle_outline),
-                  ),
-                  ButtonSegment(
-                    value: TransactionType.income,
-                    label: Text('Income'),
-                    icon: Icon(Icons.add_circle_outline),
-                  ),
-                ],
-                selected: {_selectedType},
-                onSelectionChanged: (selected) {
-                  setState(() {
-                    _selectedType = selected.first;
-                    // Reset category when type changes so it gets the new default
-                    _selectedCategoryId = null;
-                  });
-                },
-              ).animate()
-                .fadeIn(duration: 400.ms, delay: 200.ms)
-                .slideY(begin: 0.1, duration: 400.ms, delay: 200.ms, curve: Curves.easeOutCubic),
-            ),
-            const SizedBox(height: 24),
-
-            // Amount Field with animation
-            TextFormField(
-              controller: _amountController,
-              decoration: const InputDecoration(
-                labelText: 'Amount',
-                prefixText: '\$',
-                hintText: '0.00',
-              ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-              ],
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter an amount';
-                }
-                final amount = double.tryParse(value);
-                if (amount == null || amount <= 0) {
-                  return 'Please enter a valid amount';
-                }
-                return null;
+            ModernToggleButton(
+              options: const ['Expense', 'Income'],
+              selectedIndex: _selectedType == TransactionType.expense ? 0 : 1,
+              onChanged: (index) {
+                setState(() {
+                  _selectedType = index == 0 ? TransactionType.expense : TransactionType.income;
+                  // Reset category when type changes so it gets the new default
+                  _selectedCategoryId = null;
+                });
               },
-              autofocus: true,
             ).animate()
-              .fadeIn(duration: 400.ms, delay: 300.ms)
-              .slideX(begin: 0.1, duration: 400.ms, delay: 300.ms, curve: Curves.easeOutCubic),
+              .fadeIn(duration: DesignTokens.durationNormal, delay: 100.ms)
+              .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 100.ms),
+            SizedBox(height: spacing_lg),
+
+            // Amount Display (Amount-first design)
+            ModernAmountDisplay(
+              amount: _amountController.text.isEmpty
+                ? 0
+                : double.parse(_amountController.text),
+              isEditable: true,
+              onAmountChanged: (newAmount) {
+                setState(() {
+                  _amountController.text = newAmount.toStringAsFixed(0);
+                });
+              },
+            ).animate()
+              .fadeIn(duration: DesignTokens.durationNormal, delay: 200.ms)
+              .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 200.ms),
             const SizedBox(height: 16),
 
-            // Category Selection with animation
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: constraints.maxWidth - (AppTheme.screenPaddingAll.horizontal * 2),
-              ),
-              child: categoriesAsync.when(
-                data: (categoryState) {
-                  final categories = categoryState.categories;
-                  // Set default category if not set and categories exist
-                  if (_selectedCategoryId == null && categories.isNotEmpty) {
-                    final defaultCategoryId = _getSmartDefaultCategoryId(categories, _selectedType);
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (mounted) {
-                        setState(() {
-                          _selectedCategoryId = defaultCategoryId;
-                        });
-                      }
-                    });
-                  }
+            // Category Selection
+            categoriesAsync.when(
+              data: (categoryState) {
+                final categories = categoryState.categories.where((cat) => cat.type == _selectedType).toList();
+                // Set default category if not set and categories exist
+                if (_selectedCategoryId == null && categories.isNotEmpty) {
+                  final defaultCategoryId = _getSmartDefaultCategoryId(categories, _selectedType);
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      setState(() {
+                        _selectedCategoryId = defaultCategoryId;
+                      });
+                    }
+                  });
+                }
 
-                  return DropdownButtonFormField<String>(
-                    initialValue: _selectedCategoryId,
-                    decoration: const InputDecoration(
-                      labelText: 'Category',
-                    ),
-                    items: categories.map((category) {
-                      return DropdownMenuItem(
-                        value: category.id,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(categoryIconColorService.getIconForCategory(category.id), size: 20, color: categoryIconColorService.getColorForCategory(category.id)),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: Text(
-                                category.name,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() {
-                          _selectedCategoryId = value;
-                        });
-                      }
-                    },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please select a category';
-                      }
-                      return null;
-                    },
-                  ).animate()
-                    .fadeIn(duration: 400.ms, delay: 400.ms)
-                    .slideX(begin: 0.1, duration: 400.ms, delay: 400.ms, curve: Curves.easeOutCubic);
-                },
-                loading: () => const CircularProgressIndicator().animate()
-                  .fadeIn(duration: 300.ms)
-                  .scale(begin: const Offset(0.8, 0.8), duration: 300.ms, curve: Curves.elasticOut),
-                error: (error, stack) => Text('Error loading categories: $error').animate()
-                  .fadeIn(duration: 300.ms)
-                  .shake(duration: 500.ms),
-              ),
+                final categoryItems = categories.map((cat) => CategoryItem(
+                  id: cat.id,
+                  name: cat.name,
+                  icon: categoryIconColorService.getIconForCategory(cat.id),
+                  color: categoryIconColorService.getColorForCategory(cat.id).value,
+                )).toList();
+
+                return ModernCategorySelector(
+                  categories: categoryItems,
+                  selectedId: _selectedCategoryId,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedCategoryId = value;
+                    });
+                  },
+                ).animate()
+                  .fadeIn(duration: DesignTokens.durationNormal, delay: 300.ms)
+                  .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 300.ms);
+              },
+              loading: () => const CircularProgressIndicator(),
+              error: (error, stack) => Text('Error loading categories: $error'),
             ),
             const SizedBox(height: 16),
 
-            // Account Selection with animation
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: constraints.maxWidth - (AppTheme.screenPaddingAll.horizontal * 2),
-              ),
-              child: accountsAsync.when(
-                data: (accounts) {
-                  // Set default account if not set and accounts exist
-                  if (_selectedAccountId == null && accounts.isNotEmpty) {
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (mounted) {
-                        setState(() {
-                          _selectedAccountId = accounts.first.id;
-                        });
-                      }
-                    });
-                  }
+            // Account Selection
+            accountsAsync.when(
+              data: (accounts) {
+                // Set default account if not set and accounts exist
+                if (_selectedAccountId == null && accounts.isNotEmpty) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      setState(() {
+                        _selectedAccountId = accounts.first.id;
+                      });
+                    }
+                  });
+                }
 
-                  return DropdownButtonFormField<String>(
-                    initialValue: _selectedAccountId,
-                    decoration: const InputDecoration(
-                      labelText: 'Account',
-                    ),
-                    items: accounts.map((account) {
-                      return DropdownMenuItem(
-                        value: account.id,
-                        child: Text(account.displayName),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() {
-                          _selectedAccountId = value;
-                        });
-                      }
-                    },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please select an account';
-                      }
-                      return null;
-                    },
-                  ).animate()
-                    .fadeIn(duration: 400.ms, delay: 500.ms)
-                    .slideX(begin: 0.1, duration: 400.ms, delay: 500.ms, curve: Curves.easeOutCubic);
-                },
-                loading: () => const CircularProgressIndicator().animate()
-                  .fadeIn(duration: 300.ms)
-                  .scale(begin: const Offset(0.8, 0.8), duration: 300.ms, curve: Curves.elasticInOut),
-                error: (error, stack) => Text('Error loading accounts: $error').animate()
-                  .fadeIn(duration: 300.ms)
-                  .shake(duration: 500.ms),
-              ),
+                return ModernDropdownSelector<String>(
+                  label: 'Account',
+                  selectedValue: _selectedAccountId,
+                  items: accounts.map((account) => ModernDropdownItem<String>(
+                    value: account.id,
+                    label: '${account.displayName} - \$${(account.balance ?? 0).toStringAsFixed(2)}',
+                  )).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => _selectedAccountId = value);
+                    }
+                  },
+                ).animate()
+                  .fadeIn(duration: DesignTokens.durationNormal, delay: 400.ms)
+                  .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 400.ms);
+              },
+              loading: () => const CircularProgressIndicator(),
+              error: (error, stack) => Text('Error loading accounts: $error'),
             ),
             const SizedBox(height: 16),
 
-            // Date Picker with animation
-            InkWell(
-              onTap: () async {
-                final date = await showDatePicker(
-                  context: context,
-                  initialDate: _selectedDate,
-                  firstDate: DateTime(2000),
-                  lastDate: DateTime.now().add(const Duration(days: 365)),
-                );
+            // Date and Time Picker
+            ModernDateTimePicker(
+              selectedDate: _selectedDate,
+              selectedTime: TimeOfDay.fromDateTime(_selectedDate),
+              onDateChanged: (date) {
                 if (date != null) {
                   setState(() {
                     _selectedDate = date;
                   });
                 }
               },
-              child: InputDecorator(
-                decoration: const InputDecoration(
-                  labelText: 'Date',
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(DateFormat('MMM dd, yyyy').format(_selectedDate)),
-                    const Icon(Icons.calendar_today),
-                  ],
-                ),
-              ),
+              onTimeChanged: (time) {
+                if (time != null) {
+                  setState(() {
+                    _selectedDate = DateTime(
+                      _selectedDate.year,
+                      _selectedDate.month,
+                      _selectedDate.day,
+                      time.hour,
+                      time.minute,
+                    );
+                  });
+                }
+              },
             ).animate()
-              .fadeIn(duration: 400.ms, delay: 600.ms)
-              .slideX(begin: 0.1, duration: 400.ms, delay: 600.ms, curve: Curves.easeOutCubic),
-            const SizedBox(height: 16),
+              .fadeIn(duration: DesignTokens.durationNormal, delay: 500.ms)
+              .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 500.ms),
+            SizedBox(height: spacing_md),
 
-            // Title Field with animation
-            TextFormField(
+            // Title Field
+            ModernTextField(
               controller: _descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Title',
-                hintText: 'e.g., Grocery shopping at Walmart',
-              ),
+              placeholder: 'Title',
+              prefixIcon: Icons.title,
               maxLength: 100,
             ).animate()
-              .fadeIn(duration: 400.ms, delay: 700.ms)
-              .slideX(begin: 0.1, duration: 400.ms, delay: 700.ms, curve: Curves.easeOutCubic),
+              .fadeIn(duration: DesignTokens.durationNormal, delay: 600.ms)
+              .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 600.ms),
             const SizedBox(height: 16),
 
             // Receipt Scanning with animation
@@ -359,46 +270,58 @@ class _AddTransactionBottomSheetState extends ConsumerState<AddTransactionBottom
               .slideY(begin: 0.1, duration: 400.ms, delay: 800.ms, curve: Curves.easeOutCubic),
             const SizedBox(height: 16),
 
-            // Description Field with animation
-            TextFormField(
+            // Description Field
+            ModernTextField(
               controller: _noteController,
-              decoration: const InputDecoration(
-                labelText: 'Description (optional)',
-                hintText: 'Supplementary details...',
-              ),
+              placeholder: 'Description (optional)',
+              prefixIcon: Icons.description_outlined,
               maxLength: 200,
-              maxLines: 2,
             ).animate()
-              .fadeIn(duration: 400.ms, delay: 900.ms)
-              .slideX(begin: 0.1, duration: 400.ms, delay: 900.ms, curve: Curves.easeOutCubic),
+              .fadeIn(duration: DesignTokens.durationNormal, delay: 700.ms)
+              .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 700.ms),
 
-            const SizedBox(height: 32),
+            SizedBox(height: spacing_xl),
 
-            // Action Buttons with animation
+            // Scan Receipt and Confirm Buttons Row
             Row(
               children: [
+                // Scan Receipt Button (30% - icon only)
                 Expanded(
-                  child: OutlinedButton(
-                    onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
+                  flex: 2,
+                  child: IconButton(
+                    onPressed: _scanReceipt,
+                    icon: const Icon(Icons.camera_alt),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.surface,
+                      foregroundColor: Theme.of(context).colorScheme.primary,
+                      minimumSize: const Size(48, 48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    tooltip: 'Scan Receipt',
                   ).animate()
-                    .fadeIn(duration: 400.ms, delay: 1000.ms)
-                    .slideY(begin: 0.1, duration: 400.ms, delay: 1000.ms, curve: Curves.easeOutCubic),
+                    .fadeIn(duration: DesignTokens.durationNormal, delay: 800.ms)
+                    .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 800.ms),
                 ),
-                const SizedBox(width: 16),
+
+                SizedBox(width: spacing_md),
+
+                // Slide to Confirm (70%)
                 Expanded(
-                  child: TextButton(
-                    onPressed: _isSubmitting ? null : () {
-                      _submitTransaction();
-                    },
-                    child: buttonChild,
+                  flex: 7,
+                  child: ModernSlideToConfirm(
+                    text: 'Slide to Save',
+                    onSlideComplete: _isSubmitting ? null : _handleSlideComplete,
                   ).animate()
-                    .fadeIn(duration: 400.ms, delay: 1100.ms)
-                    .slideY(begin: 0.1, duration: 400.ms, delay: 1100.ms, curve: Curves.easeOutCubic)
-                    .scale(begin: const Offset(0.95, 0.95), duration: 200.ms, delay: 1100.ms),
+                    .fadeIn(duration: DesignTokens.durationNormal, delay: 900.ms)
+                    .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 900.ms),
                 ),
               ],
             ),
+
+            // Extra bottom padding to ensure button visibility
+            SizedBox(height: spacing_xl),
           ],
         ),
       ),
@@ -468,11 +391,11 @@ class _AddTransactionBottomSheetState extends ConsumerState<AddTransactionBottom
   }
 
 
-  Future<void> _submitTransaction() async {
-    debugPrint('DEBUG: _submitTransaction called');
+  Future<bool> _handleSlideComplete() async {
+    debugPrint('DEBUG: _handleSlideComplete called');
     if (!_formKey.currentState!.validate()) {
       debugPrint('DEBUG: Form validation failed');
-      return;
+      return false;
     }
 
     // Additional validation for account selection
@@ -481,7 +404,7 @@ class _AddTransactionBottomSheetState extends ConsumerState<AddTransactionBottom
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select an account')),
       );
-      return;
+      return false;
     }
 
     // Additional validation for category selection
@@ -490,13 +413,13 @@ class _AddTransactionBottomSheetState extends ConsumerState<AddTransactionBottom
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a category')),
       );
-      return;
+      return false;
     }
 
-    debugPrint('AddTransactionBottomSheet: _submitTransaction called, _isSubmitting: $_isSubmitting');
+    debugPrint('AddTransactionBottomSheet: _handleSlideComplete called, _isSubmitting: $_isSubmitting');
     if (_isSubmitting) {
       debugPrint('AddTransactionBottomSheet: Already submitting, ignoring duplicate call');
-      return;
+      return false;
     }
 
     setState(() => _isSubmitting = true);
@@ -558,11 +481,13 @@ class _AddTransactionBottomSheetState extends ConsumerState<AddTransactionBottom
           }
         }
       });
+      return true;
     } catch (e) {
       debugPrint('AddTransactionBottomSheet: Error during transaction creation: $e');
       if (mounted) {
         NotificationManager.transactionAddFailed(context, e.toString());
       }
+      return false;
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);

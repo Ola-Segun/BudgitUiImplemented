@@ -182,6 +182,31 @@ class ColorTokens {
   static const Color statusOverdue = critical600;
 
   // ============================================================================
+  // FORM DESIGN SYSTEM COLORS (from FormDesign screenshots)
+  // ============================================================================
+
+  /// Form primary dark color
+  static const Color formPrimaryDark = Color(0xFF0F172A);
+
+  /// Form primary teal color
+  static const Color formPrimaryTeal = Color(0xFF14B8A6);
+
+  /// Form background light
+  static const Color formBackgroundLight = Color(0xFFF2F4F6);
+
+  /// Form surface white
+  static const Color formSurfaceWhite = Color(0xFFFFFFFF);
+
+  /// Form border light
+  static const Color formBorderLight = Color(0xFFE2E8F0);
+
+  /// Form text secondary
+  static const Color formTextSecondary = Color(0xFF94A3B8);
+
+  /// Form error color
+  static const Color formErrorColor = Color(0xFFEF4444);
+
+  // ============================================================================
   // CHART COLORS (for data visualization)
   // ============================================================================
 

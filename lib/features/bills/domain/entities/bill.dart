@@ -64,6 +64,8 @@ class Bill with _$Bill {
     if (nextDueDate != null) return nextDueDate!;
 
     switch (frequency) {
+      case BillFrequency.daily:
+        return dueDate.add(const Duration(days: 1));
       case BillFrequency.weekly:
         return dueDate.add(const Duration(days: 7));
       case BillFrequency.biWeekly:
@@ -73,6 +75,7 @@ class Bill with _$Bill {
       case BillFrequency.quarterly:
         return DateTime(dueDate.year, dueDate.month + 3, dueDate.day);
       case BillFrequency.annually:
+      case BillFrequency.yearly:
         return DateTime(dueDate.year + 1, dueDate.month, dueDate.day);
       case BillFrequency.custom:
         // For custom frequency, return due date as-is (would need custom logic)
@@ -240,11 +243,13 @@ class BillPayment with _$BillPayment {
 
 /// Bill frequency enumeration
 enum BillFrequency {
+  daily('Daily'),
   weekly('Weekly'),
   biWeekly('Bi-weekly'),
   monthly('Monthly'),
   quarterly('Quarterly'),
   annually('Annually'),
+  yearly('Yearly'),
   custom('Custom');
 
   const BillFrequency(this.displayName);
@@ -254,6 +259,8 @@ enum BillFrequency {
   /// Get frequency in days
   int get days {
     switch (this) {
+      case BillFrequency.daily:
+        return 1;
       case BillFrequency.weekly:
         return 7;
       case BillFrequency.biWeekly:
@@ -263,6 +270,7 @@ enum BillFrequency {
       case BillFrequency.quarterly:
         return 90; // Approximate
       case BillFrequency.annually:
+      case BillFrequency.yearly:
         return 365; // Approximate
       case BillFrequency.custom:
         return 0; // Custom logic needed

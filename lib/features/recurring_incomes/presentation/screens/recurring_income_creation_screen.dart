@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
+import '../../../../core/design_system/modern/modern.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../accounts/domain/entities/account.dart';
 import '../../../accounts/presentation/providers/account_providers.dart';
@@ -45,7 +45,6 @@ class _RecurringIncomeCreationScreenState extends ConsumerState<RecurringIncomeC
 
   // Reactive validation state
   String? _nameValidationError;
-  bool _isValidatingName = false;
   Timer? _nameValidationTimer;
   String _lastValidatedName = '';
 
@@ -81,7 +80,6 @@ class _RecurringIncomeCreationScreenState extends ConsumerState<RecurringIncomeC
     if (name.isEmpty) {
       setState(() {
         _nameValidationError = null;
-        _isValidatingName = false;
       });
       _nameValidationTimer?.cancel();
       return;
@@ -97,7 +95,6 @@ class _RecurringIncomeCreationScreenState extends ConsumerState<RecurringIncomeC
 
     // Set validating state
     setState(() {
-      _isValidatingName = true;
       _nameValidationError = null;
     });
 
@@ -124,7 +121,6 @@ class _RecurringIncomeCreationScreenState extends ConsumerState<RecurringIncomeC
 
       if (mounted) {
         setState(() {
-          _isValidatingName = false;
           _lastValidatedName = name;
           _nameValidationError = isDuplicate
               ? 'An income with this name already exists'
@@ -134,7 +130,6 @@ class _RecurringIncomeCreationScreenState extends ConsumerState<RecurringIncomeC
     } catch (e) {
       if (mounted) {
         setState(() {
-          _isValidatingName = false;
           _nameValidationError = null; // Clear error on failure
         });
       }
@@ -155,81 +150,20 @@ class _RecurringIncomeCreationScreenState extends ConsumerState<RecurringIncomeC
               padding: AppTheme.screenPaddingAll,
               children: [
                 // Income Name with validation
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextFormField(
-                      controller: _nameController,
-                      decoration: InputDecoration(
-                        labelText: 'Income Name',
-                        hintText: 'e.g., Salary, Freelance Work',
-                        errorStyle: const TextStyle(height: 0.8),
-                        errorBorder: (_nameValidationError != null)
-                            ? OutlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.error,
-                                  width: 2,
-                                ),
-                                borderRadius: BorderRadius.circular(8),
-                              )
-                            : null,
-                        focusedErrorBorder: (_nameValidationError != null)
-                            ? OutlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.error,
-                                  width: 2,
-                                ),
-                                borderRadius: BorderRadius.circular(8),
-                              )
-                            : null,
-                        suffixIcon: _isValidatingName
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: Padding(
-                                  padding: EdgeInsets.all(12),
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                ),
-                              )
-                            : null,
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Please enter an income name';
-                        }
-                        if (value.trim().length < 2) {
-                          return 'Income name must be at least 2 characters';
-                        }
-                        return null;
-                      },
-                      autofocus: true,
-                    ),
-                    // Show instant validation feedback
-                    if (_nameValidationError != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4, left: 12),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.error_outline,
-                              color: Theme.of(context).colorScheme.error,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                _nameValidationError!,
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.error,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
+                ModernTextField(
+                  controller: _nameController,
+                  placeholder: 'e.g., Salary, Freelance Work',
+                  label: 'Income Name',
+                  errorText: _nameValidationError,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter an income name';
+                    }
+                    if (value.trim().length < 2) {
+                      return 'Income name must be at least 2 characters';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 16),
 
@@ -278,22 +212,16 @@ class _RecurringIncomeCreationScreenState extends ConsumerState<RecurringIncomeC
                           );
                         }
 
-                        return DropdownButtonFormField<String>(
-                          initialValue: _selectedCategoryId,
-                          decoration: const InputDecoration(
-                            labelText: 'Category',
-                          ),
+                        return ModernDropdownSelector<String>(
+                          label: 'Category',
+                          selectedValue: _selectedCategoryId,
                           items: incomeCategories.map((category) {
                             final iconAndColor = categoryIconColorService.getIconAndColorForCategory(category.id);
-                            return DropdownMenuItem(
+                            return ModernDropdownItem(
                               value: category.id,
-                              child: Row(
-                                children: [
-                                  Icon(iconAndColor.icon, size: 20, color: iconAndColor.color),
-                                  const SizedBox(width: 8),
-                                  Text(category.name),
-                                ],
-                              ),
+                              label: category.name,
+                              icon: iconAndColor.icon,
+                              color: iconAndColor.color,
                             );
                           }).toList(),
                           onChanged: (value) {
@@ -344,15 +272,13 @@ class _RecurringIncomeCreationScreenState extends ConsumerState<RecurringIncomeC
                 const SizedBox(height: 16),
 
                 // Frequency Selection
-                DropdownButtonFormField<RecurringIncomeFrequency>(
-                  initialValue: _selectedFrequency,
-                  decoration: const InputDecoration(
-                    labelText: 'Frequency',
-                  ),
+                ModernDropdownSelector<RecurringIncomeFrequency>(
+                  label: 'Frequency',
+                  selectedValue: _selectedFrequency,
                   items: RecurringIncomeFrequency.values.map((frequency) {
-                    return DropdownMenuItem(
+                    return ModernDropdownItem(
                       value: frequency,
-                      child: Text(frequency.displayName),
+                      label: frequency.displayName,
                     );
                   }).toList(),
                   onChanged: (value) {
@@ -366,125 +292,88 @@ class _RecurringIncomeCreationScreenState extends ConsumerState<RecurringIncomeC
                 const SizedBox(height: 16),
 
                 // Start Date
-                InkWell(
-                  onTap: () async {
-                    if (!mounted) return;
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: _selectedStartDate,
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
-                    );
-                    if (date != null && mounted) {
+                ModernDateTimePicker(
+                  selectedDate: _selectedStartDate,
+                  onDateChanged: (date) {
+                    if (date != null) {
                       setState(() {
                         _selectedStartDate = date;
                       });
                     }
                   },
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'Start Date',
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(DateFormat('MMM dd, yyyy').format(_selectedStartDate)),
-                        const Icon(Icons.calendar_today),
-                      ],
-                    ),
-                  ),
+                  showTime: false,
                 ),
                 const SizedBox(height: 16),
 
                 // End Date (Optional)
-                InkWell(
-                  onTap: () async {
-                    if (!mounted) return;
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: _selectedEndDate ?? _selectedStartDate.add(const Duration(days: 365)),
-                      firstDate: _selectedStartDate,
-                      lastDate: DateTime.now().add(const Duration(days: 365 * 10)),
-                    );
-                    if (date != null && mounted) {
-                      setState(() {
-                        _selectedEndDate = date;
-                      });
-                    }
-                  },
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'End Date (Optional)',
-                      helperText: 'Leave empty for indefinite income',
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ModernDateTimePicker(
+                      selectedDate: _selectedEndDate,
+                      onDateChanged: (date) {
+                        setState(() {
+                          _selectedEndDate = date;
+                        });
+                      },
+                      showTime: false,
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(_selectedEndDate != null
-                            ? DateFormat('MMM dd, yyyy').format(_selectedEndDate!)
-                            : 'No end date'),
-                        Row(
-                          children: [
-                            if (_selectedEndDate != null)
-                              IconButton(
-                                icon: const Icon(Icons.clear),
-                                onPressed: () {
-                                  setState(() {
-                                    _selectedEndDate = null;
-                                  });
-                                },
-                              ),
-                            const Icon(Icons.calendar_today),
-                          ],
+                    if (_selectedEndDate != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: TextButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              _selectedEndDate = null;
+                            });
+                          },
+                          icon: const Icon(Icons.clear),
+                          label: const Text('Clear end date'),
                         ),
-                      ],
+                      ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Leave empty for indefinite income',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
                     ),
-                  ),
+                  ],
                 ),
                 const SizedBox(height: 16),
 
                 // Payer
-                TextFormField(
+                ModernTextField(
                   controller: _payerController,
-                  decoration: const InputDecoration(
-                    labelText: 'Payer (optional)',
-                    hintText: 'e.g., Employer Name, Client',
-                  ),
+                  label: 'Payer (optional)',
+                  placeholder: 'e.g., Employer Name, Client',
                 ),
                 const SizedBox(height: 16),
 
                 // Description
-                TextFormField(
+                ModernTextField(
                   controller: _descriptionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Description (optional)',
-                    hintText: 'Additional details about this income',
-                  ),
+                  label: 'Description (optional)',
+                  placeholder: 'Additional details about this income',
                   maxLength: 200,
-                  maxLines: 2,
                 ),
                 const SizedBox(height: 16),
 
                 // Website
-                TextFormField(
+                ModernTextField(
                   controller: _websiteController,
-                  decoration: const InputDecoration(
-                    labelText: 'Website (optional)',
-                    hintText: 'https://example.com',
-                  ),
+                  label: 'Website (optional)',
+                  placeholder: 'https://example.com',
                   keyboardType: TextInputType.url,
                 ),
                 const SizedBox(height: 16),
 
                 // Notes
-                TextFormField(
+                ModernTextField(
                   controller: _notesController,
-                  decoration: const InputDecoration(
-                    labelText: 'Notes (optional)',
-                    hintText: 'Any additional notes',
-                  ),
+                  label: 'Notes (optional)',
+                  placeholder: 'Any additional notes',
                   maxLength: 500,
-                  maxLines: 3,
                 ),
 
                 const SizedBox(height: 32),
@@ -493,24 +382,21 @@ class _RecurringIncomeCreationScreenState extends ConsumerState<RecurringIncomeC
                 Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton(
+                      child: ModernActionButton(
+                        text: 'Cancel',
                         onPressed: _isSubmitting ? null : () {
                           if (mounted) Navigator.pop(context);
                         },
-                        child: const Text('Cancel'),
+                        isPrimary: false,
                       ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
-                      child: ElevatedButton(
+                      child: ModernActionButton(
+                        text: 'Add Income',
                         onPressed: _isSubmitting ? null : _submitIncome,
-                        child: _isSubmitting
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Text('Add Income'),
+                        isLoading: _isSubmitting,
+                        isPrimary: true,
                       ),
                     ),
                   ],
@@ -528,14 +414,13 @@ class _RecurringIncomeCreationScreenState extends ConsumerState<RecurringIncomeC
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Variable Amount Toggle
-        SwitchListTile(
-          title: const Text('Variable Amount'),
-          subtitle: const Text('Income amount varies each period'),
-          value: _isVariableAmount,
-          onChanged: (value) {
+        ModernToggleButton(
+          options: const ['Fixed', 'Variable'],
+          selectedIndex: _isVariableAmount ? 1 : 0,
+          onChanged: (index) {
             setState(() {
-              _isVariableAmount = value;
-              if (!value) {
+              _isVariableAmount = index == 1;
+              if (!_isVariableAmount) {
                 _minAmountController.clear();
                 _maxAmountController.clear();
               }
@@ -549,14 +434,11 @@ class _RecurringIncomeCreationScreenState extends ConsumerState<RecurringIncomeC
           Row(
             children: [
               Expanded(
-                child: TextFormField(
+                child: ModernTextField(
                   controller: _minAmountController,
-                  decoration: const InputDecoration(
-                    labelText: 'Min Amount',
-                    prefixText: '\$',
-                    hintText: '0.00',
-                  ),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  label: 'Min Amount',
+                  placeholder: '0.00',
+                  keyboardType: TextInputType.number,
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
                   ],
@@ -576,14 +458,11 @@ class _RecurringIncomeCreationScreenState extends ConsumerState<RecurringIncomeC
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: TextFormField(
+                child: ModernTextField(
                   controller: _maxAmountController,
-                  decoration: const InputDecoration(
-                    labelText: 'Max Amount',
-                    prefixText: '\$',
-                    hintText: '0.00',
-                  ),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  label: 'Max Amount',
+                  placeholder: '0.00',
+                  keyboardType: TextInputType.number,
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
                   ],
@@ -616,28 +495,20 @@ class _RecurringIncomeCreationScreenState extends ConsumerState<RecurringIncomeC
           ),
         ],
 
-        // Fixed Amount Field
-        TextFormField(
-          controller: _amountController,
-          decoration: InputDecoration(
-            labelText: _isVariableAmount ? 'Expected Amount' : 'Amount',
-            prefixText: '\$',
-            hintText: '0.00',
-          ),
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-          ],
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter an amount';
-            }
-            final amount = double.tryParse(value);
-            if (amount == null || amount <= 0) {
-              return 'Please enter a valid amount';
-            }
-            return null;
+        // Amount Display/Input
+        ModernAmountDisplay(
+          amount: double.tryParse(_amountController.text) ?? 0.0,
+          isEditable: true,
+          onAmountChanged: (amount) {
+            _amountController.text = amount.toStringAsFixed(2);
           },
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _isVariableAmount ? 'Expected Amount' : 'Amount',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
         ),
       ],
     );
@@ -702,79 +573,21 @@ class _RecurringIncomeCreationScreenState extends ConsumerState<RecurringIncomeC
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Default Account
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedDefaultAccountId,
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Default Account (Optional)',
-                    border: OutlineInputBorder(),
-                    helperText: 'Primary account for deposits',
-                  ),
-                  selectedItemBuilder: (BuildContext context) {
-                    return [
-                      const Text('No default account'),
-                      ...accounts.map((account) {
-                        return Row(
-                          children: [
-                            Icon(
-                              Icons.account_balance_wallet,
-                              color: Color(account.type.color),
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                account.displayName,
-                                style: const TextStyle(fontWeight: FontWeight.w500),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        );
-                      }),
-                    ];
-                  },
+                ModernDropdownSelector<String?>(
+                  label: 'Default Account (Optional)',
+                  placeholder: 'No default account',
+                  selectedValue: _selectedDefaultAccountId,
                   items: [
-                    const DropdownMenuItem<String>(
+                    ModernDropdownItem(
                       value: null,
-                      child: Text('No default account'),
+                      label: 'No default account',
                     ),
                     ...accounts.map((account) {
-                      return DropdownMenuItem<String>(
+                      return ModernDropdownItem(
                         value: account.id,
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.account_balance_wallet,
-                              color: Color(account.type.color),
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    account.displayName,
-                                    style: const TextStyle(fontWeight: FontWeight.w500),
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
-                                  ),
-                                  Text(
-                                    account.formattedAvailableBalance,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+                        label: '${account.displayName} (${account.formattedAvailableBalance})',
+                        icon: Icons.account_balance_wallet,
+                        color: Color(account.type.color),
                       );
                     }),
                   ],
@@ -999,7 +812,7 @@ class _RecurringIncomeCreationScreenState extends ConsumerState<RecurringIncomeC
         // Get the error message from the state
         final incomeState = ref.read(recurringIncomeNotifierProvider);
         final errorMessage = incomeState.maybeWhen(
-          error: (message, incomes, summary) => message ?? 'Failed to add recurring income',
+          error: (message, incomes, summary) => message,
           orElse: () => 'Failed to add recurring income',
         );
 

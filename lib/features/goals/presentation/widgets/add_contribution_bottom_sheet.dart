@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 
+import '../../../../core/design_system/modern/modern.dart';
 import '../../domain/entities/goal_contribution.dart';
 
 /// Bottom sheet for adding contributions to a goal
@@ -35,192 +34,83 @@ class _AddContributionBottomSheetState extends State<AddContributionBottomSheet>
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.add_circle,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Add Contribution',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-              ],
+    return ModernBottomSheet(
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: spacing_md),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.add_circle,
+                    color: ModernColors.accentGreen,
+                  ),
+                  const SizedBox(width: spacing_sm),
+                  Text(
+                    'Add Contribution',
+                    style: ModernTypography.titleLarge.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          // Form fields
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Amount field
-                Text(
-                  'Amount',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _amountController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-                  ],
-                  decoration: InputDecoration(
-                    hintText: '0.00',
-                    prefixText: '\$',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter an amount';
-                    }
-                    final amount = double.tryParse(value);
-                    if (amount == null || amount <= 0) {
-                      return 'Please enter a valid positive amount';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                // Date field
-                Text(
-                  'Date',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                ),
-                const SizedBox(height: 8),
-                InkWell(
-                  onTap: _selectDate,
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_today,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          DateFormat('EEEE, MMMM dd, yyyy').format(_selectedDate),
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                        const Spacer(),
-                        Icon(
-                          Icons.arrow_drop_down,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Note field (optional)
-                Text(
-                  'Note (Optional)',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _noteController,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    hintText: 'Add a note about this contribution...',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ],
+            // Amount Display (prominent)
+            ModernAmountDisplay(
+              amount: double.tryParse(_amountController.text) ?? 0.0,
+              isEditable: true,
+              onAmountChanged: (amount) {
+                _amountController.text = amount.toStringAsFixed(2);
+              },
+              onTap: () {
+                // Could show keyboard here
+              },
             ),
-          ),
+            const SizedBox(height: spacing_lg),
 
-          // Buttons
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _isLoading ? null : () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      side: BorderSide(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
-                    ),
-                    child: const Text('Cancel'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: FilledButton(
-                    onPressed: _isLoading ? null : _submitContribution,
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : const Text('Add Contribution'),
-                  ),
-                ),
-              ],
+            // Date picker
+            ModernDateTimePicker(
+              selectedDate: _selectedDate,
+              onDateChanged: (date) {
+                if (date != null) {
+                  setState(() {
+                    _selectedDate = date;
+                  });
+                }
+              },
+              showTime: false,
             ),
-          ),
-        ],
+            const SizedBox(height: spacing_md),
+
+            // Note field (optional)
+            ModernTextField(
+              controller: _noteController,
+              label: 'Note (Optional)',
+              placeholder: 'Add a note about this contribution...',
+              maxLength: 200,
+            ),
+
+            const SizedBox(height: spacing_xl),
+
+            // Action Button
+            ModernActionButton(
+              text: 'Add Contribution',
+              onPressed: _isLoading ? null : _submitContribution,
+              isLoading: _isLoading,
+            ),
+            const SizedBox(height: spacing_lg),
+          ],
+        ),
       ),
     );
   }
 
-  Future<void> _selectDate() async {
-    final pickedDate = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now(),
-    );
-
-    if (pickedDate != null) {
-      setState(() {
-        _selectedDate = pickedDate;
-      });
-    }
-  }
 
   Future<void> _submitContribution() async {
     if (!_formKey.currentState!.validate()) return;

@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/design_system/modern/modern.dart';
 import '../../../transactions/domain/entities/transaction.dart';
 import '../../domain/entities/account.dart';
-import '../widgets/account_selector.dart';
+import '../widgets/modern_account_selector.dart';
 import '../widgets/transfer_confirmation_dialog.dart';
 import '../../presentation/providers/account_providers.dart';
 import '../../../transactions/presentation/providers/transaction_providers.dart';
@@ -204,17 +205,17 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
             padding: const EdgeInsets.all(16),
             children: [
               // Source Account Selector
-              AccountSelector(
+              ModernAccountSelector(
                 label: 'From Account',
                 selectedAccount: _sourceAccount,
                 onAccountSelected: _onSourceAccountSelected,
                 excludeAccountId: _destinationAccount?.id,
                 showBalance: true,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: spacing_lg),
 
               // Destination Account Selector
-              AccountSelector(
+              ModernAccountSelector(
                 label: 'To Account',
                 selectedAccount: _destinationAccount,
                 onAccountSelected: _onDestinationAccountSelected,
@@ -223,26 +224,53 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
               ),
               const SizedBox(height: 24),
 
-              // Amount Input
-              _buildAmountInput(),
-              const SizedBox(height: 16),
+              // Amount Display
+              ModernAmountDisplay(
+                amount: _amount,
+                isEditable: true,
+                onAmountChanged: (value) {
+                  setState(() {
+                    _amount = value;
+                  });
+                },
+                onTap: () {
+                  // TODO: Show numeric keyboard
+                },
+              ),
+              const SizedBox(height: spacing_lg),
 
               // Transfer Fee Input (Optional)
-              _buildFeeInput(),
-              const SizedBox(height: 16),
+              ModernTextField(
+                label: 'Transfer Fee (Optional)',
+                placeholder: 'Enter fee amount',
+                prefixIcon: Icons.attach_money,
+                keyboardType: TextInputType.number,
+                onChanged: _onFeeChanged,
+              ),
+              const SizedBox(height: spacing_lg),
 
               // Description Input
-              _buildDescriptionInput(),
+              ModernTextField(
+                label: 'Description (Optional)',
+                placeholder: 'Add a note for this transfer',
+                maxLength: 200,
+                onChanged: (value) {
+                  // Description is optional, no validation needed
+                },
+              ),
               const SizedBox(height: 32),
 
               // Transfer Summary
               if (_sourceAccount != null && _destinationAccount != null && _amount > 0)
                 _buildTransferSummary(),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: spacing_xl),
 
-              // Action Buttons
-              _buildActionButtons(),
+              // Slide to Transfer
+              ModernSlideToConfirm(
+                text: 'Slide to Transfer',
+                onConfirmed: _isLoading ? null : _processTransfer,
+              ),
             ],
           ),
         ),
@@ -253,28 +281,29 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
     final totalDebit = _amount + _fee;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(spacing_lg),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Theme.of(context).dividerColor),
+        color: ModernColors.primaryGray,
+        borderRadius: BorderRadius.circular(radius_md),
+        border: Border.all(color: ModernColors.borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Transfer Summary',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            style: ModernTypography.titleLarge.copyWith(
+              fontSize: 20,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: spacing_md),
           _buildSummaryRow('From', _sourceAccount!.displayName),
           _buildSummaryRow('To', _destinationAccount!.displayName),
           _buildSummaryRow('Amount', '\$${_amount.toStringAsFixed(2)}'),
           if (_fee > 0)
             _buildSummaryRow('Fee', '\$${_fee.toStringAsFixed(2)}'),
-          const Divider(height: 16),
+          const Divider(height: spacing_lg),
           _buildSummaryRow(
             'Total Debit',
             '\$${totalDebit.toStringAsFixed(2)}',
@@ -287,24 +316,24 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
 
   Widget _buildSummaryRow(String label, String value, {bool isTotal = false}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: spacing_xs),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
             style: isTotal
-                ? Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)
-                : Theme.of(context).textTheme.bodyMedium,
+                ? ModernTypography.bodyLarge.copyWith(fontWeight: FontWeight.w600)
+                : ModernTypography.bodyLarge,
           ),
           Text(
             value,
             style: isTotal
-                ? Theme.of(context).textTheme.bodyMedium?.copyWith(
+                ? ModernTypography.bodyLarge.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: Theme.of(context).primaryColor,
+                    color: ModernColors.accentGreen,
                   )
-                : Theme.of(context).textTheme.bodyMedium,
+                : ModernTypography.bodyLarge,
           ),
         ],
       ),
@@ -312,77 +341,4 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
   }
 
 
-  Widget _buildAmountInput() {
-    return TextFormField(
-      controller: _amountController,
-      decoration: const InputDecoration(
-        labelText: 'Transfer Amount',
-        hintText: 'Enter amount to transfer',
-        prefixText: '\$',
-        border: OutlineInputBorder(),
-      ),
-      keyboardType: TextInputType.number,
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Please enter transfer amount';
-        }
-        final amount = double.tryParse(value);
-        if (amount == null || amount <= 0) {
-          return 'Please enter a valid amount';
-        }
-        return null;
-      },
-      onChanged: _onAmountChanged,
-    );
-  }
-
-  Widget _buildFeeInput() {
-    return TextFormField(
-      controller: _feeController,
-      decoration: const InputDecoration(
-        labelText: 'Transfer Fee (Optional)',
-        hintText: 'Enter fee amount',
-        prefixText: '\$',
-        border: OutlineInputBorder(),
-      ),
-      keyboardType: TextInputType.number,
-      onChanged: _onFeeChanged,
-    );
-  }
-
-  Widget _buildDescriptionInput() {
-    return TextFormField(
-      controller: _descriptionController,
-      decoration: const InputDecoration(
-        labelText: 'Description (Optional)',
-        hintText: 'Add a note for this transfer',
-        border: OutlineInputBorder(),
-      ),
-      maxLines: 2,
-    );
-  }
-
-  Widget _buildActionButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: OutlinedButton(
-            onPressed: () => context.pop(),
-            child: const Text('Cancel'),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: _sourceAccount != null &&
-                _destinationAccount != null &&
-                _amount > 0
-                ? _processTransfer
-                : null,
-            child: const Text('Transfer'),
-          ),
-        ),
-      ],
-    );
-  }
 }

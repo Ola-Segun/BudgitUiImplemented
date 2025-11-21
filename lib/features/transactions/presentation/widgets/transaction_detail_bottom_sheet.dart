@@ -4,14 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+import '../../../../core/design_system/modern/modern.dart';
 import '../../../../core/design_system/design_tokens.dart';
-import '../../../../core/design_system/color_tokens.dart';
-import '../../../../core/design_system/typography_tokens.dart';
 import '../../../../core/design_system/form_tokens.dart';
-import '../../../../core/design_system/components/enhanced_text_field.dart';
-import '../../../../core/design_system/components/category_button_selector.dart';
 import '../../../../core/design_system/haptic_feedback_utils.dart';
-import '../../../../core/design_system/components/optional_fields_toggle.dart';
 import '../../domain/entities/transaction.dart';
 import '../providers/transaction_providers.dart';
 
@@ -41,18 +37,24 @@ class _TransactionDetailBottomSheetState extends ConsumerState<TransactionDetail
 
   @override
   Widget build(BuildContext context) {
-    // Return content based on editing state
-    if (_isEditing) {
-      return _buildEditContent();
-    } else {
-      return _buildDetailContent();
-    }
+    final screenHeight = MediaQuery.of(context).size.height;
+    final content = _isEditing ? _buildEditContent() : _buildDetailContent();
+
+    return SizedBox(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical:24),
+          child: content,
+        ),
+      ),
+    );
   }
 
   Widget _buildDetailContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const SizedBox(height: 24),
         // Amount Card
         Card(
           child: Padding(
@@ -107,17 +109,31 @@ class _TransactionDetailBottomSheetState extends ConsumerState<TransactionDetail
           _buildDetailRow('Tags', widget.transaction.tags.join(', ')),
         ],
 
-        // Edit button
+        // Edit and Delete buttons
         const SizedBox(height: 24),
-        Center(
-          child: ElevatedButton.icon(
-            onPressed: () => setState(() => _isEditing = true),
-            icon: const Icon(Icons.edit),
-            label: const Text('Edit Transaction'),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton.icon(
+              onPressed: () => setState(() => _isEditing = true),
+              icon: const Icon(Icons.edit),
+              label: const Text('Edit'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
             ),
-          ),
+            const SizedBox(width: 16),
+            ElevatedButton.icon(
+              onPressed: () => _confirmDeleteTransaction(context),
+              icon: const Icon(Icons.delete),
+              label: const Text('Delete'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -166,35 +182,6 @@ class _TransactionDetailBottomSheetState extends ConsumerState<TransactionDetail
           onCancel: () => setState(() => _isEditing = false),
         ),
 
-        const SizedBox(height: 24),
-
-        // Delete Button
-        Center(
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: ColorTokens.gradientPrimary,
-              borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-            ),
-            child: ElevatedButton(
-              onPressed: () => _confirmDeleteTransaction(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                minimumSize: const Size(200, 48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-                ),
-              ),
-              child: Text(
-                'Delete Transaction',
-                style: TypographyTokens.labelMd.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -304,7 +291,6 @@ class _EditTransactionFormState extends State<EditTransactionForm> {
   late TransactionType _selectedType;
   late DateTime _selectedDate;
   late String _selectedCategoryId;
-  bool _showOptionalFields = false;
 
   @override
   void initState() {
@@ -333,37 +319,29 @@ class _EditTransactionFormState extends State<EditTransactionForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Optional Fields Toggle
-          OptionalFieldsToggle(
-            onChanged: (show) {
+          // Transaction Type Selector
+          ModernToggleButton(
+            options: const ['Expense', 'Income'],
+            selectedIndex: _selectedType == TransactionType.expense ? 0 : 1,
+            onChanged: (index) {
               setState(() {
-                _showOptionalFields = show;
+                _selectedType = index == 0 ? TransactionType.expense : TransactionType.income;
+                _selectedCategoryId = ''; // Reset category when type changes
               });
             },
-            label: 'Show optional fields',
           ).animate()
             .fadeIn(duration: DesignTokens.durationNormal)
             .slideY(begin: 0.1, duration: DesignTokens.durationNormal),
 
-          SizedBox(height: FormTokens.sectionGap),
-
-          // Transaction Type Selector with enhanced design
-          _buildTypeSelector().animate()
-            .fadeIn(duration: DesignTokens.durationNormal, delay: 100.ms)
-            .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 100.ms),
+          SizedBox(height: spacing_lg),
 
           SizedBox(height: FormTokens.sectionGap),
 
           // Amount Field
-          EnhancedTextField(
+          ModernTextField(
             controller: _amountController,
-            label: 'Amount',
-            hint: '0.00',
-            prefix: Icon(
-              Icons.attach_money,
-              color: FormTokens.iconColor,
-              size: DesignTokens.iconMd,
-            ),
+            placeholder: 'Amount',
+            prefixIcon: Icons.attach_money,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
@@ -380,20 +358,16 @@ class _EditTransactionFormState extends State<EditTransactionForm> {
             },
           ).animate()
             .fadeIn(duration: DesignTokens.durationNormal, delay: 100.ms)
-            .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 100.ms),
+            .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 100.ms),
 
           SizedBox(height: FormTokens.fieldGapMd),
 
           // Title Field
-          EnhancedTextField(
+          ModernTextField(
             controller: _titleController,
-            label: 'Title',
-            hint: 'Transaction title',
-            prefix: Icon(
-              Icons.title,
-              color: FormTokens.iconColor,
-              size: DesignTokens.iconMd,
-            ),
+            placeholder: 'Title',
+            prefixIcon: Icons.title,
+            maxLength: 100,
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
                 return 'Please enter a title';
@@ -402,285 +376,131 @@ class _EditTransactionFormState extends State<EditTransactionForm> {
             },
           ).animate()
             .fadeIn(duration: DesignTokens.durationNormal, delay: 200.ms)
-            .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 200.ms),
+            .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 200.ms),
 
           SizedBox(height: FormTokens.fieldGapMd),
 
           // Category Selection
-          CategoryButtonSelector(
-            categories: widget.categories,
-            selectedCategoryId: _selectedCategoryId,
-            onCategorySelected: (value) {
-              if (value != null) {
-                HapticFeedbackUtils.light();
-                setState(() {
-                  _selectedCategoryId = value;
-                });
-              }
-            },
-            categoryIconColorService: widget.categoryIconColorService,
-            validator: (value) {
-              if (value == null) {
-                return 'Please select a category';
-              }
-              return null;
+          Builder(
+            builder: (context) {
+              final categories = widget.categories.where((cat) =>
+                cat.type == _selectedType || cat.type == TransactionType.transfer
+              ).toList();
+              final categoryItems = categories.map((cat) => CategoryItem(
+                id: cat.id,
+                name: cat.name,
+                icon: widget.categoryIconColorService.getIconForCategory(cat.id),
+                color: widget.categoryIconColorService.getColorForCategory(cat.id).value,
+              )).toList();
+
+              return ModernCategorySelector(
+                categories: categoryItems,
+                selectedId: _selectedCategoryId.isNotEmpty ? _selectedCategoryId : null,
+                onChanged: (value) {
+                  if (value != null) {
+                    HapticFeedbackUtils.light();
+                    setState(() {
+                      _selectedCategoryId = value;
+                    });
+                  }
+                },
+              );
             },
           ).animate()
             .fadeIn(duration: DesignTokens.durationNormal, delay: 300.ms)
-            .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 300.ms),
+            .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 300.ms),
 
           SizedBox(height: FormTokens.fieldGapMd),
 
           // Date Picker
-          _buildDatePicker().animate()
+          ModernDateTimePicker(
+            selectedDate: _selectedDate,
+            selectedTime: TimeOfDay.fromDateTime(_selectedDate),
+            onDateChanged: (date) {
+              if (date != null) {
+                setState(() {
+                  _selectedDate = date;
+                });
+              }
+            },
+            onTimeChanged: (time) {
+              if (time != null) {
+                setState(() {
+                  _selectedDate = DateTime(
+                    _selectedDate.year,
+                    _selectedDate.month,
+                    _selectedDate.day,
+                    time.hour,
+                    time.minute,
+                  );
+                });
+              }
+            },
+          ).animate()
             .fadeIn(duration: DesignTokens.durationNormal, delay: 400.ms)
-            .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 400.ms),
+            .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 400.ms),
 
           SizedBox(height: FormTokens.fieldGapMd),
 
           // Description Field
-          if (_showOptionalFields) ...[
-            EnhancedTextField(
-              controller: _descriptionController,
-              label: 'Description (optional)',
-              hint: 'Additional details...',
-              maxLength: 200,
-              maxLines: 3,
-            ).animate()
-              .fadeIn(duration: DesignTokens.durationNormal, delay: 600.ms)
-              .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 600.ms),
+          ModernTextField(
+            controller: _descriptionController,
+            placeholder: 'Description (optional)',
+            prefixIcon: Icons.description_outlined,
+            maxLength: 200,
+          ).animate()
+            .fadeIn(duration: DesignTokens.durationNormal, delay: 450.ms)
+            .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 450.ms),
 
-            SizedBox(height: FormTokens.sectionGap),
-          ],
+          SizedBox(height: spacing_lg),
 
           // Action Buttons
           Row(
             children: [
+              // Cancel Button
               Expanded(
+                flex: 3,
                 child: OutlinedButton(
                   onPressed: () {
                     HapticFeedbackUtils.light();
                     widget.onCancel();
                   },
                   style: OutlinedButton.styleFrom(
-                    minimumSize: Size(0, FormTokens.fieldHeightMd),
-                    side: BorderSide(
-                      color: ColorTokens.borderPrimary,
+                    minimumSize: const Size(double.infinity, 48),
+                    side: const BorderSide(
+                      color: ModernColors.borderColor,
                       width: 1.5,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
+                      borderRadius: BorderRadius.circular(radius_md),
                     ),
                   ),
-                  child: Text('Cancel', style: TypographyTokens.labelMd),
+                  child: Text('Cancel', style: ModernTypography.labelMedium),
                 ),
               ),
-              SizedBox(width: DesignTokens.spacing3),
+              SizedBox(width: spacing_md),
+              // Save Button
               Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: ColorTokens.gradientPrimary,
-                    borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-                  ),
-                  child: ElevatedButton(
-                    onPressed: _saveTransaction,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      minimumSize: Size(0, FormTokens.fieldHeightMd),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-                      ),
-                    ),
-                    child: Text(
-                      'Save Changes',
-                      style: TypographyTokens.labelMd.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
+                flex: 7,
+                child: ModernSlideToConfirm(
+                  text: 'Slide to Save',
+                  onSlideComplete: _saveTransaction,
                 ),
               ),
             ],
           ).animate()
-            .fadeIn(duration: DesignTokens.durationNormal, delay: _showOptionalFields ? 700.ms : 600.ms)
-            .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: _showOptionalFields ? 700.ms : 600.ms),
+            .fadeIn(duration: DesignTokens.durationNormal, delay: 600.ms)
+            .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 600.ms),
         ],
       ),
     );
   }
 
-  Widget _buildTypeSelector() {
-    return Container(
-      decoration: BoxDecoration(
-        color: ColorTokens.surfaceSecondary,
-        borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-        border: Border.all(
-          color: ColorTokens.borderSecondary,
-          width: 1.5,
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildTypeButton(
-              type: TransactionType.expense,
-              icon: Icons.remove_circle_outline,
-              label: 'Expense',
-              color: ColorTokens.critical500,
-            ),
-          ),
-          Container(
-            width: 1.5,
-            height: 48,
-            color: ColorTokens.borderSecondary,
-          ),
-          Expanded(
-            child: _buildTypeButton(
-              type: TransactionType.income,
-              icon: Icons.add_circle_outline,
-              label: 'Income',
-              color: ColorTokens.success500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildTypeButton({
-    required TransactionType type,
-    required IconData icon,
-    required String label,
-    required Color color,
-  }) {
-    final isSelected = _selectedType == type;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          HapticFeedbackUtils.light();
-          setState(() {
-            _selectedType = type;
-            _selectedCategoryId = ''; // Reset category when type changes
-          });
-        },
-        borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-        child: AnimatedContainer(
-          duration: DesignTokens.durationSm,
-          curve: DesignTokens.curveEaseOut,
-          padding: EdgeInsets.symmetric(
-            vertical: DesignTokens.spacing3,
-          ),
-          decoration: BoxDecoration(
-            color: isSelected ? color.withValues(alpha: 0.1) : Colors.transparent,
-            borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: DesignTokens.iconMd,
-                color: isSelected ? color : ColorTokens.textSecondary,
-              ),
-              SizedBox(width: DesignTokens.spacing2),
-              Text(
-                label,
-                style: TypographyTokens.labelMd.copyWith(
-                  color: isSelected ? color : ColorTokens.textSecondary,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ).animate(target: isSelected ? 1 : 0)
-      .scaleXY(
-        begin: 1.0,
-        end: 1.02,
-        duration: DesignTokens.durationSm,
-      );
-  }
-
-  Widget _buildDatePicker() {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () async {
-          HapticFeedbackUtils.light();
-          final date = await showDatePicker(
-            context: context,
-            initialDate: _selectedDate,
-            firstDate: DateTime(2000),
-            lastDate: DateTime.now().add(const Duration(days: 365)),
-          );
-          if (date != null && mounted) {
-            setState(() {
-              _selectedDate = date;
-            });
-          }
-        },
-        borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: FormTokens.fieldPaddingH,
-            vertical: FormTokens.fieldPaddingV,
-          ),
-          decoration: BoxDecoration(
-            color: FormTokens.fieldBackground,
-            borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-            border: Border.all(
-              color: FormTokens.fieldBorder,
-              width: 1.5,
-            ),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.calendar_today,
-                size: DesignTokens.iconMd,
-                color: FormTokens.iconColor,
-              ),
-              SizedBox(width: DesignTokens.spacing3),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Date',
-                      style: TypographyTokens.captionMd.copyWith(
-                        color: FormTokens.labelColor,
-                      ),
-                    ),
-                    SizedBox(height: DesignTokens.spacing05),
-                    Text(
-                      DateFormat('EEEE, MMMM dd, yyyy').format(_selectedDate),
-                      style: TypographyTokens.labelMd,
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.chevron_right,
-                size: DesignTokens.iconMd,
-                color: FormTokens.iconColor,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _saveTransaction() {
+  Future<bool> _saveTransaction() async {
     if (!_formKey.currentState!.validate()) {
       HapticFeedbackUtils.error();
-      return;
+      return false;
     }
 
     HapticFeedbackUtils.success();
@@ -699,5 +519,6 @@ class _EditTransactionFormState extends State<EditTransactionForm> {
     );
 
     widget.onSave(updatedTransaction);
+    return true;
   }
 }

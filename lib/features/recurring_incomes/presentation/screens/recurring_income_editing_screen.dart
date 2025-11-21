@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
+import '../../../../core/design_system/modern/modern.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../accounts/presentation/providers/account_providers.dart';
 import '../../../dashboard/presentation/providers/dashboard_providers.dart';
@@ -247,81 +247,20 @@ class _RecurringIncomeEditingScreenState extends ConsumerState<RecurringIncomeEd
               padding: AppTheme.screenPaddingAll,
               children: [
                 // Income Name with validation
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextFormField(
-                      controller: _nameController,
-                      decoration: InputDecoration(
-                        labelText: 'Income Name',
-                        hintText: 'e.g., Salary, Freelance Work',
-                        errorStyle: const TextStyle(height: 0.8),
-                        errorBorder: (_nameValidationError != null)
-                            ? OutlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.error,
-                                  width: 2,
-                                ),
-                                borderRadius: BorderRadius.circular(8),
-                              )
-                            : null,
-                        focusedErrorBorder: (_nameValidationError != null)
-                            ? OutlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.error,
-                                  width: 2,
-                                ),
-                                borderRadius: BorderRadius.circular(8),
-                              )
-                            : null,
-                        suffixIcon: _isValidatingName
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: Padding(
-                                  padding: EdgeInsets.all(12),
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                ),
-                              )
-                            : null,
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Please enter an income name';
-                        }
-                        if (value.trim().length < 2) {
-                          return 'Income name must be at least 2 characters';
-                        }
-                        return null;
-                      },
-                      autofocus: false,
-                    ),
-                    // Show instant validation feedback
-                    if (_nameValidationError != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4, left: 12),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.error_outline,
-                              color: Theme.of(context).colorScheme.error,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                _nameValidationError!,
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.error,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
+                ModernTextField(
+                  controller: _nameController,
+                  label: 'Income Name',
+                  placeholder: 'e.g., Salary, Freelance Work',
+                  errorText: _nameValidationError,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter an income name';
+                    }
+                    if (value.trim().length < 2) {
+                      return 'Income name must be at least 2 characters';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 16),
 
@@ -364,30 +303,22 @@ class _RecurringIncomeEditingScreenState extends ConsumerState<RecurringIncomeEd
                           );
                         }
 
-                        return DropdownButtonFormField<String>(
-                          initialValue: _selectedCategoryId,
-                          decoration: const InputDecoration(
-                            labelText: 'Category',
-                          ),
+                        return ModernDropdownSelector<String>(
+                          label: 'Category',
+                          selectedValue: _selectedCategoryId,
                           items: incomeCategories.map((category) {
                             final iconAndColor = categoryIconColorService.getIconAndColorForCategory(category.id);
-                            return DropdownMenuItem(
+                            return ModernDropdownItem<String>(
                               value: category.id,
-                              child: Row(
-                                children: [
-                                  Icon(iconAndColor.icon, size: 20, color: iconAndColor.color),
-                                  const SizedBox(width: 8),
-                                  Text(category.name),
-                                ],
-                              ),
+                              label: category.name,
+                              icon: iconAndColor.icon,
+                              color: iconAndColor.color,
                             );
                           }).toList(),
                           onChanged: (value) {
-                            if (value != null) {
-                              setState(() {
-                                _selectedCategoryId = value;
-                              });
-                            }
+                            setState(() {
+                              _selectedCategoryId = value!;
+                            });
                           },
                         );
                       },
@@ -430,147 +361,100 @@ class _RecurringIncomeEditingScreenState extends ConsumerState<RecurringIncomeEd
                 const SizedBox(height: 16),
 
                 // Frequency Selection
-                DropdownButtonFormField<RecurringIncomeFrequency>(
-                  initialValue: _selectedFrequency,
-                  decoration: const InputDecoration(
-                    labelText: 'Frequency',
-                  ),
+                ModernDropdownSelector<RecurringIncomeFrequency>(
+                  label: 'Frequency',
+                  selectedValue: _selectedFrequency,
                   items: RecurringIncomeFrequency.values.map((frequency) {
-                    return DropdownMenuItem(
+                    return ModernDropdownItem<RecurringIncomeFrequency>(
                       value: frequency,
-                      child: Text(frequency.displayName),
+                      label: frequency.displayName,
+                      icon: _getFrequencyIcon(frequency),
                     );
                   }).toList(),
                   onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        _selectedFrequency = value;
-                      });
-                    }
+                    setState(() {
+                      _selectedFrequency = value!;
+                    });
                   },
                 ),
                 const SizedBox(height: 16),
 
                 // Start Date
-                InkWell(
-                  onTap: () async {
-                    if (!mounted) return;
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: _selectedStartDate,
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
-                    );
-                    if (date != null && mounted) {
+                ModernDateTimePicker(
+                  selectedDate: _selectedStartDate,
+                  onDateChanged: (date) {
+                    if (date != null) {
                       setState(() {
                         _selectedStartDate = date;
                       });
                     }
                   },
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'Start Date',
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(DateFormat('MMM dd, yyyy').format(_selectedStartDate)),
-                        const Icon(Icons.calendar_today),
-                      ],
-                    ),
-                  ),
+                  showDate: true,
+                  showTime: false,
                 ),
                 const SizedBox(height: 16),
 
                 // End Date (Optional)
-                InkWell(
-                  onTap: () async {
-                    if (!mounted) return;
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: _selectedEndDate ?? _selectedStartDate.add(const Duration(days: 365)),
-                      firstDate: _selectedStartDate,
-                      lastDate: DateTime.now().add(const Duration(days: 365 * 10)),
-                    );
-                    if (date != null && mounted) {
-                      setState(() {
-                        _selectedEndDate = date;
-                      });
-                    }
-                  },
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'End Date (Optional)',
-                      helperText: 'Leave empty for indefinite income',
+                Row(
+                  children: [
+                    Expanded(
+                      child: ModernDateTimePicker(
+                        selectedDate: _selectedEndDate,
+                        onDateChanged: (date) {
+                          setState(() {
+                            _selectedEndDate = date;
+                          });
+                        },
+                        showDate: true,
+                        showTime: false,
+                      ),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(_selectedEndDate != null
-                            ? DateFormat('MMM dd, yyyy').format(_selectedEndDate!)
-                            : 'No end date'),
-                        Row(
-                          children: [
-                            if (_selectedEndDate != null)
-                              IconButton(
-                                icon: const Icon(Icons.clear),
-                                onPressed: () {
-                                  setState(() {
-                                    _selectedEndDate = null;
-                                  });
-                                },
-                              ),
-                            const Icon(Icons.calendar_today),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
+                    if (_selectedEndDate != null)
+                      IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          setState(() {
+                            _selectedEndDate = null;
+                          });
+                        },
+                        tooltip: 'Clear end date',
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 16),
 
                 // Payer
-                TextFormField(
+                ModernTextField(
                   controller: _payerController,
-                  decoration: const InputDecoration(
-                    labelText: 'Payer (optional)',
-                    hintText: 'e.g., Employer Name, Client',
-                  ),
+                  label: 'Payer (optional)',
+                  placeholder: 'e.g., Employer Name, Client',
                 ),
                 const SizedBox(height: 16),
 
                 // Description
-                TextFormField(
+                ModernTextField(
                   controller: _descriptionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Description (optional)',
-                    hintText: 'Additional details about this income',
-                  ),
+                  label: 'Description (optional)',
+                  placeholder: 'Additional details about this income',
                   maxLength: 200,
-                  maxLines: 2,
                 ),
                 const SizedBox(height: 16),
 
                 // Website
-                TextFormField(
+                ModernTextField(
                   controller: _websiteController,
-                  decoration: const InputDecoration(
-                    labelText: 'Website (optional)',
-                    hintText: 'https://example.com',
-                  ),
+                  label: 'Website (optional)',
+                  placeholder: 'https://example.com',
                   keyboardType: TextInputType.url,
                 ),
                 const SizedBox(height: 16),
 
                 // Notes
-                TextFormField(
+                ModernTextField(
                   controller: _notesController,
-                  decoration: const InputDecoration(
-                    labelText: 'Notes (optional)',
-                    hintText: 'Any additional notes',
-                  ),
+                  label: 'Notes (optional)',
+                  placeholder: 'Any additional notes',
                   maxLength: 500,
-                  maxLines: 3,
                 ),
 
                 const SizedBox(height: 32),
@@ -579,24 +463,21 @@ class _RecurringIncomeEditingScreenState extends ConsumerState<RecurringIncomeEd
                 Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton(
+                      child: ModernActionButton(
+                        text: 'Cancel',
+                        isPrimary: false,
                         onPressed: _isSubmitting ? null : () {
                           if (mounted) Navigator.pop(context);
                         },
-                        child: const Text('Cancel'),
                       ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
-                      child: ElevatedButton(
+                      child: ModernActionButton(
+                        text: 'Update Income',
+                        isPrimary: true,
+                        isLoading: _isSubmitting,
                         onPressed: _isSubmitting ? null : _submitIncome,
-                        child: _isSubmitting
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Text('Update Income'),
                       ),
                     ),
                   ],
@@ -635,14 +516,11 @@ class _RecurringIncomeEditingScreenState extends ConsumerState<RecurringIncomeEd
           Row(
             children: [
               Expanded(
-                child: TextFormField(
+                child: ModernTextField(
                   controller: _minAmountController,
-                  decoration: const InputDecoration(
-                    labelText: 'Min Amount',
-                    prefixText: '\$',
-                    hintText: '0.00',
-                  ),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  label: 'Min Amount',
+                  placeholder: '0.00',
+                  keyboardType: TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
                   ],
@@ -662,14 +540,11 @@ class _RecurringIncomeEditingScreenState extends ConsumerState<RecurringIncomeEd
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: TextFormField(
+                child: ModernTextField(
                   controller: _maxAmountController,
-                  decoration: const InputDecoration(
-                    labelText: 'Max Amount',
-                    prefixText: '\$',
-                    hintText: '0.00',
-                  ),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  label: 'Max Amount',
+                  placeholder: '0.00',
+                  keyboardType: TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
                   ],
@@ -703,27 +578,13 @@ class _RecurringIncomeEditingScreenState extends ConsumerState<RecurringIncomeEd
         ],
 
         // Fixed Amount Field
-        TextFormField(
-          controller: _amountController,
-          decoration: InputDecoration(
-            labelText: _isVariableAmount ? 'Expected Amount' : 'Amount',
-            prefixText: '\$',
-            hintText: '0.00',
-          ),
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-          ],
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter an amount';
-            }
-            final amount = double.tryParse(value);
-            if (amount == null || amount <= 0) {
-              return 'Please enter a valid amount';
-            }
-            return null;
+        ModernAmountDisplay(
+          amount: double.tryParse(_amountController.text) ?? 0.0,
+          isEditable: true,
+          onAmountChanged: (amount) {
+            _amountController.text = amount.toStringAsFixed(2);
           },
+          currencySymbol: '\$',
         ),
       ],
     );
@@ -776,84 +637,26 @@ class _RecurringIncomeEditingScreenState extends ConsumerState<RecurringIncomeEd
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Default Account
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedDefaultAccountId,
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Default Account (Optional)',
-                    border: OutlineInputBorder(),
-                    helperText: 'Primary account for deposits',
-                  ),
-                  selectedItemBuilder: (BuildContext context) {
-                    return [
-                      const Text('No default account'),
-                      ...accounts.map((account) {
-                        return Row(
-                          children: [
-                            Icon(
-                              Icons.account_balance_wallet,
-                              color: Color(account.type.color),
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                account.displayName,
-                                style: const TextStyle(fontWeight: FontWeight.w500),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        );
-                      }),
-                    ];
-                  },
+                ModernDropdownSelector<String>(
+                  label: 'Default Account (Optional)',
+                  selectedValue: _selectedDefaultAccountId ?? '',
                   items: [
-                    const DropdownMenuItem<String>(
-                      value: null,
-                      child: Text('No default account'),
+                    ModernDropdownItem<String>(
+                      value: '',
+                      label: 'No default account',
+                      icon: Icons.account_balance_wallet,
                     ),
                     ...accounts.map((account) {
-                      return DropdownMenuItem<String>(
+                      return ModernDropdownItem<String>(
                         value: account.id,
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.account_balance_wallet,
-                              color: Color(account.type.color),
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    account.displayName,
-                                    style: const TextStyle(fontWeight: FontWeight.w500),
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
-                                  ),
-                                  Text(
-                                    account.formattedAvailableBalance,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+                        label: account.displayName,
+                        icon: Icons.account_balance_wallet,
+                        color: Color(account.type.color),
                       );
                     }),
                   ],
                   onChanged: (value) {
-                    setState(() => _selectedDefaultAccountId = value);
+                    setState(() => _selectedDefaultAccountId = value == '' ? null : value);
                   },
                 ),
 
@@ -1045,6 +848,25 @@ class _RecurringIncomeEditingScreenState extends ConsumerState<RecurringIncomeEd
       if (mounted) {
         setState(() => _isSubmitting = false);
       }
+    }
+  }
+
+  IconData _getFrequencyIcon(RecurringIncomeFrequency frequency) {
+    switch (frequency) {
+      case RecurringIncomeFrequency.daily:
+        return Icons.calendar_view_day;
+      case RecurringIncomeFrequency.weekly:
+        return Icons.calendar_view_week;
+      case RecurringIncomeFrequency.biWeekly:
+        return Icons.calendar_month;
+      case RecurringIncomeFrequency.monthly:
+        return Icons.calendar_month;
+      case RecurringIncomeFrequency.quarterly:
+        return Icons.event_repeat;
+      case RecurringIncomeFrequency.annually:
+        return Icons.event;
+      case RecurringIncomeFrequency.custom:
+        return Icons.tune;
     }
   }
 

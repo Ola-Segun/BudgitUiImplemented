@@ -1,6 +1,5 @@
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
-import '../../../bills/domain/repositories/bill_repository.dart';
 import '../../domain/entities/transaction.dart';
 import '../../domain/repositories/transaction_category_repository.dart';
 import '../../domain/repositories/transaction_repository.dart';

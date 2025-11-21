@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/goal_template.dart';
+import '../widgets/create_goal_bottom_sheet.dart';
 import '../widgets/goal_template_card.dart';
 
 /// Screen for selecting a goal template with visual template cards
@@ -450,18 +450,21 @@ class _GoalTemplateSelectionScreenState extends State<GoalTemplateSelectionScree
 
   void _navigateToGoalCreation(BuildContext context) {
     if (_selectedTemplate != null) {
-      // Navigate to goal creation with the selected template
-      debugPrint('GoalTemplateSelectionScreen: Navigating to /goals/add with template: ${_selectedTemplate!.name}');
-      context.push('/goals/add', extra: _selectedTemplate);
+      // Show goal creation bottom sheet with the selected template
+      debugPrint('GoalTemplateSelectionScreen: Showing bottom sheet with template: ${_selectedTemplate!.name}');
+      CreateGoalBottomSheet.show(
+        context,
+        selectedTemplate: _selectedTemplate,
+      );
     } else {
-      debugPrint('GoalTemplateSelectionScreen: No template selected, navigating without template');
-      context.go('/goals/add');
+      debugPrint('GoalTemplateSelectionScreen: No template selected, showing bottom sheet without template');
+      CreateGoalBottomSheet.show(context);
     }
   }
 
   void _onCustomSelected(BuildContext context) {
-    // Navigate to goal creation without a template
-    debugPrint('GoalTemplateSelectionScreen: Custom goal selected, navigating to /goals/add without template');
-    context.go('/goals/add');
+    // Show goal creation bottom sheet without a template
+    debugPrint('GoalTemplateSelectionScreen: Custom goal selected, showing bottom sheet without template');
+    CreateGoalBottomSheet.show(context);
   }
 }

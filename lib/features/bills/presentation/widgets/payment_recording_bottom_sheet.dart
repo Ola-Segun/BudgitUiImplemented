@@ -4,9 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/design_system/modern/modern.dart';
 import '../../../../core/error/failures.dart';
-import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/di/providers.dart' as core_providers;
 import '../../../accounts/domain/entities/account.dart';
 import '../../../accounts/presentation/providers/account_providers.dart';
@@ -35,13 +34,16 @@ class PaymentRecordingBottomSheet extends ConsumerStatefulWidget {
     required Bill bill,
     required VoidCallback onPaymentRecorded,
   }) {
-    return AppBottomSheet.show(
+    showModernBottomSheet(
       context: context,
-      child: PaymentRecordingBottomSheet(
-        bill: bill,
-        onPaymentRecorded: onPaymentRecorded,
+      builder: (context) => ModernBottomSheet(
+        child: PaymentRecordingBottomSheet(
+          bill: bill,
+          onPaymentRecorded: onPaymentRecorded,
+        ),
       ),
     );
+    return Future.value();
   }
 }
 
@@ -103,63 +105,70 @@ class _PaymentRecordingBottomSheetState
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Row(
+    return Form(
+      key: _formKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.only(bottom: spacing_lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  Icons.payment,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(width: 12),
                 Text(
                   'Record Payment',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                  style: ModernTypography.titleLarge,
+                ),
+                const SizedBox(height: spacing_xs),
+                Text(
+                  'Record a payment for ${widget.bill.name}',
+                  style: ModernTypography.bodyLarge.copyWith(
+                    color: ModernColors.textSecondary,
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Record a payment for ${widget.bill.name}',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-            ),
-            const SizedBox(height: 24),
+          ),
 
-            // Amount Field
-            TextFormField(
-              controller: _amountController,
-              decoration: const InputDecoration(
-                labelText: 'Payment Amount',
-                prefixText: '\$',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-              ],
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter an amount';
-                }
-                final amount = double.tryParse(value);
-                if (amount == null || amount <= 0) {
-                  return 'Please enter a valid amount';
-                }
-                return null;
-              },
+          // Amount Display
+          ModernAmountDisplay(
+            amount: double.tryParse(_amountController.text) ?? widget.bill.amount,
+            isEditable: true,
+            onTap: () {
+              // Focus on amount field when tapped
+            },
+            onAmountChanged: (value) {
+              _amountController.text = value.toStringAsFixed(2);
+            },
+          ),
+
+          // Hidden amount input for form validation
+          TextFormField(
+            controller: _amountController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+            ],
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter an amount';
+              }
+              final amount = double.tryParse(value);
+              if (amount == null || amount <= 0) {
+                return 'Please enter a valid amount';
+              }
+              return null;
+            },
+            style: const TextStyle(fontSize: 0),
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.zero,
             ),
+          ),
+
+          const SizedBox(height: spacing_lg),
             const SizedBox(height: 16),
 
             // Account Selection
@@ -379,28 +388,23 @@ class _PaymentRecordingBottomSheetState
             const SizedBox(height: 16),
 
             // Payment Date
-            InkWell(
-              onTap: _selectPaymentDate,
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-              child: InputDecorator(
-                decoration: const InputDecoration(
-                  labelText: 'Payment Date',
-                  border: OutlineInputBorder(),
-                  suffixIcon: Icon(Icons.calendar_today),
-                ),
-                child: Text(
-                  DateFormat('MMM dd, yyyy').format(_paymentDate),
-                ),
-              ),
+            ModernDateTimePicker(
+              selectedDate: _paymentDate,
+              onDateChanged: (date) {
+                if (date != null) {
+                  setState(() {
+                    _paymentDate = date;
+                  });
+                }
+              },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: spacing_lg),
 
-            // Payment Method
+            // Payment Method - Keep existing dropdown for now
             DropdownButtonFormField<PaymentMethod>(
               initialValue: _paymentMethod,
               decoration: const InputDecoration(
                 labelText: 'Payment Method',
-                border: OutlineInputBorder(),
               ),
               items: PaymentMethod.values.map((method) {
                 return DropdownMenuItem(
@@ -414,7 +418,7 @@ class _PaymentRecordingBottomSheetState
                 }
               },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: spacing_lg),
 
             // Attach Payment Confirmation
             Container(
@@ -502,45 +506,37 @@ class _PaymentRecordingBottomSheetState
             const SizedBox(height: 16),
 
             // Notes (Optional)
-            TextFormField(
+            ModernTextField(
               controller: _notesController,
-              decoration: const InputDecoration(
-                labelText: 'Notes (Optional)',
-                border: OutlineInputBorder(),
-                hintText: 'Add any notes about this payment',
-              ),
-              maxLines: 3,
+              label: 'Notes (Optional)',
+              placeholder: 'Add any notes about this payment',
+              maxLength: 500,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: spacing_xl),
 
             // Action Buttons
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton(
+                  child: ModernActionButton(
+                    text: 'Cancel',
                     onPressed: _isLoading ? null : () => Navigator.pop(context),
-                    child: const Text('Cancel'),
+                    isPrimary: false,
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: spacing_md),
                 Expanded(
-                  child: FilledButton(
+                  child: ModernActionButton(
+                    text: 'Record Payment',
                     onPressed: _isLoading ? null : _recordPayment,
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Record Payment'),
+                    isLoading: _isLoading,
                   ),
                 ),
               ],
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 
   Future<void> _selectPaymentDate() async {

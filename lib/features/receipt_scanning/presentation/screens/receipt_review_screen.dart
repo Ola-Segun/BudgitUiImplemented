@@ -281,41 +281,21 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
         return;
       }
 
-      if (_selectedCategory == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select a category')),
-        );
-        return;
-      }
-
       final date = DateFormat('yyyy-MM-dd').parse(_dateController.text);
 
-      final transaction = Transaction(
-        id: DateTime.now().millisecondsSinceEpoch.toString(), // Generate ID
-        title: _merchantController.text,
+      // Create updated receipt data
+      final updatedReceiptData = widget.receiptData.copyWith(
+        merchant: _merchantController.text,
         amount: amount,
         date: date,
-        type: TransactionType.expense,
-        categoryId: _selectedCategory!,
-        accountId: 'checking', // Default account
+        suggestedCategory: _selectedCategory,
       );
 
-      final success = await ref.read(transactionNotifierProvider.notifier).addTransaction(transaction);
-
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Transaction saved successfully')),
-        );
-        // Navigate back to dashboard
-        context.go('/');
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to save transaction')),
-        );
-      }
+      // Return the updated receipt data instead of saving directly
+      context.pop(updatedReceiptData);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving transaction: $e')),
+        SnackBar(content: Text('Error processing receipt data: $e')),
       );
     }
   }

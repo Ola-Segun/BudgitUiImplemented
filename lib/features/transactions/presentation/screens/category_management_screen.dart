@@ -8,11 +8,9 @@ import '../../../../core/di/providers.dart' as core_providers;
 import '../../../../core/design_system/design_tokens.dart';
 import '../../../../core/design_system/color_tokens.dart';
 import '../../../../core/design_system/typography_tokens.dart';
-import '../../../../core/design_system/form_tokens.dart';
-import '../../../../core/design_system/components/enhanced_bottom_sheet.dart';
-import '../../../../core/design_system/components/enhanced_text_field.dart';
 import '../../../../core/design_system/components/enhanced_dropdown_field.dart';
 import '../../../../core/design_system/components/optional_fields_toggle.dart';
+import '../../../../core/design_system/modern/modern.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -286,32 +284,16 @@ class _CategoryManagementScreenState extends ConsumerState<CategoryManagementScr
   }
 
   Future<void> _showAddCategoryDialog(BuildContext context) async {
-    await EnhancedBottomSheet.showForm(
+    await showModernBottomSheet(
       context: context,
-      title: 'Add Category',
-      subtitle: 'Create a new transaction category',
-      child: const EnhancedAddCategoryForm(),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-      ],
+      builder: (context) => const EnhancedAddCategoryForm(),
     );
   }
 
   Future<void> _showEditCategoryDialog(BuildContext context, TransactionCategory category) async {
-    await EnhancedBottomSheet.showForm(
+    await showModernBottomSheet(
       context: context,
-      title: 'Edit Category',
-      subtitle: 'Update category details',
-      child: EnhancedEditCategoryForm(category: category),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-      ],
+      builder: (context) => EnhancedEditCategoryForm(category: category),
     );
   }
 
@@ -411,6 +393,16 @@ class _EnhancedAddCategoryFormState extends ConsumerState<EnhancedAddCategoryFor
   int _selectedColor = 0xFF64748B; // Default gray
   bool _isSubmitting = false;
   bool _showOptionalFields = false;
+
+  // Convert available icons to CategoryItem format
+  List<CategoryItem> get _availableCategoryItems => _availableIcons.map((iconData) {
+    return CategoryItem(
+      id: iconData['name'] as String,
+      name: iconData['name'] as String,
+      icon: iconData['icon'] as IconData,
+      color: _selectedColor,
+    );
+  }).toList();
 
   final List<Map<String, dynamic>> _availableIcons = [
     // Food & Dining
@@ -545,126 +537,128 @@ class _EnhancedAddCategoryFormState extends ConsumerState<EnhancedAddCategoryFor
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Optional Fields Toggle
-          OptionalFieldsToggle(
-            onChanged: (show) {
-              setState(() {
-                _showOptionalFields = show;
-              });
-            },
-            label: 'Show optional fields',
-          ).animate()
-            .fadeIn(duration: DesignTokens.durationNormal)
-            .slideY(begin: 0.1, duration: DesignTokens.durationNormal),
-
-          SizedBox(height: FormTokens.sectionGap),
-
-          // Section: Basic Information
-          _buildSectionHeader(
-            'Basic Information',
-            'Essential details about your category',
-          ).animate()
-            .fadeIn(duration: DesignTokens.durationNormal, delay: 100.ms)
-            .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 100.ms),
-
-          SizedBox(height: FormTokens.groupGap),
-
-          // Name field with async validation
-          EnhancedTextField(
-            controller: _nameController,
-            label: 'Category Name',
-            hint: 'e.g., Food & Dining',
-            prefix: Icon(
-              Icons.category,
-              color: FormTokens.iconColor,
-              size: DesignTokens.iconMd,
+    return ModernBottomSheet(
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Title
+            Text(
+              'Add Category',
+              style: ModernTypography.titleLarge,
+              textAlign: TextAlign.center,
             ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Please enter a category name';
-              }
-              if (value.trim().length < 2) {
-                return 'Category name must be at least 2 characters';
-              }
-              return null;
-            },
-            asyncValidator: (value) => _validateCategoryName(value),
-            autofocus: true,
-            debounceMs: 500,
-          ).animate()
-            .fadeIn(duration: DesignTokens.durationNormal, delay: 100.ms)
-            .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 100.ms),
+            const SizedBox(height: spacing_lg),
 
-          SizedBox(height: FormTokens.fieldGapMd),
-
-          // Type selection
-          EnhancedDropdownField<TransactionType>(
-            label: 'Transaction Type',
-            hint: 'Select category type',
-            items: TransactionType.values.map((type) {
-              return DropdownItem<TransactionType>(
-                value: type,
-                label: type.displayName,
-                icon: type == TransactionType.expense
-                    ? Icons.remove_circle_outline
-                    : Icons.add_circle_outline,
-                iconColor: type == TransactionType.expense
-                    ? ColorTokens.critical500
-                    : ColorTokens.success500,
-              );
-            }).toList(),
-            value: _selectedType,
-            onChanged: (value) {
-              if (value != null) {
-                HapticFeedback.lightImpact();
+            // Optional Fields Toggle
+            OptionalFieldsToggle(
+              onChanged: (show) {
                 setState(() {
-                  _selectedType = value;
+                  _showOptionalFields = show;
                 });
-              }
-            },
-          ).animate()
-            .fadeIn(duration: DesignTokens.durationNormal, delay: 200.ms)
-            .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 200.ms),
-
-          SizedBox(height: FormTokens.sectionGap),
-
-          // Section: Appearance
-          if (_showOptionalFields) ...[
-            _buildSectionHeader(
-              'Appearance',
-              'Customize how your category looks',
+              },
+              label: 'Show optional fields',
             ).animate()
-              .fadeIn(duration: DesignTokens.durationNormal, delay: 400.ms)
-              .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 400.ms),
+              .fadeIn(duration: ModernAnimations.normal)
+              .slideY(begin: 0.1, duration: ModernAnimations.normal),
 
-            SizedBox(height: FormTokens.groupGap),
+            const SizedBox(height: spacing_lg),
 
-            // Icon selection
-            _buildIconSelection().animate()
-              .fadeIn(duration: DesignTokens.durationNormal, delay: 500.ms)
-              .scale(begin: const Offset(0.95, 0.95), duration: DesignTokens.durationNormal, delay: 500.ms),
+            // Section: Basic Information
+            _buildSectionHeader(
+              'Basic Information',
+              'Essential details about your category',
+            ).animate()
+              .fadeIn(duration: ModernAnimations.normal, delay: 100.ms)
+              .slideX(begin: -0.1, duration: ModernAnimations.normal, delay: 100.ms),
 
-            SizedBox(height: FormTokens.fieldGapMd),
+            const SizedBox(height: spacing_md),
 
-            // Color selection
-            _buildColorSelection().animate()
-              .fadeIn(duration: DesignTokens.durationNormal, delay: 600.ms)
-              .scale(begin: const Offset(0.95, 0.95), duration: DesignTokens.durationNormal, delay: 600.ms),
+            // Name field with async validation
+            ModernTextField(
+              controller: _nameController,
+              placeholder: 'e.g., Food & Dining',
+              prefixIcon: Icons.category,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Please enter a category name';
+                }
+                if (value.trim().length < 2) {
+                  return 'Category name must be at least 2 characters';
+                }
+                return null;
+              },
+            ).animate()
+              .fadeIn(duration: ModernAnimations.normal, delay: 100.ms)
+              .slideX(begin: 0.1, duration: ModernAnimations.normal, delay: 100.ms),
 
-            SizedBox(height: FormTokens.sectionGap),
+            const SizedBox(height: spacing_md),
+
+            // Type selection
+            EnhancedDropdownField<TransactionType>(
+              label: 'Transaction Type',
+              hint: 'Select category type',
+              items: TransactionType.values.map((type) {
+                return DropdownItem<TransactionType>(
+                  value: type,
+                  label: type.displayName,
+                  icon: type == TransactionType.expense
+                      ? Icons.remove_circle_outline
+                      : Icons.add_circle_outline,
+                  iconColor: type == TransactionType.expense
+                      ? ColorTokens.critical500
+                      : ColorTokens.success500,
+                );
+              }).toList(),
+              value: _selectedType,
+              onChanged: (value) {
+                if (value != null) {
+                  HapticFeedback.lightImpact();
+                  setState(() {
+                    _selectedType = value;
+                  });
+                }
+              },
+            ).animate()
+              .fadeIn(duration: ModernAnimations.normal, delay: 200.ms)
+              .slideX(begin: 0.1, duration: ModernAnimations.normal, delay: 200.ms),
+
+            const SizedBox(height: spacing_lg),
+
+            // Section: Appearance
+            if (_showOptionalFields) ...[
+              _buildSectionHeader(
+                'Appearance',
+                'Customize how your category looks',
+              ).animate()
+                .fadeIn(duration: ModernAnimations.normal, delay: 400.ms)
+                .slideX(begin: -0.1, duration: ModernAnimations.normal, delay: 400.ms),
+
+              const SizedBox(height: spacing_md),
+
+              // Icon selection
+              _buildIconSelection().animate()
+                .fadeIn(duration: ModernAnimations.normal, delay: 500.ms)
+                .scale(begin: const Offset(0.95, 0.95), duration: ModernAnimations.normal, delay: 500.ms),
+
+              const SizedBox(height: spacing_md),
+
+              // Color selection
+              _buildColorSelection().animate()
+                .fadeIn(duration: ModernAnimations.normal, delay: 600.ms)
+                .scale(begin: const Offset(0.95, 0.95), duration: ModernAnimations.normal, delay: 600.ms),
+
+              const SizedBox(height: spacing_lg),
+            ],
+
+            // Submit button
+            _buildSubmitButton().animate()
+              .fadeIn(duration: ModernAnimations.normal, delay: _showOptionalFields ? 700.ms : 300.ms)
+              .slideY(begin: 0.1, duration: ModernAnimations.normal, delay: _showOptionalFields ? 700.ms : 300.ms)
+              .scale(begin: const Offset(0.95, 0.95), duration: ModernAnimations.fast, delay: _showOptionalFields ? 700.ms : 300.ms),
           ],
-
-          // Submit button
-          _buildSubmitButton().animate()
-            .fadeIn(duration: DesignTokens.durationNormal, delay: _showOptionalFields ? 700.ms : 300.ms)
-            .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: _showOptionalFields ? 700.ms : 300.ms)
-            .scale(begin: const Offset(0.95, 0.95), duration: DesignTokens.durationSm, delay: _showOptionalFields ? 700.ms : 300.ms),
-        ],
+        ),
       ),
     );
   }
@@ -692,75 +686,17 @@ class _EnhancedAddCategoryFormState extends ConsumerState<EnhancedAddCategoryFor
   }
 
   Widget _buildIconSelection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Icon',
-          style: TypographyTokens.labelMd.copyWith(
-            fontWeight: FontWeight.w600,
-            color: ColorTokens.textPrimary,
-          ),
-        ),
-        SizedBox(height: DesignTokens.spacing2),
-        Wrap(
-          spacing: DesignTokens.spacing2,
-          runSpacing: DesignTokens.spacing2,
-          children: _availableIcons.map((iconData) {
-            final isSelected = _selectedIcon == iconData['name'];
-            return Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  setState(() {
-                    _selectedIcon = iconData['name'] as String;
-                  });
-                },
-                borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                child: AnimatedContainer(
-                  duration: DesignTokens.durationSm,
-                  curve: DesignTokens.curveEaseOut,
-                  width: 56,
-                  height: 56,
-                  padding: EdgeInsets.all(DesignTokens.spacing2),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? ColorTokens.teal500.withValues(alpha: 0.1)
-                        : ColorTokens.surfaceSecondary,
-                    border: Border.all(
-                      color: isSelected
-                          ? ColorTokens.teal500
-                          : ColorTokens.borderSecondary,
-                      width: isSelected ? 2 : 1.5,
-                    ),
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                    boxShadow: isSelected
-                        ? DesignTokens.elevationGlow(
-                            ColorTokens.teal500,
-                            alpha: 0.2,
-                            spread: 0,
-                          )
-                        : null,
-                  ),
-                  child: Icon(
-                    iconData['icon'] as IconData,
-                    color: isSelected
-                        ? ColorTokens.teal500
-                        : ColorTokens.textSecondary,
-                    size: DesignTokens.iconLg,
-                  ),
-                ).animate(target: isSelected ? 1 : 0)
-                  .scaleXY(
-                    begin: 1.0,
-                    end: 1.05,
-                    duration: DesignTokens.durationSm,
-                  ),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
+    return ModernCategorySelector(
+      categories: _availableCategoryItems,
+      selectedId: _selectedIcon,
+      onChanged: (id) {
+        if (id != null) {
+          HapticFeedback.lightImpact();
+          setState(() {
+            _selectedIcon = id;
+          });
+        }
+      },
     );
   }
 
@@ -770,15 +706,15 @@ class _EnhancedAddCategoryFormState extends ConsumerState<EnhancedAddCategoryFor
       children: [
         Text(
           'Color',
-          style: TypographyTokens.labelMd.copyWith(
+          style: ModernTypography.labelMedium.copyWith(
             fontWeight: FontWeight.w600,
-            color: ColorTokens.textPrimary,
+            color: ModernColors.textPrimary,
           ),
         ),
-        SizedBox(height: DesignTokens.spacing2),
+        const SizedBox(height: spacing_sm),
         Wrap(
-          spacing: DesignTokens.spacing2,
-          runSpacing: DesignTokens.spacing2,
+          spacing: spacing_sm,
+          runSpacing: spacing_sm,
           children: _availableColors.map((colorData) {
             final isSelected = _selectedColor == colorData['color'];
             return Material(
@@ -790,41 +726,37 @@ class _EnhancedAddCategoryFormState extends ConsumerState<EnhancedAddCategoryFor
                     _selectedColor = colorData['color'] as int;
                   });
                 },
-                borderRadius: BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(radius_pill),
                 child: AnimatedContainer(
-                  duration: DesignTokens.durationSm,
-                  curve: DesignTokens.curveEaseOut,
+                  duration: ModernAnimations.fast,
+                  curve: ModernCurves.easeOut,
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
                     color: Color(colorData['color'] as int),
                     border: Border.all(
                       color: isSelected
-                          ? ColorTokens.teal500
+                          ? ModernColors.accentGreen
                           : Colors.transparent,
                       width: 3,
                     ),
-                    borderRadius: BorderRadius.circular(28),
+                    borderRadius: BorderRadius.circular(radius_pill),
                     boxShadow: isSelected
-                        ? DesignTokens.elevationGlow(
-                            ColorTokens.teal500,
-                            alpha: 0.3,
-                            spread: 0,
-                          )
+                        ? [ModernShadows.medium]
                         : null,
                   ),
                   child: isSelected
                       ? Icon(
                           Icons.check,
                           color: Colors.white,
-                          size: DesignTokens.iconMd,
+                          size: 20,
                         )
                       : null,
                 ).animate(target: isSelected ? 1 : 0)
                   .scaleXY(
                     begin: 1.0,
                     end: 1.1,
-                    duration: DesignTokens.durationSm,
+                    duration: ModernAnimations.fast,
                   ),
               ),
             );
@@ -835,41 +767,10 @@ class _EnhancedAddCategoryFormState extends ConsumerState<EnhancedAddCategoryFor
   }
 
   Widget _buildSubmitButton() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: ColorTokens.gradientPrimary,
-        borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-        boxShadow: _isSubmitting
-            ? []
-            : DesignTokens.elevationColored(ColorTokens.teal500, alpha: 0.3),
-      ),
-      child: ElevatedButton(
-        onPressed: _isSubmitting ? null : _addCategory,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          minimumSize: Size(double.infinity, FormTokens.fieldHeightMd),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-          ),
-        ),
-        child: _isSubmitting
-            ? SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
-            : Text(
-                'Add Category',
-                style: TypographyTokens.labelMd.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-      ),
+    return ModernActionButton(
+      text: 'Add Category',
+      onPressed: _isSubmitting ? null : _addCategory,
+      isLoading: _isSubmitting,
     );
   }
 
@@ -975,6 +876,16 @@ class _EnhancedEditCategoryFormState extends ConsumerState<EnhancedEditCategoryF
   late int _selectedColor;
   bool _isSubmitting = false;
   bool _showOptionalFields = false;
+
+  // Convert available icons to CategoryItem format
+  List<CategoryItem> get _availableCategoryItems => _availableIcons.map((iconData) {
+    return CategoryItem(
+      id: iconData['name'] as String,
+      name: iconData['name'] as String,
+      icon: iconData['icon'] as IconData,
+      color: _selectedColor,
+    );
+  }).toList();
 
   final List<Map<String, dynamic>> _availableIcons = [
     // Food & Dining
@@ -1118,125 +1029,127 @@ class _EnhancedEditCategoryFormState extends ConsumerState<EnhancedEditCategoryF
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Optional Fields Toggle
-          OptionalFieldsToggle(
-            onChanged: (show) {
-              setState(() {
-                _showOptionalFields = show;
-              });
-            },
-            label: 'Show optional fields',
-          ).animate()
-            .fadeIn(duration: DesignTokens.durationNormal)
-            .slideY(begin: 0.1, duration: DesignTokens.durationNormal),
-
-          SizedBox(height: FormTokens.sectionGap),
-
-          // Section: Basic Information
-          _buildSectionHeader(
-            'Basic Information',
-            'Update essential category details',
-          ).animate()
-            .fadeIn(duration: DesignTokens.durationNormal, delay: 100.ms)
-            .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 100.ms),
-
-          SizedBox(height: FormTokens.groupGap),
-
-          // Name field with async validation
-          EnhancedTextField(
-            controller: _nameController,
-            label: 'Category Name',
-            hint: 'e.g., Food & Dining',
-            prefix: Icon(
-              Icons.category,
-              color: FormTokens.iconColor,
-              size: DesignTokens.iconMd,
+    return ModernBottomSheet(
+      child: Form(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Title
+            Text(
+              'Edit Category',
+              style: ModernTypography.titleLarge,
+              textAlign: TextAlign.center,
             ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Please enter a category name';
-              }
-              if (value.trim().length < 2) {
-                return 'Category name must be at least 2 characters';
-              }
-              return null;
-            },
-            asyncValidator: (value) => _validateCategoryName(value),
-            autofocus: true,
-            debounceMs: 500,
-          ).animate()
-            .fadeIn(duration: DesignTokens.durationNormal, delay: 100.ms)
-            .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 100.ms),
+            const SizedBox(height: spacing_lg),
 
-          SizedBox(height: FormTokens.fieldGapMd),
-
-          // Type selection
-          EnhancedDropdownField<TransactionType>(
-            label: 'Transaction Type',
-            hint: 'Select category type',
-            items: TransactionType.values.map((type) {
-              return DropdownItem<TransactionType>(
-                value: type,
-                label: type.displayName,
-                icon: type == TransactionType.expense
-                    ? Icons.remove_circle_outline
-                    : Icons.add_circle_outline,
-                iconColor: type == TransactionType.expense
-                    ? ColorTokens.critical500
-                    : ColorTokens.success500,
-              );
-            }).toList(),
-            value: _selectedType,
-            onChanged: (value) {
-              if (value != null) {
-                HapticFeedback.lightImpact();
+            // Optional Fields Toggle
+            OptionalFieldsToggle(
+              onChanged: (show) {
                 setState(() {
-                  _selectedType = value;
+                  _showOptionalFields = show;
                 });
-              }
-            },
-          ).animate()
-            .fadeIn(duration: DesignTokens.durationNormal, delay: 200.ms)
-            .slideX(begin: 0.1, duration: DesignTokens.durationNormal, delay: 200.ms),
-
-          SizedBox(height: FormTokens.sectionGap),
-
-          // Section: Appearance
-          if (_showOptionalFields) ...[
-            _buildSectionHeader(
-              'Appearance',
-              'Customize how your category looks',
+              },
+              label: 'Show optional fields',
             ).animate()
-              .fadeIn(duration: DesignTokens.durationNormal, delay: 400.ms)
-              .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 400.ms),
+              .fadeIn(duration: ModernAnimations.normal)
+              .slideY(begin: 0.1, duration: ModernAnimations.normal),
 
-            SizedBox(height: FormTokens.groupGap),
+            const SizedBox(height: spacing_lg),
 
-            // Icon selection
-            _buildIconSelection().animate()
-              .fadeIn(duration: DesignTokens.durationNormal, delay: 500.ms)
-              .scale(begin: const Offset(0.95, 0.95), duration: DesignTokens.durationNormal, delay: 500.ms),
+            // Section: Basic Information
+            _buildSectionHeader(
+              'Basic Information',
+              'Update essential category details',
+            ).animate()
+              .fadeIn(duration: ModernAnimations.normal, delay: 100.ms)
+              .slideX(begin: -0.1, duration: ModernAnimations.normal, delay: 100.ms),
 
-            SizedBox(height: FormTokens.fieldGapMd),
+            const SizedBox(height: spacing_md),
 
-            // Color selection
-            _buildColorSelection().animate()
-              .fadeIn(duration: DesignTokens.durationNormal, delay: 600.ms)
-              .scale(begin: const Offset(0.95, 0.95), duration: DesignTokens.durationNormal, delay: 600.ms),
+            // Name field with async validation
+            ModernTextField(
+              controller: _nameController,
+              placeholder: 'e.g., Food & Dining',
+              prefixIcon: Icons.category,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Please enter a category name';
+                }
+                if (value.trim().length < 2) {
+                  return 'Category name must be at least 2 characters';
+                }
+                return null;
+              },
+            ).animate()
+              .fadeIn(duration: ModernAnimations.normal, delay: 100.ms)
+              .slideX(begin: 0.1, duration: ModernAnimations.normal, delay: 100.ms),
 
-            SizedBox(height: FormTokens.sectionGap),
+            const SizedBox(height: spacing_md),
+
+            // Type selection
+            EnhancedDropdownField<TransactionType>(
+              label: 'Transaction Type',
+              hint: 'Select category type',
+              items: TransactionType.values.map((type) {
+                return DropdownItem<TransactionType>(
+                  value: type,
+                  label: type.displayName,
+                  icon: type == TransactionType.expense
+                      ? Icons.remove_circle_outline
+                      : Icons.add_circle_outline,
+                  iconColor: type == TransactionType.expense
+                      ? ColorTokens.critical500
+                      : ColorTokens.success500,
+                );
+              }).toList(),
+              value: _selectedType,
+              onChanged: (value) {
+                if (value != null) {
+                  HapticFeedback.lightImpact();
+                  setState(() {
+                    _selectedType = value;
+                  });
+                }
+              },
+            ).animate()
+              .fadeIn(duration: ModernAnimations.normal, delay: 200.ms)
+              .slideX(begin: 0.1, duration: ModernAnimations.normal, delay: 200.ms),
+
+            const SizedBox(height: spacing_lg),
+
+            // Section: Appearance
+            if (_showOptionalFields) ...[
+              _buildSectionHeader(
+                'Appearance',
+                'Customize how your category looks',
+              ).animate()
+                .fadeIn(duration: ModernAnimations.normal, delay: 400.ms)
+                .slideX(begin: -0.1, duration: ModernAnimations.normal, delay: 400.ms),
+
+              const SizedBox(height: spacing_md),
+
+              // Icon selection
+              _buildIconSelection().animate()
+                .fadeIn(duration: ModernAnimations.normal, delay: 500.ms)
+                .scale(begin: const Offset(0.95, 0.95), duration: ModernAnimations.normal, delay: 500.ms),
+
+              const SizedBox(height: spacing_md),
+
+              // Color selection
+              _buildColorSelection().animate()
+                .fadeIn(duration: ModernAnimations.normal, delay: 600.ms)
+                .scale(begin: const Offset(0.95, 0.95), duration: ModernAnimations.normal, delay: 600.ms),
+
+              const SizedBox(height: spacing_lg),
+            ],
+
+            // Submit button
+            _buildSubmitButton().animate()
+              .fadeIn(duration: ModernAnimations.normal, delay: _showOptionalFields ? 700.ms : 300.ms)
+              .slideY(begin: 0.1, duration: ModernAnimations.normal, delay: _showOptionalFields ? 700.ms : 300.ms)
+              .scale(begin: const Offset(0.95, 0.95), duration: ModernAnimations.fast, delay: _showOptionalFields ? 700.ms : 300.ms),
           ],
-
-          // Submit button
-          _buildSubmitButton().animate()
-            .fadeIn(duration: DesignTokens.durationNormal, delay: _showOptionalFields ? 700.ms : 300.ms)
-            .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: _showOptionalFields ? 700.ms : 300.ms)
-            .scale(begin: const Offset(0.95, 0.95), duration: DesignTokens.durationSm, delay: _showOptionalFields ? 700.ms : 300.ms),
-        ],
+        ),
       ),
     );
   }
@@ -1264,75 +1177,17 @@ class _EnhancedEditCategoryFormState extends ConsumerState<EnhancedEditCategoryF
   }
 
   Widget _buildIconSelection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Icon',
-          style: TypographyTokens.labelMd.copyWith(
-            fontWeight: FontWeight.w600,
-            color: ColorTokens.textPrimary,
-          ),
-        ),
-        SizedBox(height: DesignTokens.spacing2),
-        Wrap(
-          spacing: DesignTokens.spacing2,
-          runSpacing: DesignTokens.spacing2,
-          children: _availableIcons.map((iconData) {
-            final isSelected = _selectedIcon == iconData['name'];
-            return Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  setState(() {
-                    _selectedIcon = iconData['name'] as String;
-                  });
-                },
-                borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                child: AnimatedContainer(
-                  duration: DesignTokens.durationSm,
-                  curve: DesignTokens.curveEaseOut,
-                  width: 56,
-                  height: 56,
-                  padding: EdgeInsets.all(DesignTokens.spacing2),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? ColorTokens.teal500.withValues(alpha: 0.1)
-                        : ColorTokens.surfaceSecondary,
-                    border: Border.all(
-                      color: isSelected
-                          ? ColorTokens.teal500
-                          : ColorTokens.borderSecondary,
-                      width: isSelected ? 2 : 1.5,
-                    ),
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                    boxShadow: isSelected
-                        ? DesignTokens.elevationGlow(
-                            ColorTokens.teal500,
-                            alpha: 0.2,
-                            spread: 0,
-                          )
-                        : null,
-                  ),
-                  child: Icon(
-                    iconData['icon'] as IconData,
-                    color: isSelected
-                        ? ColorTokens.teal500
-                        : ColorTokens.textSecondary,
-                    size: DesignTokens.iconLg,
-                  ),
-                ).animate(target: isSelected ? 1 : 0)
-                  .scaleXY(
-                    begin: 1.0,
-                    end: 1.05,
-                    duration: DesignTokens.durationSm,
-                  ),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
+    return ModernCategorySelector(
+      categories: _availableCategoryItems,
+      selectedId: _selectedIcon,
+      onChanged: (id) {
+        if (id != null) {
+          HapticFeedback.lightImpact();
+          setState(() {
+            _selectedIcon = id;
+          });
+        }
+      },
     );
   }
 
@@ -1342,15 +1197,15 @@ class _EnhancedEditCategoryFormState extends ConsumerState<EnhancedEditCategoryF
       children: [
         Text(
           'Color',
-          style: TypographyTokens.labelMd.copyWith(
+          style: ModernTypography.labelMedium.copyWith(
             fontWeight: FontWeight.w600,
-            color: ColorTokens.textPrimary,
+            color: ModernColors.textPrimary,
           ),
         ),
-        SizedBox(height: DesignTokens.spacing2),
+        const SizedBox(height: spacing_sm),
         Wrap(
-          spacing: DesignTokens.spacing2,
-          runSpacing: DesignTokens.spacing2,
+          spacing: spacing_sm,
+          runSpacing: spacing_sm,
           children: _availableColors.map((colorData) {
             final isSelected = _selectedColor == colorData['color'];
             return Material(
@@ -1362,41 +1217,37 @@ class _EnhancedEditCategoryFormState extends ConsumerState<EnhancedEditCategoryF
                     _selectedColor = colorData['color'] as int;
                   });
                 },
-                borderRadius: BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(radius_pill),
                 child: AnimatedContainer(
-                  duration: DesignTokens.durationSm,
-                  curve: DesignTokens.curveEaseOut,
+                  duration: ModernAnimations.fast,
+                  curve: ModernCurves.easeOut,
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
                     color: Color(colorData['color'] as int),
                     border: Border.all(
                       color: isSelected
-                          ? ColorTokens.teal500
+                          ? ModernColors.accentGreen
                           : Colors.transparent,
                       width: 3,
                     ),
-                    borderRadius: BorderRadius.circular(28),
+                    borderRadius: BorderRadius.circular(radius_pill),
                     boxShadow: isSelected
-                        ? DesignTokens.elevationGlow(
-                            ColorTokens.teal500,
-                            alpha: 0.3,
-                            spread: 0,
-                          )
+                        ? [ModernShadows.medium]
                         : null,
                   ),
                   child: isSelected
                       ? Icon(
                           Icons.check,
                           color: Colors.white,
-                          size: DesignTokens.iconMd,
+                          size: 20,
                         )
                       : null,
                 ).animate(target: isSelected ? 1 : 0)
                   .scaleXY(
                     begin: 1.0,
                     end: 1.1,
-                    duration: DesignTokens.durationSm,
+                    duration: ModernAnimations.fast,
                   ),
               ),
             );
@@ -1407,41 +1258,10 @@ class _EnhancedEditCategoryFormState extends ConsumerState<EnhancedEditCategoryF
   }
 
   Widget _buildSubmitButton() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: ColorTokens.gradientPrimary,
-        borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-        boxShadow: _isSubmitting
-            ? []
-            : DesignTokens.elevationColored(ColorTokens.teal500, alpha: 0.3),
-      ),
-      child: ElevatedButton(
-        onPressed: _isSubmitting ? null : _updateCategory,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          minimumSize: Size(double.infinity, FormTokens.fieldHeightMd),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(FormTokens.fieldRadiusMd),
-          ),
-        ),
-        child: _isSubmitting
-            ? SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
-            : Text(
-                'Update Category',
-                style: TypographyTokens.labelMd.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-      ),
+    return ModernActionButton(
+      text: 'Update Category',
+      onPressed: _isSubmitting ? null : _updateCategory,
+      isLoading: _isSubmitting,
     );
   }
 

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_typography.dart';
+import '../../domain/entities/receipt_data.dart';
 import '../providers/receipt_scanning_providers.dart';
 import '../widgets/camera_overlay.dart';
 import '../widgets/camera_preview_widget.dart';
@@ -31,8 +32,16 @@ class _ReceiptScanningScreenState extends ConsumerState<ReceiptScanningScreen> {
     // Listen for receipt data changes to navigate to review screen
     final state = ref.watch(receiptScanningProvider);
     if (state.receiptData != null && !state.isProcessing) {
-      // Navigate to review screen
-      context.go('/review-receipt', extra: state.receiptData);
+      // Navigate to review screen and return result
+      _navigateToReview(state.receiptData!);
+    }
+  }
+
+  Future<void> _navigateToReview(ReceiptData receiptData) async {
+    final result = await context.push('/review-receipt', extra: receiptData);
+    if (result != null && mounted) {
+      // Return the result to the caller
+      context.pop(result);
     }
   }
 

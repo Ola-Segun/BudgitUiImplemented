@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../goals/presentation/notifiers/goal_notifier.dart';
 import '../../domain/entities/transaction.dart';
+import '../../domain/entities/split_transaction.dart';
 import '../../domain/entities/transaction_filter.dart';
 import '../../domain/usecases/add_transaction.dart';
 import '../../domain/usecases/delete_transaction.dart';
@@ -200,6 +201,74 @@ class TransactionNotifier extends StateNotifier<AsyncValue<TransactionState>> {
         return false;
       },
     );
+  }
+
+  /// Add a split transaction by converting it to multiple individual transactions
+  Future<bool> addSplitTransaction(SplitTransaction splitTransaction) async {
+    debugPrint('TransactionNotifier: Adding split transaction with ${splitTransaction.splits.length} splits');
+
+    final currentState = state.value;
+    if (currentState == null) {
+      return false;
+    }
+
+    // Set loading state
+    state = AsyncValue.data(currentState.copyWith(isLoading: true));
+
+    try {
+      // Convert split transaction to individual transactions
+      final transactions = splitTransaction.splits.map((split) {
+        return Transaction(
+          id: '${splitTransaction.id}_${split.categoryId}_${DateTime.now().millisecondsSinceEpoch}',
+          title: splitTransaction.title,
+          amount: split.amount,
+          type: splitTransaction.type,
+          date: splitTransaction.date,
+          categoryId: split.categoryId,
+          accountId: splitTransaction.accountId,
+          description: split.description ?? splitTransaction.description,
+          tags: splitTransaction.tags,
+          currencyCode: splitTransaction.currencyCode,
+        );
+      }).toList();
+
+      // Add all transactions
+      bool allSuccessful = true;
+      for (final transaction in transactions) {
+        final result = await _addTransaction(transaction);
+        result.when(
+          success: (_) {
+            // Transaction added successfully
+          },
+          error: (failure) {
+            allSuccessful = false;
+            debugPrint('TransactionNotifier: Failed to add split transaction part: ${failure.message}');
+          },
+        );
+        if (!allSuccessful) break;
+      }
+
+      if (allSuccessful) {
+        debugPrint('TransactionNotifier: All split transactions added successfully, reloading');
+        // Reload transactions to ensure consistency
+        initializeWithPagination();
+        return true;
+      } else {
+        // Revert to original state with error
+        state = AsyncValue.data(currentState.copyWith(
+          isLoading: false,
+          error: 'Failed to add some split transactions',
+        ));
+        return false;
+      }
+    } catch (e) {
+      debugPrint('TransactionNotifier: Error adding split transaction: $e');
+      state = AsyncValue.data(currentState.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      ));
+      return false;
+    }
   }
 
   /// Delete a transaction

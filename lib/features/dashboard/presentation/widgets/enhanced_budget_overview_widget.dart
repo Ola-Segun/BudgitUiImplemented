@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -7,9 +8,11 @@ import '../../../../core/theme/app_colors_extended.dart';
 import '../../../../core/theme/app_typography_extended.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../budgets/presentation/widgets/enhanced_budget_card.dart';
+import '../../../budgets/presentation/widgets/budget_creation_bottom_sheet.dart';
+import '../../../budgets/presentation/providers/budget_providers.dart';
 import '../../domain/entities/dashboard_data.dart';
 
-class EnhancedBudgetOverviewWidget extends StatelessWidget {
+class EnhancedBudgetOverviewWidget extends ConsumerWidget {
   const EnhancedBudgetOverviewWidget({
     super.key,
     required this.budgetOverview,
@@ -18,7 +21,7 @@ class EnhancedBudgetOverviewWidget extends StatelessWidget {
   final List<BudgetCategoryOverview> budgetOverview;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       padding: EdgeInsets.all(AppDimensions.cardPadding),
       decoration: BoxDecoration(
@@ -91,7 +94,7 @@ class EnhancedBudgetOverviewWidget extends StatelessWidget {
           SizedBox(height: AppDimensions.spacing4),
 
           if (budgetOverview.isEmpty)
-            _buildEmptyState(context)
+            _buildEmptyState(context, ref)
           else
             ...budgetOverview.take(5).toList().asMap().entries.map((entry) {
               final index = entry.key;
@@ -112,7 +115,7 @@ class EnhancedBudgetOverviewWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
+  Widget _buildEmptyState(BuildContext context, WidgetRef ref) {
     return Container(
       padding: const EdgeInsets.all(32),
       child: Column(
@@ -140,7 +143,20 @@ class EnhancedBudgetOverviewWidget extends StatelessWidget {
           const SizedBox(height: 16),
           TextButton.icon(
             onPressed: () {
-              context.go('/budgets');
+              BudgetCreationBottomSheet.show(
+                context: context,
+                onSubmit: (budget) async {
+                  await ref
+                      .read(budgetNotifierProvider.notifier)
+                      .createBudget(budget);
+
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Budget created successfully')),
+                    );
+                  }
+                },
+              );
             },
             icon: const Icon(Icons.add, size: 18),
             label: const Text('Create Budget'),

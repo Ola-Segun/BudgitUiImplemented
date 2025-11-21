@@ -1,4 +1,3 @@
-import '../../../goals/data/models/goal_contribution_mapper.dart';
 import '../../../goals/domain/entities/goal_contribution.dart';
 import 'transaction_dto.dart';
 import '../../domain/entities/transaction.dart';

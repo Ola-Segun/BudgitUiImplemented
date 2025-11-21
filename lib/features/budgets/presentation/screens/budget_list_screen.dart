@@ -20,7 +20,7 @@ import '../widgets/budget_metric_cards.dart';
 import '../widgets/budget_stats_row.dart';
 import '../widgets/budget_bar_chart.dart';
 import '../widgets/enhanced_budget_card.dart';
-import 'budget_creation_screen.dart';
+import '../widgets/budget_creation_bottom_sheet.dart';
 import 'budget_detail_screen.dart';
 
 /// Data class for aggregated budget information
@@ -625,11 +625,19 @@ class _BudgetListScreenState extends ConsumerState<BudgetListScreen>
   }
 
   void _navigateToBudgetCreation() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const BudgetCreationScreen(),
-      ),
+    BudgetCreationBottomSheet.show(
+      context: context,
+      onSubmit: (budget) async {
+        await ref
+            .read(budgetNotifierProvider.notifier)
+            .createBudget(budget);
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Budget created successfully')),
+          );
+        }
+      },
     );
   }
 
