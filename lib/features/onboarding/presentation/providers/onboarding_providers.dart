@@ -4,8 +4,11 @@ import '../../../../core/di/providers.dart' as core_providers;
 import '../../../accounts/domain/usecases/create_account.dart';
 import '../../../budgets/domain/usecases/create_budget.dart';
 import '../../data/datasources/user_profile_hive_datasource.dart';
+import '../../data/repositories/user_profile_repository_impl.dart';
 import '../../domain/entities/onboarding_data.dart';
 import '../../domain/entities/user_profile.dart';
+import '../../domain/repositories/user_profile_repository.dart';
+import '../../domain/usecases/update_user_profile.dart';
 import '../notifiers/onboarding_notifier.dart';
 import '../states/onboarding_state.dart';
 
@@ -14,6 +17,18 @@ final userProfileDataSourceProvider = Provider<UserProfileHiveDataSource>((ref) 
   final dataSource = UserProfileHiveDataSource();
   // Note: Initialization is handled in appInitializationProvider
   return dataSource;
+});
+
+/// Provider for user profile repository
+final userProfileRepositoryProvider = Provider<UserProfileRepository>((ref) {
+  final dataSource = ref.watch(userProfileDataSourceProvider);
+  return UserProfileRepositoryImpl(dataSource);
+});
+
+/// Provider for update user profile use case
+final updateUserProfileProvider = Provider<UpdateUserProfile>((ref) {
+  final repository = ref.watch(userProfileRepositoryProvider);
+  return UpdateUserProfile(repository);
 });
 
 /// Provider for CreateBudget use case

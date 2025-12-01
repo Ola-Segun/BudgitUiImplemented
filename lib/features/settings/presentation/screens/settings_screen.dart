@@ -141,10 +141,10 @@ class SettingsScreen extends ConsumerWidget {
   Widget _buildCurrencySelector(BuildContext context, WidgetRef ref, dynamic settings) {
     return ListTile(
       title: const Text('Currency'),
-      subtitle: Text(settings.currencyCode),
+      subtitle: Text(settings.currencyCode ?? 'USD'),
       leading: const Icon(Icons.attach_money),
       trailing: const Icon(Icons.chevron_right),
-      onTap: () => _showCurrencySelector(context, ref, settings.currencyCode),
+      onTap: () => _showCurrencySelector(context, ref, settings.currencyCode ?? 'USD'),
     );
   }
 

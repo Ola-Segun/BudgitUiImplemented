@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/settings.dart';
+import '../../../accounts/domain/entities/account_type_theme.dart' as accounts;
 import '../../domain/usecases/get_settings.dart';
 import '../../domain/usecases/update_settings.dart';
 import '../states/settings_state.dart';
@@ -25,20 +26,38 @@ class SettingsNotifier extends StateNotifier<AsyncValue<SettingsState>> {
     debugPrint('SettingsNotifier: Loading settings');
     state = const AsyncValue.loading();
 
-    final result = await _getSettings();
+    try {
+      final result = await _getSettings();
 
-    result.when(
-      success: (settings) {
-        state = AsyncValue.data(SettingsState(
-          settings: settings,
-          isLoading: false,
-          error: null,
-        ));
-      },
-      error: (failure) {
-        state = AsyncValue.error(failure.message, StackTrace.current);
-      },
-    );
+      result.when(
+        success: (settings) {
+          state = AsyncValue.data(SettingsState(
+            settings: settings,
+            isLoading: false,
+            error: null,
+          ));
+        },
+        error: (failure) {
+          debugPrint('SettingsNotifier: Failed to load settings: ${failure.message}');
+          // Try to load default settings
+          final defaultSettings = AppSettings.defaultSettings();
+          state = AsyncValue.data(SettingsState(
+            settings: defaultSettings,
+            isLoading: false,
+            error: null,
+          ));
+        },
+      );
+    } catch (e) {
+      debugPrint('SettingsNotifier: Exception loading settings: $e');
+      // Fallback to default settings
+      final defaultSettings = AppSettings.defaultSettings();
+      state = AsyncValue.data(SettingsState(
+        settings: defaultSettings,
+        isLoading: false,
+        error: null,
+      ));
+    }
   }
 
   /// Update theme mode
@@ -303,6 +322,9 @@ class SettingsNotifier extends StateNotifier<AsyncValue<SettingsState>> {
             break;
           case 'scheduledExportFrequency':
             updatedSettings = currentState.settings.copyWith(scheduledExportFrequency: value as String);
+            break;
+          case 'accountTypeThemes':
+            updatedSettings = currentState.settings.copyWith(accountTypeThemes: value as Map<String, accounts.AccountTypeTheme>);
             break;
           default:
             return false;

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../form_design_system.dart';
 import 'modern_design_constants.dart';
 
 /// Enhanced ModernAmountDisplay with integrated keyboard
@@ -9,6 +8,7 @@ class ModernAmountDisplay extends StatefulWidget {
   final double amount;
   final bool isEditable;
   final ValueChanged<double>? onAmountChanged;
+  final ValueChanged<String>? onValueChanged;
   final VoidCallback? onTap;
   final String currencySymbol;
 
@@ -17,6 +17,7 @@ class ModernAmountDisplay extends StatefulWidget {
     required this.amount,
     this.isEditable = false,
     this.onAmountChanged,
+    this.onValueChanged,
     this.onTap,
     this.currencySymbol = '\$',
   });
@@ -73,14 +74,16 @@ class _ModernAmountDisplayState extends State<ModernAmountDisplay>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => IntegratedNumericKeyboard(
-        initialValue: widget.amount.toStringAsFixed(0),
+        initialValue: widget.amount.toStringAsFixed(2),
         currencySymbol: widget.currencySymbol,
-        showDecimal: false,
+        showDecimal: true,
+        onValueChanged: widget.onValueChanged,
       ),
     );
 
     if (result != null) {
       final newAmount = double.tryParse(result) ?? 0.0;
+      debugPrint('ModernAmountDisplay: onAmountChanged called with $newAmount');
       widget.onAmountChanged?.call(newAmount);
     }
   }
@@ -166,6 +169,7 @@ class IntegratedNumericKeyboard extends StatefulWidget {
   final String currencySymbol;
   final bool showDecimal;
   final int? maxLength;
+  final ValueChanged<String>? onValueChanged;
 
   const IntegratedNumericKeyboard({
     super.key,
@@ -173,6 +177,7 @@ class IntegratedNumericKeyboard extends StatefulWidget {
     this.currencySymbol = '\$',
     this.showDecimal = true,
     this.maxLength,
+    this.onValueChanged,
   });
 
   @override
@@ -209,7 +214,7 @@ class _IntegratedNumericKeyboardState extends State<IntegratedNumericKeyboard>
 
   void _handleKeyPress(String value) {
     HapticFeedback.lightImpact();
-    
+
     setState(() {
       if (value == 'backspace') {
         if (_currentValue.isNotEmpty) {
@@ -226,12 +231,12 @@ class _IntegratedNumericKeyboardState extends State<IntegratedNumericKeyboard>
         if (value == '.' && (!widget.showDecimal || _currentValue.contains('.'))) {
           return;
         }
-        
+
         // Check max length
         if (widget.maxLength != null && _currentValue.length >= widget.maxLength!) {
           return;
         }
-        
+
         // Don't allow leading zeros
         if (_currentValue == '0' && value != '.') {
           _currentValue = value;
@@ -240,6 +245,9 @@ class _IntegratedNumericKeyboardState extends State<IntegratedNumericKeyboard>
         }
       }
     });
+
+    // Call onValueChanged with the current value
+    widget.onValueChanged?.call(_currentValue);
   }
 
   @override

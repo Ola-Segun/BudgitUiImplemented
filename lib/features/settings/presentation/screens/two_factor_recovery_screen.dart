@@ -280,8 +280,7 @@ class _TwoFactorRecoveryScreenState extends ConsumerState<TwoFactorRecoveryScree
         return;
       }
 
-      final hashedCodes = settings.backupCodes;
-      final isValid = _twoFactorService.verifyBackupCode(code, hashedCodes);
+      final isValid = _twoFactorService.validateBackupCode(code);
 
       if (isValid) {
         // Success - navigate to main app

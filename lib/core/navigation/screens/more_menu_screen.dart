@@ -83,11 +83,11 @@ class MoreMenuScreen extends StatelessWidget {
                         route: '/more/accounts',
                       ),
                       MenuItem(
-                        icon: Icons.receipt_long,
-                        title: 'Bills & Subscriptions',
-                        subtitle: 'Track recurring payments',
-                        color: ColorTokens.purple600,
-                        route: '/more/bills',
+                        icon: Icons.account_balance_wallet,
+                        title: 'Cash Flow',
+                        subtitle: 'Bills, income & obligations',
+                        color: ColorTokens.teal500,
+                        route: '/more/cash-flow',
                       ),
                       MenuItem(
                         icon: Icons.account_balance,

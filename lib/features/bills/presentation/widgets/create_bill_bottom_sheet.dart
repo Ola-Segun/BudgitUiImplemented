@@ -1,14 +1,14 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/design_system/modern/modern.dart';
+import '../../../../core/design_system/design_tokens.dart';
 import '../../../../core/error/failures.dart';
-import '../../../accounts/domain/entities/account.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../../accounts/presentation/providers/account_providers.dart';
-import '../../../accounts/presentation/widgets/modern_account_selector.dart';
 import '../../../dashboard/presentation/providers/dashboard_providers.dart';
 import '../../../transactions/domain/entities/transaction.dart';
 import '../../../transactions/presentation/providers/transaction_providers.dart';
@@ -36,6 +36,7 @@ class CreateBillBottomSheet extends ConsumerStatefulWidget {
 
 class _CreateBillBottomSheetState extends ConsumerState<CreateBillBottomSheet> {
   final _formKey = GlobalKey<FormState>();
+  final _contentKey = GlobalKey();
   final _nameController = TextEditingController();
   final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -149,422 +150,478 @@ class _CreateBillBottomSheetState extends ConsumerState<CreateBillBottomSheet> {
   @override
   Widget build(BuildContext context) {
     return ModernBottomSheet(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: spacing_md),
-            child: Row(
-              children: [
-                Text(
-                  'Add Bill',
-                  style: ModernTypography.titleLarge.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const Spacer(),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
-                ),
-              ],
-            ),
-          ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Diagnostic logging to monitor screen height, content height, and overflow amounts
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final contentSize = _contentKey.currentContext?.size;
+            final mediaQuery = MediaQuery.of(context);
+            if (contentSize != null) {
+              developer.log(
+                'CreateBillBottomSheet - Screen height: ${mediaQuery.size.height}, '
+                'Content height: ${contentSize.height}, '
+                'Available height: ${constraints.maxHeight}, '
+                'Overflow amount: ${contentSize.height - constraints.maxHeight}, '
+                'Keyboard height: ${mediaQuery.viewInsets.bottom}, '
+                'View padding: ${mediaQuery.viewPadding.bottom}',
+                name: 'CreateBillBottomSheet',
+              );
+            }
+          });
 
-          // Form
-          Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Bill Name
-                ModernTextField(
-                  controller: _nameController,
-                  label: 'Bill Name',
-                  placeholder: 'e.g., Electricity Bill',
-                  errorText: _nameValidationError,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter a bill name';
-                    }
-                    // Basic client-side validation - full uniqueness check happens in use case
-                    if (value.trim().length < 2) {
-                      return 'Bill name must be at least 2 characters';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: spacing_lg),
-
-                // Amount Display
-                ModernAmountDisplay(
-                  amount: double.tryParse(_amountController.text) ?? 0.0,
-                  isEditable: true,
-                  onAmountChanged: (value) {
-                    _amountController.text = value.toStringAsFixed(2);
-                  },
-                ),
-                const SizedBox(height: spacing_lg),
-
-                // Amount Input (hidden but functional)
-                TextFormField(
-                  controller: _amountController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+          return Column(
+            children: [
+              // Fixed Header
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: spacing_md),
+                child: Row(
+                  children: [
+                    Text(
+                      'Add Bill',
+                      style: ModernTypography.titleLarge.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
                   ],
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter an amount';
-                    }
-                    final amount = double.tryParse(value);
-                    if (amount == null || amount <= 0) {
-                      return 'Please enter a valid amount';
-                    }
-                    return null;
-                  },
-                  style: const TextStyle(fontSize: 0), // Hidden
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.zero,
-                  ),
                 ),
-                const SizedBox(height: 16),
+              ),
 
-                // Category Selector
-                Consumer(
-                  builder: (context, ref, child) {
-                    final categoryState = ref.watch(categoryNotifierProvider);
-                    final categoryIconColorService = ref.watch(categoryIconColorServiceProvider);
-
-                    return categoryState.when(
-                      data: (state) {
-                        final expenseCategories = state.getCategoriesByType(TransactionType.expense);
-
-                        // Update default category if not set or invalid
-                        if (_selectedCategoryId.isEmpty ||
-                            !expenseCategories.any((cat) => cat.id == _selectedCategoryId)) {
-                          _selectedCategoryId = _getSmartDefaultCategoryId(expenseCategories);
-                        }
-
-                        if (expenseCategories.isEmpty) {
-                          return Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: ModernColors.primaryGray,
-                              borderRadius: BorderRadius.circular(radius_md),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.info_outline,
-                                  color: ModernColors.accentGreen,
-                                ),
-                                const SizedBox(width: spacing_md),
-                                const Expanded(
-                                  child: Text(
-                                    'No expense categories available. Please add categories first.',
-                                    style: TextStyle(fontSize: 14),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-
-                        final categoryItems = expenseCategories.map((category) {
-                          final iconAndColor = categoryIconColorService.getIconAndColorForCategory(category.id);
-                          return CategoryItem(
-                            id: category.id,
-                            name: category.name,
-                            icon: iconAndColor.icon,
-                            color: iconAndColor.color.value,
-                          );
-                        }).toList();
-
-                        return ModernCategorySelector(
-                          categories: categoryItems,
-                          selectedId: _selectedCategoryId,
-                          onChanged: (value) {
-                            if (value != null) {
-                              setState(() {
-                                _selectedCategoryId = value;
-                              });
-                            }
-                          },
-                        );
-                      },
-                      loading: () => const SizedBox(
-                        height: 100,
-                        child: Center(child: CircularProgressIndicator()),
-                      ),
-                      error: (error, stack) => Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: ModernColors.error.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(radius_md),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.error_outline,
-                              color: ModernColors.error,
-                            ),
-                            const SizedBox(width: spacing_md),
-                            Expanded(
-                              child: Text(
-                                'Error loading categories: $error',
-                                style: TextStyle(
-                                  color: ModernColors.error,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Account Selection
-                ModernAccountSelector(
-                  label: 'Default Account (Optional)',
-                  selectedAccount: _selectedAccountId != null
-                      ? ref.watch(filteredAccountsProvider).maybeWhen(
-                          data: (accounts) => accounts.firstWhere(
-                            (account) => account.id == _selectedAccountId,
-                            orElse: () => null as Account,
-                          ),
-                          orElse: () => null,
-                        )
-                      : null,
-                  onAccountSelected: (account) {
-                    setState(() {
-                      _selectedAccountId = account?.id;
-                    });
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Frequency
-                ModernDropdownSelector<BillFrequency>(
-                  label: 'Frequency',
-                  selectedValue: _selectedFrequency,
-                  items: BillFrequency.values.map((frequency) {
-                    return ModernDropdownItem(
-                      value: frequency,
-                      label: frequency.displayName,
-                      icon: _getFrequencyIcon(frequency),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        _selectedFrequency = value;
-                      });
-                    }
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Due Date Picker
-                ModernDateTimePicker(
-                  selectedDate: _selectedDueDate,
-                  onDateChanged: (date) {
-                    if (date != null) {
-                      setState(() {
-                        _selectedDueDate = date;
-                      });
-                    }
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Optional Fields Section
-                // Payee
-                ModernTextField(
-                  controller: _payeeController,
-                  label: 'Payee (optional)',
-                  placeholder: 'e.g., Electric Company',
-                  prefixIcon: Icons.business,
-                ),
-                const SizedBox(height: spacing_md),
-
-                // Description
-                ModernTextField(
-                  controller: _descriptionController,
-                  label: 'Description (optional)',
-                  placeholder: 'Additional details about this bill',
-                  maxLength: 200,
-                  prefixIcon: Icons.description_outlined,
-                ),
-                const SizedBox(height: spacing_md),
-
-                // Website
-                ModernTextField(
-                  controller: _websiteController,
-                  label: 'Website (optional)',
-                  placeholder: 'https://example.com',
-                  keyboardType: TextInputType.url,
-                  prefixIcon: Icons.link,
-                ),
-                const SizedBox(height: spacing_md),
-
-                // Auto Pay Toggle
-                Container(
-                  padding: const EdgeInsets.all(spacing_md),
-                  decoration: BoxDecoration(
-                    color: ModernColors.primaryGray,
-                    borderRadius: BorderRadius.circular(radius_md),
-                  ),
-                  child: Row(
+              // Scrollable Content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom + 16),
+                  child: Column(
+                    key: _contentKey,
                     children: [
-                      Icon(
-                        Icons.autorenew,
-                        color: ModernColors.textSecondary,
-                        size: 24,
-                      ),
-                      const SizedBox(width: spacing_md),
-                      Expanded(
+                      // Form
+                      Form(
+                        key: _formKey,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Auto Pay',
-                              style: ModernTypography.bodyLarge.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            Text(
-                              'Automatically pay this bill when due',
-                              style: ModernTypography.labelMedium.copyWith(
-                                color: ModernColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Switch(
-                        value: _isAutoPay,
-                        onChanged: (value) async {
-                          if (value) {
-                            // Show confirmation dialog for enabling auto-pay
-                            final confirmed = await showDialog<bool>(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text('Enable Auto Pay'),
-                                content: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Auto Pay will automatically process payments when bills are due. This requires:',
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Text(
-                                      '• A linked account with sufficient funds',
-                                      style: TextStyle(
-                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                      ),
-                                    ),
-                                    Text(
-                                      '• Confirmation of payment processing',
-                                      style: TextStyle(
-                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                      ),
-                                    ),
-                                    Text(
-                                      '• Ability to modify or cancel auto-pay settings',
-                                      style: TextStyle(
-                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Container(
-                                      padding: const EdgeInsets.all(12),
-                                      decoration: BoxDecoration(
-                                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.info_outline,
-                                            color: Theme.of(context).colorScheme.primary,
-                                            size: 20,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Text(
-                                              'You can disable auto-pay anytime from bill settings.',
-                                              style: TextStyle(
-                                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                                fontSize: 14,
+                            // Amount Display
+                            ModernAmountDisplay(
+                              amount: double.tryParse(_amountController.text) ?? 0.0,
+                              isEditable: true,
+                              onAmountChanged: (value) {
+                                developer.log('CreateBillBottomSheet: Amount changed to $value', name: 'CreateBillBottomSheet');
+                                _amountController.text = value.toStringAsFixed(2);
+                              },
+                              onValueChanged: (value) {
+                                developer.log('CreateBillBottomSheet: Amount value changed to $value', name: 'CreateBillBottomSheet');
+                                setState(() {
+                                  _amountController.text = value;
+                                });
+                              },
+                            ).animate()
+                              .fadeIn(duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 100))
+                              .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 100)),
+                            const SizedBox(height: spacing_lg),
+
+
+                            // Category Selector
+                            Consumer(
+                              builder: (context, ref, child) {
+                                final categoryState = ref.watch(categoryNotifierProvider);
+                                final categoryIconColorService = ref.watch(categoryIconColorServiceProvider);
+
+                                return categoryState.when(
+                                  data: (state) {
+                                    final expenseCategories = state.getCategoriesByType(TransactionType.expense);
+
+                                    // Update default category if not set or invalid
+                                    if (_selectedCategoryId.isEmpty ||
+                                        !expenseCategories.any((cat) => cat.id == _selectedCategoryId)) {
+                                      _selectedCategoryId = _getSmartDefaultCategoryId(expenseCategories);
+                                    }
+
+                                    if (expenseCategories.isEmpty) {
+                                      return Container(
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                          color: ModernColors.primaryGray,
+                                          borderRadius: BorderRadius.circular(radius_md),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.info_outline,
+                                              color: ModernColors.accentGreen,
+                                            ),
+                                            const SizedBox(width: spacing_md),
+                                            const Expanded(
+                                              child: Text(
+                                                'No expense categories available. Please add categories first.',
+                                                style: TextStyle(fontSize: 14),
                                               ),
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context, false),
-                                    child: const Text('Cancel'),
+                                          ],
+                                        ),
+                                      );
+                                    }
+
+                                    final categoryItems = expenseCategories.map((category) {
+                                      final iconAndColor = categoryIconColorService.getIconAndColorForCategory(category.id);
+                                      return CategoryItem(
+                                        id: category.id,
+                                        name: category.name,
+                                        icon: iconAndColor.icon,
+                                        color: iconAndColor.color.toARGB32(),
+                                      );
+                                    }).toList();
+
+                                    return ModernCategorySelector(
+                                      categories: categoryItems,
+                                      selectedId: _selectedCategoryId,
+                                      onChanged: (value) {
+                                        if (value != null) {
+                                          setState(() {
+                                            _selectedCategoryId = value;
+                                          });
+                                        }
+                                      },
+                                    );
+                                  },
+                                  loading: () => const SizedBox(
+                                    height: 100,
+                                    child: Center(child: CircularProgressIndicator()),
                                   ),
-                                  FilledButton(
-                                    onPressed: () => Navigator.pop(context, true),
-                                    child: const Text('Enable Auto Pay'),
+                                  error: (error, stack) => Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: ModernColors.error.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(radius_md),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.error_outline,
+                                          color: ModernColors.error,
+                                        ),
+                                        const SizedBox(width: spacing_md),
+                                        Expanded(
+                                          child: Text(
+                                            'Error loading categories: $error',
+                                            style: TextStyle(
+                                              color: ModernColors.error,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ).animate()
+                              .fadeIn(duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 300))
+                              .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 300)),
+                            const SizedBox(height: 16),
+
+                            // Account Selection
+                            Consumer(
+                              builder: (context, ref, child) {
+                                final accountsAsync = ref.watch(filteredAccountsProvider);
+
+                                return accountsAsync.when(
+                                  data: (accounts) {
+                                    return ModernDropdownSelector<String?>(
+                                      label: '',
+                                      placeholder: 'No default account',
+                                      selectedValue: _selectedAccountId,
+                                      items: [
+                                        ModernDropdownItem(
+                                          value: null,
+                                          label: 'No default account',
+                                        ),
+                                        ...accounts.map((account) {
+                                          return ModernDropdownItem(
+                                            value: account.id,
+                                            label: '${account.displayName} (${account.formattedAvailableBalance})',
+                                            icon: Icons.account_balance_wallet,
+                                            color: Color(account.type.color),
+                                          );
+                                        }),
+                                      ],
+                                      onChanged: (value) {
+                                        developer.log('CreateBillBottomSheet: Account changed to $value', name: 'CreateBillBottomSheet');
+                                        setState(() {
+                                          _selectedAccountId = value;
+                                        });
+                                      },
+                                    );
+                                  },
+                                  loading: () => const SizedBox(
+                                    height: 60,
+                                    child: Center(child: CircularProgressIndicator()),
+                                  ),
+                                  error: (error, stack) => Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: ModernColors.error.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(radius_md),
+                                    ),
+                                    child: Text(
+                                      'Error loading accounts: $error',
+                                      style: TextStyle(color: ModernColors.error),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ).animate()
+                              .fadeIn(duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 400))
+                              .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 400)),
+                            const SizedBox(height: 16),
+
+                            // Frequency
+                            ModernToggleButton(
+                              options: const ['Weekly', 'Monthly', 'Quarterly', 'Annually'],
+                              selectedIndex: _getFrequencyIndex(_selectedFrequency),
+                              onChanged: (index) {
+                                developer.log('CreateBillBottomSheet: Frequency changed to index $index', name: 'CreateBillBottomSheet');
+                                setState(() {
+                                  _selectedFrequency = _getFrequencyFromIndex(index);
+                                });
+                              },
+                            ).animate()
+                              .fadeIn(duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 500))
+                              .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 500)),
+                            const SizedBox(height: 16),
+
+                            // Due Date Picker
+                            ModernDateTimePicker(
+                              selectedDate: _selectedDueDate,
+                              onDateChanged: (date) {
+                                if (date != null) {
+                                  setState(() {
+                                    _selectedDueDate = date;
+                                  });
+                                }
+                              },
+                            ).animate()
+                              .fadeIn(duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 600))
+                              .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 600)),
+                            const SizedBox(height: 16),
+
+                            // Bill Name
+                            ModernTextField(
+                              controller: _nameController,
+                              placeholder: 'e.g., Electricity Bill',
+                              prefixIcon: Icons.title,
+                              errorText: _nameValidationError,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Please enter a bill name';
+                                }
+                                // Basic client-side validation - full uniqueness check happens in use case
+                                if (value.trim().length < 2) {
+                                  return 'Bill name must be at least 2 characters';
+                                }
+                                return null;
+                              },
+                            ).animate()
+                              .fadeIn(duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 200))
+                              .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 200)),
+                            const SizedBox(height: spacing_lg),
+
+                            // Optional Fields Section
+                            // Payee
+                            ModernTextField(
+                              controller: _payeeController,
+                              label: '',
+                              placeholder: 'Payee (optional)',
+                              prefixIcon: Icons.business,
+                            ),
+                            const SizedBox(height: spacing_md),
+
+                            // Description
+                            ModernTextField(
+                              controller: _descriptionController,
+                              label: '',
+                              placeholder: 'Description (optional)',
+                              maxLength: 200,
+                              prefixIcon: Icons.description_outlined,
+                            ),
+                            const SizedBox(height: spacing_md),
+
+                            // Website
+                            ModernTextField(
+                              controller: _websiteController,
+                              label: '',
+                              placeholder: 'Website (optional) - e.g., https://example.com',
+                              keyboardType: TextInputType.url,
+                              prefixIcon: Icons.link,
+                            ),
+                            const SizedBox(height: spacing_md),
+
+                            // Auto Pay Toggle
+                            Container(
+                              padding: const EdgeInsets.all(spacing_md),
+                              decoration: BoxDecoration(
+                                color: ModernColors.primaryGray,
+                                borderRadius: BorderRadius.circular(radius_md),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.autorenew,
+                                    color: ModernColors.textSecondary,
+                                    size: 24,
+                                  ),
+                                  const SizedBox(width: spacing_md),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Auto Pay',
+                                          style: ModernTypography.bodyLarge.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Automatically pay this bill when due',
+                                          style: ModernTypography.labelMedium.copyWith(
+                                            color: ModernColors.textSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Switch(
+                                    value: _isAutoPay,
+                                    onChanged: (value) async {
+                                      if (value) {
+                                        // Show confirmation dialog for enabling auto-pay
+                                        final confirmed = await showDialog<bool>(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            title: const Text('Enable Auto Pay'),
+                                            content: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                const Text(
+                                                  'Auto Pay will automatically process payments when bills are due. This requires:',
+                                                ),
+                                                const SizedBox(height: 12),
+                                                Text(
+                                                  '• A linked account with sufficient funds',
+                                                  style: TextStyle(
+                                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  '• Confirmation of payment processing',
+                                                  style: TextStyle(
+                                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  '• Ability to modify or cancel auto-pay settings',
+                                                  style: TextStyle(
+                                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 16),
+                                                Container(
+                                                  padding: const EdgeInsets.all(12),
+                                                  decoration: BoxDecoration(
+                                                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                                    borderRadius: BorderRadius.circular(8),
+                                                  ),
+                                                  child: Row(
+                                                    children: [
+                                                      Icon(
+                                                        Icons.info_outline,
+                                                        color: Theme.of(context).colorScheme.primary,
+                                                        size: 20,
+                                                      ),
+                                                      const SizedBox(width: 8),
+                                                      Expanded(
+                                                        child: Text(
+                                                          'You can disable auto-pay anytime from bill settings.',
+                                                          style: TextStyle(
+                                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                                            fontSize: 14,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () => Navigator.pop(context, false),
+                                                child: const Text('Cancel'),
+                                              ),
+                                              FilledButton(
+                                                onPressed: () => Navigator.pop(context, true),
+                                                child: const Text('Enable Auto Pay'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+
+                                        if (confirmed == true) {
+                                          setState(() {
+                                            _isAutoPay = value;
+                                          });
+                                        }
+                                      } else {
+                                        setState(() {
+                                          _isAutoPay = value;
+                                        });
+                                      }
+                                    },
                                   ),
                                 ],
                               ),
-                            );
+                            ),
+                            const SizedBox(height: spacing_md),
 
-                            if (confirmed == true) {
-                              setState(() {
-                                _isAutoPay = value;
-                              });
-                            }
-                          } else {
-                            setState(() {
-                              _isAutoPay = value;
-                            });
-                          }
-                        },
+                            // Notes
+                            ModernTextField(
+                              controller: _notesController,
+                              label: '',
+                              prefixIcon: Icons.note,
+                              placeholder: 'Any additional notes (optional)',
+                              maxLength: 500,
+                            ),
+
+                            const SizedBox(height: 32),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: spacing_md),
+              ),
 
-                // Notes
-                ModernTextField(
-                  controller: _notesController,
-                  label: 'Notes (optional)',
-                  placeholder: 'Any additional notes',
-                  maxLength: 500,
-                ),
-
-                const SizedBox(height: 32),
-
-                // Action Button
-                ModernActionButton(
-                  text: 'Add Bill',
-                  onPressed: _isSubmitting ? null : _submitBill,
-                  isLoading: _isSubmitting,
-                ),
-                const SizedBox(height: spacing_lg),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+              // Fixed Action Button
+              ModernActionButton(
+                text: 'Add Bill',
+                onPressed: _isSubmitting ? null : () {
+                  developer.log('CreateBillBottomSheet: Add Bill button pressed', name: 'CreateBillBottomSheet');
+                  _submitBill();
+                },
+                isLoading: _isSubmitting,
+                minimumPressDuration: const Duration(milliseconds: 100),
+              ),
+              const SizedBox(height: spacing_lg),
+            ],
+          );
+       },
+     ),
+   );
+ }
 
   /// Get smart default category ID for expense categories (bills)
   String _getSmartDefaultCategoryId(List<TransactionCategory> expenseCategories) {
@@ -590,35 +647,51 @@ class _CreateBillBottomSheetState extends ConsumerState<CreateBillBottomSheet> {
     return expenseCategories.first.id;
   }
 
-  /// Get icon for frequency
-  IconData _getFrequencyIcon(BillFrequency frequency) {
+  /// Get index for frequency in toggle button
+  int _getFrequencyIndex(BillFrequency frequency) {
     switch (frequency) {
-      case BillFrequency.daily:
-        return Icons.today;
       case BillFrequency.weekly:
-        return Icons.calendar_view_week;
-      case BillFrequency.biWeekly:
-        return Icons.calendar_view_week;
+        return 0;
       case BillFrequency.monthly:
-        return Icons.calendar_month;
+        return 1;
       case BillFrequency.quarterly:
-        return Icons.calendar_view_month;
+        return 2;
       case BillFrequency.annually:
-        return Icons.calendar_today;
       case BillFrequency.yearly:
-        return Icons.calendar_today;
-      case BillFrequency.custom:
-        return Icons.settings;
+        return 3;
+      default:
+        return 1; // Default to monthly
     }
   }
 
+  /// Get frequency from toggle button index
+  BillFrequency _getFrequencyFromIndex(int index) {
+    switch (index) {
+      case 0:
+        return BillFrequency.weekly;
+      case 1:
+        return BillFrequency.monthly;
+      case 2:
+        return BillFrequency.quarterly;
+      case 3:
+        return BillFrequency.annually;
+      default:
+        return BillFrequency.monthly;
+    }
+  }
+
+
   Future<void> _submitBill() async {
+    developer.log('CreateBillBottomSheet: _submitBill called', name: 'CreateBillBottomSheet');
+
     if (!_formKey.currentState!.validate()) {
+      developer.log('CreateBillBottomSheet: Form validation failed', name: 'CreateBillBottomSheet');
       return;
     }
 
     // Check for instant validation error
     if (_nameValidationError != null) {
+      developer.log('CreateBillBottomSheet: Name validation error: $_nameValidationError', name: 'CreateBillBottomSheet');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(_nameValidationError!),
@@ -628,6 +701,7 @@ class _CreateBillBottomSheetState extends ConsumerState<CreateBillBottomSheet> {
       return;
     }
 
+    developer.log('CreateBillBottomSheet: Setting _isSubmitting = true', name: 'CreateBillBottomSheet');
     setState(() => _isSubmitting = true);
 
     try {

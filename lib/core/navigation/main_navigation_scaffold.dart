@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../features/notifications/presentation/providers/notification_providers.dart';
 
 /// Main navigation scaffold with bottom tab bar
-class MainNavigationScaffold extends StatefulWidget {
+class MainNavigationScaffold extends ConsumerStatefulWidget {
   const MainNavigationScaffold({super.key, required this.child});
 
   final Widget child;
@@ -10,10 +12,10 @@ class MainNavigationScaffold extends StatefulWidget {
   static const List<String> _routes = ['/', '/transactions', '/budgets', '/goals', '/more/accounts'];
 
   @override
-  State<MainNavigationScaffold> createState() => _MainNavigationScaffoldState();
+  ConsumerState<MainNavigationScaffold> createState() => _MainNavigationScaffoldState();
 }
 
-class _MainNavigationScaffoldState extends State<MainNavigationScaffold> with TickerProviderStateMixin {
+class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold> with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   int _previousIndex = 0;
@@ -59,6 +61,7 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> with Ti
   @override
   Widget build(BuildContext context) {
     final currentIndex = _getCurrentIndex(context);
+    final unreadCount = ref.watch(unreadNotificationsCountProvider);
 
     return Scaffold(
       body: widget.child,
@@ -69,73 +72,101 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> with Ti
         showSelectedLabels: true,
         showUnselectedLabels: true,
         items: [
-          BottomNavigationBarItem(
-            icon: AnimatedBuilder(
-              animation: _scaleAnimation,
-              builder: (context, child) {
-                return Transform.scale(
-                  scale: currentIndex == 0 ? _scaleAnimation.value : 1.0,
-                  child: const Icon(Icons.home_outlined, size: 24),
-                );
-              },
-            ),
-            activeIcon: const Icon(Icons.home, size: 24),
+          _buildNavigationBarItem(
+            icon: Icons.home_outlined,
+            activeIcon: Icons.home,
             label: 'Home',
+            index: 0,
+            currentIndex: currentIndex,
+            badgeCount: 0, // Home doesn't need badge
           ),
-          BottomNavigationBarItem(
-            icon: AnimatedBuilder(
-              animation: _scaleAnimation,
-              builder: (context, child) {
-                return Transform.scale(
-                  scale: currentIndex == 1 ? _scaleAnimation.value : 1.0,
-                  child: const Icon(Icons.credit_card_outlined, size: 24),
-                );
-              },
-            ),
-            activeIcon: const Icon(Icons.credit_card, size: 24),
+          _buildNavigationBarItem(
+            icon: Icons.credit_card_outlined,
+            activeIcon: Icons.credit_card,
             label: 'Transactions',
+            index: 1,
+            currentIndex: currentIndex,
+            badgeCount: 0, // Transactions don't need badge
           ),
-          BottomNavigationBarItem(
-            icon: AnimatedBuilder(
-              animation: _scaleAnimation,
-              builder: (context, child) {
-                return Transform.scale(
-                  scale: currentIndex == 2 ? _scaleAnimation.value : 1.0,
-                  child: const Icon(Icons.pie_chart_outline, size: 24),
-                );
-              },
-            ),
-            activeIcon: const Icon(Icons.pie_chart, size: 24),
+          _buildNavigationBarItem(
+            icon: Icons.pie_chart_outline,
+            activeIcon: Icons.pie_chart,
             label: 'Budgets',
+            index: 2,
+            currentIndex: currentIndex,
+            badgeCount: 0, // Budgets don't need badge
           ),
-          BottomNavigationBarItem(
-            icon: AnimatedBuilder(
-              animation: _scaleAnimation,
-              builder: (context, child) {
-                return Transform.scale(
-                  scale: currentIndex == 3 ? _scaleAnimation.value : 1.0,
-                  child: const Icon(Icons.flag_outlined, size: 24),
-                );
-              },
-            ),
-            activeIcon: const Icon(Icons.flag, size: 24),
+          _buildNavigationBarItem(
+            icon: Icons.flag_outlined,
+            activeIcon: Icons.flag,
             label: 'Goals',
+            index: 3,
+            currentIndex: currentIndex,
+            badgeCount: 0, // Goals don't need badge
           ),
-          BottomNavigationBarItem(
-            icon: AnimatedBuilder(
-              animation: _scaleAnimation,
-              builder: (context, child) {
-                return Transform.scale(
-                  scale: currentIndex == 4 ? _scaleAnimation.value : 1.0,
-                  child: const Icon(Icons.account_balance_wallet_outlined, size: 24),
-                );
-              },
-            ),
-            activeIcon: const Icon(Icons.account_balance_wallet, size: 24),
+          _buildNavigationBarItem(
+            icon: Icons.account_balance_wallet_outlined,
+            activeIcon: Icons.account_balance_wallet,
             label: 'Wallet',
+            index: 4,
+            currentIndex: currentIndex,
+            badgeCount: unreadCount, // Wallet/More tab shows notification badge
           ),
         ],
       ),
+    );
+  }
+
+  BottomNavigationBarItem _buildNavigationBarItem({
+    required IconData icon,
+    required IconData activeIcon,
+    required String label,
+    required int index,
+    required int currentIndex,
+    required int badgeCount,
+  }) {
+    return BottomNavigationBarItem(
+      icon: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          AnimatedBuilder(
+            animation: _scaleAnimation,
+            builder: (context, child) {
+              return Transform.scale(
+                scale: currentIndex == index ? _scaleAnimation.value : 1.0,
+                child: Icon(icon, size: 24),
+              );
+            },
+          ),
+          if (badgeCount > 0)
+            Positioned(
+              right: -6,
+              top: -6,
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: const BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                constraints: const BoxConstraints(
+                  minWidth: 16,
+                  minHeight: 16,
+                ),
+                child: Text(
+                  badgeCount > 9 ? '9+' : '$badgeCount',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+        ],
+      ),
+      activeIcon: Icon(activeIcon, size: 24),
+      label: label,
     );
   }
 }

@@ -8,6 +8,8 @@ import '../../../accounts/domain/entities/account.dart';
 import '../../../accounts/presentation/providers/account_providers.dart';
 import '../../domain/entities/recurring_income.dart';
 import '../providers/recurring_income_providers.dart';
+import '../widgets/edit_recurring_income_bottom_sheet.dart';
+import '../widgets/receipt_recording_bottom_sheet.dart';
 
 /// Detail screen for viewing and managing a specific recurring income
 class RecurringIncomeDetailScreen extends ConsumerStatefulWidget {
@@ -76,7 +78,7 @@ class _RecurringIncomeDetailScreenState extends ConsumerState<RecurringIncomeDet
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),
-            onPressed: () => context.go('/more/incomes/${_income!.id}/edit'),
+            onPressed: () => EditRecurringIncomeBottomSheet.show(context, incomeId: _income!.id),
             tooltip: 'Edit Income',
           ),
           IconButton(
@@ -383,7 +385,7 @@ class _RecurringIncomeDetailScreenState extends ConsumerState<RecurringIncomeDet
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => context.go('/more/incomes/${_income!.id}/edit'),
+                    onPressed: () => EditRecurringIncomeBottomSheet.show(context, incomeId: _income!.id),
                     icon: const Icon(Icons.edit),
                     label: const Text('Edit'),
                   ),
@@ -479,7 +481,14 @@ class _RecurringIncomeDetailScreenState extends ConsumerState<RecurringIncomeDet
   }
 
   Future<void> _recordIncomeReceipt() async {
-    // Navigate to receipt recording screen
-    context.go('/more/incomes/${_income!.id}/receipt');
+    // Show receipt recording bottom sheet
+    await ReceiptRecordingBottomSheet.show(
+      context: context,
+      incomeId: _income!.id,
+      onReceiptRecorded: () {
+        // Refresh the income data after recording
+        _loadIncome();
+      },
+    );
   }
 }

@@ -6,6 +6,7 @@ import 'package:gap/gap.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../settings/presentation/providers/settings_providers.dart';
 
 /// Enhanced spending trends chart widget with actual data visualization
 class EnhancedSpendingTrendsChart extends ConsumerWidget {
@@ -72,7 +73,7 @@ class EnhancedSpendingTrendsChart extends ConsumerWidget {
             Gap(AppSpacing.lg),
             SizedBox(
               height: height,
-              child: _buildChart(),
+              child: _buildChart(ref),
             ),
             if (showLegend) ...[
               Gap(AppSpacing.md),
@@ -84,7 +85,7 @@ class EnhancedSpendingTrendsChart extends ConsumerWidget {
     );
   }
 
-  Widget _buildChart() {
+  Widget _buildChart(WidgetRef ref) {
     // Sample data - in real implementation, this would come from a provider
     final sampleData = _generateSampleData();
 
@@ -130,8 +131,10 @@ class EnhancedSpendingTrendsChart extends ConsumerWidget {
               interval: 100,
               reservedSize: 40,
               getTitlesWidget: (value, meta) {
+                final formattingService = ref.read(formattingServiceProvider);
+                final formattedValue = formattingService.formatCurrency(value, decimalDigits: 0);
                 return Text(
-                  '\$${value.toInt()}',
+                  formattedValue,
                   style: AppTypography.bodySmall.copyWith(
                     color: AppColors.textSecondary,
                   ),

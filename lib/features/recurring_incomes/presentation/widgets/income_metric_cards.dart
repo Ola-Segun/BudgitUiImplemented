@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography_extended.dart';
+import '../../../settings/presentation/widgets/privacy_mode_text.dart';
 import '../theme/income_theme_extended.dart';
 import '../../domain/entities/recurring_income.dart';
 
-class IncomeMetricCards extends StatelessWidget {
+class IncomeMetricCards extends ConsumerWidget {
   const IncomeMetricCards({
     super.key,
     required this.summary,
@@ -14,14 +16,13 @@ class IncomeMetricCards extends StatelessWidget {
   final RecurringIncomesSummary summary;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Row(
       children: [
         Expanded(
           child: _IncomeMetricCard(
             title: 'Expected',
             value: summary.expectedAmount,
-            displayValue: '\$${summary.expectedAmount.toStringAsFixed(0)}',
             icon: Icons.schedule,
             color: IncomeThemeExtended.incomeSecondary,
             subtitle: 'This Month',
@@ -34,7 +35,6 @@ class IncomeMetricCards extends StatelessWidget {
           child: _IncomeMetricCard(
             title: 'Received',
             value: summary.receivedThisMonth,
-            displayValue: '\$${summary.receivedThisMonth.toStringAsFixed(0)}',
             icon: Icons.check_circle,
             color: IncomeThemeExtended.statusReceived,
             subtitle: 'This Month',
@@ -47,11 +47,10 @@ class IncomeMetricCards extends StatelessWidget {
   }
 }
 
-class _IncomeMetricCard extends StatefulWidget {
+class _IncomeMetricCard extends ConsumerStatefulWidget {
   const _IncomeMetricCard({
     required this.title,
     required this.value,
-    required this.displayValue,
     required this.icon,
     required this.color,
     required this.subtitle,
@@ -59,16 +58,15 @@ class _IncomeMetricCard extends StatefulWidget {
 
   final String title;
   final double value;
-  final String displayValue;
   final IconData icon;
   final Color color;
   final String subtitle;
 
   @override
-  State<_IncomeMetricCard> createState() => _IncomeMetricCardState();
+  ConsumerState<_IncomeMetricCard> createState() => _IncomeMetricCardState();
 }
 
-class _IncomeMetricCardState extends State<_IncomeMetricCard>
+class _IncomeMetricCardState extends ConsumerState<_IncomeMetricCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
@@ -133,8 +131,9 @@ class _IncomeMetricCardState extends State<_IncomeMetricCard>
           AnimatedBuilder(
             animation: _animation,
             builder: (context, child) {
-              return Text(
-                '\$${_animation.value.toStringAsFixed(0)}',
+              return PrivacyModeAmount(
+                amount: _animation.value,
+                currency: '\$',
                 style: AppTypographyExtended.metricPercentage.copyWith(
                   color: widget.color,
                 ),

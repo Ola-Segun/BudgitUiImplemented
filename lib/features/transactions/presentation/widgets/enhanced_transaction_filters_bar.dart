@@ -6,6 +6,10 @@ import '../../../../core/design_system/design_tokens.dart';
 import '../../../../core/design_system/color_tokens.dart';
 import '../../../../core/design_system/typography_tokens.dart';
 import '../../../../core/design_system/form_tokens.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_colors_extended.dart';
+import '../../../../core/theme/app_typography_extended.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../domain/entities/transaction_filter.dart';
 import '../../domain/entities/transaction.dart';
 import '../providers/transaction_providers.dart';
@@ -68,103 +72,53 @@ class EnhancedTransactionFiltersBar extends ConsumerWidget {
 
   Widget _buildTypeFilter(TransactionType type) {
     final isSelected = currentFilter?.transactionType == type;
+    final color = type == TransactionType.income
+        ? AppColorsExtended.statusNormal
+        : AppColorsExtended.statusCritical;
 
-    return FilterChip(
-      label: Text(
-        type.displayName,
-        style: TypographyTokens.labelMd.copyWith(
-          color: isSelected ? Colors.white : ColorTokens.textPrimary,
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-        ),
-      ),
-      selected: isSelected,
-      onSelected: (selected) {
-        if (selected) {
-          final newFilter = (currentFilter ?? TransactionFilter()).copyWith(
-            transactionType: type,
-          );
-          onFilterApplied(newFilter);
-        } else {
+    return _EnhancedFilterChip(
+      label: type.displayName,
+      isSelected: isSelected,
+      color: color,
+      onTap: () {
+        if (isSelected) {
           final newFilter = (currentFilter ?? TransactionFilter()).copyWith(
             transactionType: null,
           );
           onFilterApplied(newFilter);
+        } else {
+          final newFilter = (currentFilter ?? TransactionFilter()).copyWith(
+            transactionType: type,
+          );
+          onFilterApplied(newFilter);
         }
       },
-      backgroundColor: ColorTokens.surfaceSecondary,
-      selectedColor: type == TransactionType.income
-          ? ColorTokens.success500
-          : ColorTokens.critical500,
-      checkmarkColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
-        side: BorderSide(
-          color: isSelected
-              ? Colors.transparent
-              : ColorTokens.borderSecondary,
-          width: 1.5,
-        ),
-      ),
-      padding: EdgeInsets.symmetric(
-        horizontal: DesignTokens.spacing3,
-        vertical: DesignTokens.spacing2,
-      ),
-    ).animate(target: isSelected ? 1 : 0)
-        .scale(
-          begin: const Offset(1.0, 1.0),
-          end: const Offset(1.05, 1.05),
-          duration: DesignTokens.durationSm,
-        );
+    );
   }
 
   Widget _buildQuickDateFilter(String label, DateTimeRange range) {
     final isSelected = _isDateRangeSelected(range);
 
-    return FilterChip(
-      label: Text(
-        label,
-        style: TypographyTokens.labelMd.copyWith(
-          color: isSelected ? Colors.white : ColorTokens.textPrimary,
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-        ),
-      ),
-      selected: isSelected,
-      onSelected: (selected) {
-        if (selected) {
-          final newFilter = (currentFilter ?? TransactionFilter()).copyWith(
-            startDate: range.start,
-            endDate: range.end,
-          );
-          onFilterApplied(newFilter);
-        } else {
+    return _EnhancedFilterChip(
+      label: label,
+      isSelected: isSelected,
+      color: AppColorsExtended.budgetPrimary,
+      icon: Icons.calendar_today,
+      onTap: () {
+        if (isSelected) {
           final newFilter = (currentFilter ?? TransactionFilter()).copyWith(
             startDate: null,
             endDate: null,
           );
           onFilterApplied(newFilter);
+        } else {
+          final newFilter = (currentFilter ?? TransactionFilter()).copyWith(
+            startDate: range.start,
+            endDate: range.end,
+          );
+          onFilterApplied(newFilter);
         }
       },
-      backgroundColor: ColorTokens.surfaceSecondary,
-      selectedColor: ColorTokens.teal500,
-      checkmarkColor: Colors.white,
-      avatar: Icon(
-        Icons.calendar_today,
-        size: DesignTokens.iconSm,
-        color: isSelected ? Colors.white : ColorTokens.textSecondary,
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
-        side: BorderSide(
-          color: isSelected
-              ? Colors.transparent
-              : ColorTokens.borderSecondary,
-          width: 1.5,
-        ),
-      ),
-      padding: EdgeInsets.symmetric(
-        horizontal: DesignTokens.spacing3,
-        vertical: DesignTokens.spacing2,
-      ),
     );
   }
 
@@ -177,23 +131,18 @@ class EnhancedTransactionFiltersBar extends ConsumerWidget {
       final isSelected = currentFilter?.categoryIds?.contains(category.id) ?? false;
 
       return Padding(
-        padding: EdgeInsets.only(right: DesignTokens.spacing2),
-        child: FilterChip(
-          label: Text(
-            category.name,
-            style: TypographyTokens.labelMd.copyWith(
-              color: isSelected ? Colors.white : ColorTokens.textPrimary,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            ),
-          ),
-          selected: isSelected,
-          onSelected: (selected) {
+        padding: EdgeInsets.only(right: AppDimensions.spacing2),
+        child: _EnhancedFilterChip(
+          label: category.name,
+          isSelected: isSelected,
+          color: Color(category.color),
+          onTap: () {
             final currentIds = currentFilter?.categoryIds ?? [];
             List<String> newIds;
-            if (selected) {
-              newIds = [...currentIds, category.id];
-            } else {
+            if (isSelected) {
               newIds = currentIds.where((id) => id != category.id).toList();
+            } else {
+              newIds = [...currentIds, category.id];
             }
 
             final newFilter = (currentFilter ?? TransactionFilter()).copyWith(
@@ -201,22 +150,6 @@ class EnhancedTransactionFiltersBar extends ConsumerWidget {
             );
             onFilterApplied(newFilter);
           },
-          backgroundColor: ColorTokens.surfaceSecondary,
-          selectedColor: Color(category.color),
-          checkmarkColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
-            side: BorderSide(
-              color: isSelected
-                  ? Colors.transparent
-                  : ColorTokens.borderSecondary,
-              width: 1.5,
-            ),
-          ),
-          padding: EdgeInsets.symmetric(
-            horizontal: DesignTokens.spacing3,
-            vertical: DesignTokens.spacing2,
-          ),
         ),
       );
     }).toList();
@@ -224,80 +157,34 @@ class EnhancedTransactionFiltersBar extends ConsumerWidget {
 
   Widget _buildAmountRangeFilter(BuildContext context) {
     final hasAmountFilter = currentFilter?.minAmount != null ||
-                           currentFilter?.maxAmount != null;
+                            currentFilter?.maxAmount != null;
 
-    return FilterChip(
-      label: Text(
-        hasAmountFilter ? 'Amount Set' : 'Amount Range',
-        style: TypographyTokens.labelMd.copyWith(
-          color: hasAmountFilter ? Colors.white : ColorTokens.textPrimary,
-          fontWeight: hasAmountFilter ? FontWeight.w600 : FontWeight.w500,
-        ),
-      ),
-      selected: hasAmountFilter,
-      onSelected: (selected) {
-        if (selected) {
-          _showAmountRangeDialog(context);
-        } else {
+    return _EnhancedFilterChip(
+      label: hasAmountFilter ? 'Amount Set' : 'Amount Range',
+      isSelected: hasAmountFilter,
+      color: AppColorsExtended.budgetPrimary,
+      icon: Icons.attach_money,
+      onTap: () {
+        if (hasAmountFilter) {
           final newFilter = (currentFilter ?? TransactionFilter()).copyWith(
             minAmount: null,
             maxAmount: null,
           );
           onFilterApplied(newFilter);
+        } else {
+          _showAmountRangeDialog(context);
         }
       },
-      backgroundColor: ColorTokens.surfaceSecondary,
-      selectedColor: ColorTokens.teal500,
-      checkmarkColor: Colors.white,
-      avatar: Icon(
-        Icons.attach_money,
-        size: DesignTokens.iconSm,
-        color: hasAmountFilter ? Colors.white : ColorTokens.textSecondary,
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
-        side: BorderSide(
-          color: hasAmountFilter
-              ? Colors.transparent
-              : ColorTokens.borderSecondary,
-          width: 1.5,
-        ),
-      ),
-      padding: EdgeInsets.symmetric(
-        horizontal: DesignTokens.spacing3,
-        vertical: DesignTokens.spacing2,
-      ),
     );
   }
 
   Widget _buildClearAllFilter() {
-    return FilterChip(
-      label: Text(
-        'Clear All',
-        style: TypographyTokens.labelMd.copyWith(
-          color: ColorTokens.critical500,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      selected: false,
-      onSelected: (_) => onFilterCleared(),
-      backgroundColor: ColorTokens.critical500.withValues(alpha: 0.1),
-      avatar: Icon(
-        Icons.clear_all,
-        size: DesignTokens.iconSm,
-        color: ColorTokens.critical500,
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
-        side: BorderSide(
-          color: ColorTokens.critical500.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
-      ),
-      padding: EdgeInsets.symmetric(
-        horizontal: DesignTokens.spacing3,
-        vertical: DesignTokens.spacing2,
-      ),
+    return _EnhancedFilterChip(
+      label: 'Clear All',
+      isSelected: false,
+      color: AppColorsExtended.statusCritical,
+      icon: Icons.clear_all,
+      onTap: onFilterCleared,
     );
   }
 
@@ -398,5 +285,90 @@ class EnhancedTransactionFiltersBar extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+class _EnhancedFilterChip extends StatelessWidget {
+  const _EnhancedFilterChip({
+    required this.label,
+    required this.isSelected,
+    required this.color,
+    required this.onTap,
+    this.icon,
+  });
+
+  final String label;
+  final bool isSelected;
+  final Color color;
+  final VoidCallback onTap;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppDimensions.spacing3,
+            vertical: AppDimensions.spacing2,
+          ),
+          decoration: BoxDecoration(
+            gradient: isSelected
+                ? LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      color.withValues(alpha: 0.15),
+                      color.withValues(alpha: 0.08),
+                    ],
+                  )
+                : null,
+            color: isSelected ? null : AppColorsExtended.pillBgUnselected,
+            borderRadius: BorderRadius.circular(12),
+            border: isSelected
+                ? Border.all(color: color.withValues(alpha: 0.3), width: 1.5)
+                : null,
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.15),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(
+                  icon,
+                  size: 16,
+                  color: isSelected ? color : AppColors.textSecondary,
+                ),
+                SizedBox(width: AppDimensions.spacing1),
+              ],
+              Text(
+                label,
+                style: AppTypographyExtended.metricLabel.copyWith(
+                  color: isSelected ? color : AppColors.textPrimary,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).animate(target: isSelected ? 1 : 0)
+        .scale(
+          begin: const Offset(1.0, 1.0),
+          end: const Offset(1.05, 1.05),
+          duration: const Duration(milliseconds: 200),
+        );
   }
 }

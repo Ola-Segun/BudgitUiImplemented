@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'goal_contribution.dart';
@@ -27,7 +28,9 @@ class Goal with _$Goal {
 
   /// Calculate progress percentage (0.0 to 1.0)
   double get progressPercentage {
-    if (targetAmount <= 0) return 0.0;
+    if (!targetAmount.isFinite || targetAmount <= 0) {
+      return 0.0;
+    }
     return (currentAmount / targetAmount).clamp(0.0, 1.0);
   }
 
@@ -80,23 +83,25 @@ class Goal with _$Goal {
     final remaining = remainingAmount;
     if (remaining <= 0) return DateTime.now();
 
-    // Simple projection: assume current contribution rate continues
-    // This is a basic calculation - could be enhanced with historical data
-    final daysRemaining = deadline.difference(DateTime.now()).inDays;
-    if (daysRemaining <= 0) return null;
+    // Calculate days passed (ensure at least 1 day to avoid division by zero)
+    final daysPassed = DateTime.now().difference(createdAt).inDays.clamp(1, double.infinity).toInt();
 
-    final daysPassed = DateTime.now().difference(createdAt).inDays + 1;
+    // Use current progress rate, but ensure it's positive
     final dailyRate = currentAmount / daysPassed;
-
-    // If no progress has been made (dailyRate <= 0), cannot project completion
     if (dailyRate <= 0) return null;
 
     final projectedDays = remaining / dailyRate;
 
-    // Ensure projectedDays is finite and reasonable
-    if (!projectedDays.isFinite || projectedDays < 0) return null;
+    // Ensure projectedDays is finite, reasonable, and not too far in the future (max 10 years)
+    if (!projectedDays.isFinite || projectedDays < 0 || projectedDays > 3650) return null;
 
-    return DateTime.now().add(Duration(days: projectedDays.round()));
+    final projectedDate = DateTime.now().add(Duration(days: projectedDays.round()));
+
+    // Don't project beyond a reasonable timeframe (5 years from now)
+    final maxProjectionDate = DateTime.now().add(const Duration(days: 1825));
+    if (projectedDate.isAfter(maxProjectionDate)) return null;
+
+    return projectedDate;
   }
 
   /// Calculate required monthly contribution to meet deadline

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_colors_extended.dart';
 import '../../../../core/theme/app_typography_extended.dart';
@@ -7,6 +6,7 @@ import '../../../../core/theme/app_dimensions.dart';
 import '../../../insights/domain/entities/insight.dart';
 import '../../../insights/presentation/widgets/enhanced_spending_trends_chart.dart';
 import '../../../insights/presentation/widgets/spending_insights_card.dart';
+import '../../../settings/presentation/widgets/privacy_mode_text.dart';
 
 class EnhancedInsightsCard extends StatefulWidget {
   const EnhancedInsightsCard({
@@ -341,8 +341,9 @@ class _InsightContent extends StatelessWidget {
                     color: insightColor,
                   ),
                   const SizedBox(width: 4),
-                  Text(
-                    NumberFormat.currency(symbol: '\$', decimalDigits: 0).format(insight.amount),
+                  PrivacyModeAmount(
+                    amount: insight.amount!,
+                    currency: '\$',
                     style: AppTypographyExtended.statsValue.copyWith(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,

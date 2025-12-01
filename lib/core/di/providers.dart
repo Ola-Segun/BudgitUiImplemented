@@ -5,6 +5,7 @@ import 'package:hive/hive.dart';
 
 import '../storage/hive_storage.dart';
 import '../router/app_router.dart';
+import '../navigation/navigation_service.dart';
 import '../../features/transactions/data/datasources/transaction_hive_datasource.dart';
 import '../../features/transactions/data/datasources/transaction_category_hive_datasource.dart';
 import '../../features/transactions/data/repositories/transaction_repository_impl.dart';
@@ -84,6 +85,9 @@ import '../../features/recurring_incomes/domain/usecases/record_income_receipt.d
 import '../../features/recurring_incomes/data/datasources/recurring_income_hive_datasource.dart';
 import '../../features/recurring_incomes/presentation/providers/recurring_income_providers.dart' as recurring_income_providers;
 import '../../features/notifications/presentation/providers/notification_providers.dart' as notification_providers;
+import '../../features/notifications/data/repositories/notification_repository_impl.dart';
+import '../../features/notifications/data/datasources/notification_hive_datasource.dart';
+import '../../features/notifications/domain/repositories/notification_repository.dart';
 
 /// Core providers for dependency injection
 /// All app dependencies should be defined here
@@ -96,6 +100,11 @@ final hiveStorageProvider = Provider<HiveStorage>((ref) {
 // Router provider
 final routerProvider = Provider<GoRouter>((ref) {
   return AppRouter.router;
+});
+
+// Navigation service provider
+final navigationServiceProvider = Provider<NavigationService>((ref) {
+  return NavigationService(ref.read(routerProvider));
 });
 
 // Theme mode provider (now uses settings)
@@ -597,6 +606,11 @@ final appInitializationProvider = FutureProvider<void>((ref) async {
     await userProfileDataSource.init();
     ref.read(errorLoggerProvider).logInfo('User profile data source initialized');
 
+    ref.read(errorLoggerProvider).logInfo('Initializing notification data source');
+    final notificationDataSource = ref.read(notificationDataSourceProvider);
+    await notificationDataSource.init();
+    ref.read(errorLoggerProvider).logInfo('Notification data source initialized');
+
     // Initialize notification service
     ref.read(errorLoggerProvider).logInfo('Initializing notification service');
     final notificationService = ref.read(notification_providers.notificationServiceProvider);
@@ -635,3 +649,13 @@ final recordIncomeReceiptProvider = Provider<RecordIncomeReceipt>((ref) {
 
 // Recurring Income notifier provider
 final recurringIncomeNotifierProvider = recurring_income_providers.recurringIncomeNotifierProvider;
+
+// Notification data sources
+final notificationDataSourceProvider = Provider<NotificationHiveDataSource>((ref) {
+  return NotificationHiveDataSource();
+});
+
+// Notification repositories
+final notificationRepositoryProvider = Provider<NotificationRepository>((ref) {
+  return NotificationRepositoryImpl(ref.read(notificationDataSourceProvider));
+});

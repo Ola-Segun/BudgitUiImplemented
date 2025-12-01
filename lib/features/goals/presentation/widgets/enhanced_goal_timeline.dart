@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors_extended.dart';
 import '../../../../core/theme/app_typography_extended.dart';
 import '../theme/goals_theme_extended.dart';
 import '../../domain/entities/goal.dart';
 
-class EnhancedGoalTimeline extends StatelessWidget {
+class EnhancedGoalTimeline extends ConsumerWidget {
   const EnhancedGoalTimeline({
     super.key,
     required this.goal,
@@ -15,7 +16,7 @@ class EnhancedGoalTimeline extends StatelessWidget {
   final Goal goal;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final now = DateTime.now();
     final totalDays = goal.deadline.difference(goal.createdAt).inDays;
     final elapsedDays = now.difference(goal.createdAt).inDays;

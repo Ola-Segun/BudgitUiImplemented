@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/design_system/modern/modern.dart';
+import '../../../../core/design_system/design_tokens.dart';
 import '../../../accounts/presentation/providers/account_providers.dart';
 import '../../../dashboard/presentation/providers/dashboard_providers.dart';
 import '../../../transactions/domain/entities/transaction.dart';
@@ -249,44 +252,68 @@ class _EditRecurringIncomeBottomSheetState extends ConsumerState<EditRecurringIn
     }
 
     return ModernBottomSheet(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: spacing_md),
-            child: Row(
-              children: [
-                Text(
-                  'Edit Recurring Income',
-                  style: ModernTypography.titleLarge.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const Spacer(),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: _confirmDelete,
-                  tooltip: 'Delete Income',
-                ),
-              ],
-            ),
-          ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Diagnostic logging to monitor screen height, content height, and overflow amounts
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final contentSize = context.findRenderObject()?.semanticBounds.size;
+            final mediaQuery = MediaQuery.of(context);
+            if (contentSize != null) {
+              developer.log(
+                'EditRecurringIncomeBottomSheet - Screen height: ${mediaQuery.size.height}, '
+                'Content height: ${contentSize.height}, '
+                'Available height: ${constraints.maxHeight}, '
+                'Overflow amount: ${contentSize.height - constraints.maxHeight}, '
+                'Keyboard height: ${mediaQuery.viewInsets.bottom}, '
+                'View padding: ${mediaQuery.viewPadding.bottom}',
+                name: 'EditRecurringIncomeBottomSheet',
+              );
+            }
+          });
 
-          // Form
-          Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+          return Column(
+            children: [
+              // Fixed Header
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: spacing_md),
+                child: Row(
+                  children: [
+                    Text(
+                      'Edit Recurring Income',
+                      style: ModernTypography.titleLarge.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Scrollable Content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom + 16),
+                  child: Column(
+                    children: [
+                      // Form
+                      Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                // Amount Section
+                _buildAmountSection().animate()
+                  .fadeIn(duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 100))
+                  .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 100)),
+                const SizedBox(height: 16),
+
                 // Income Name with validation
                 ModernTextField(
                   controller: _nameController,
-                  label: 'Income Name',
                   placeholder: 'e.g., Salary, Freelance Work',
                   errorText: _nameValidationError,
                   validator: (value) {
@@ -298,11 +325,9 @@ class _EditRecurringIncomeBottomSheetState extends ConsumerState<EditRecurringIn
                     }
                     return null;
                   },
-                ),
-                const SizedBox(height: 16),
-
-                // Amount Section
-                _buildAmountSection(),
+                ).animate()
+                  .fadeIn(duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 200))
+                  .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 200)),
                 const SizedBox(height: 16),
 
                 // Category Selection
@@ -340,18 +365,19 @@ class _EditRecurringIncomeBottomSheetState extends ConsumerState<EditRecurringIn
                           );
                         }
 
-                        return ModernDropdownSelector<String>(
-                          label: 'Category',
-                          selectedValue: _selectedCategoryId,
-                          items: incomeCategories.map((category) {
-                            final iconAndColor = categoryIconColorService.getIconAndColorForCategory(category.id);
-                            return ModernDropdownItem<String>(
-                              value: category.id,
-                              label: category.name,
-                              icon: iconAndColor.icon,
-                              color: iconAndColor.color,
-                            );
-                          }).toList(),
+                        final categoryItems = incomeCategories.map((category) {
+                          final iconAndColor = categoryIconColorService.getIconAndColorForCategory(category.id);
+                          return CategoryItem(
+                            id: category.id,
+                            name: category.name,
+                            icon: iconAndColor.icon,
+                            color: iconAndColor.color.toARGB32(),
+                          );
+                        }).toList();
+
+                        return ModernCategorySelector(
+                          categories: categoryItems,
+                          selectedId: _selectedCategoryId,
                           onChanged: (value) {
                             if (value != null) {
                               setState(() {
@@ -392,32 +418,29 @@ class _EditRecurringIncomeBottomSheetState extends ConsumerState<EditRecurringIn
                       ),
                     );
                   },
-                ),
+                ).animate()
+                  .fadeIn(duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 300))
+                  .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 300)),
                 const SizedBox(height: 16),
 
                 // Account Selection
-                _buildAccountSelection(),
+                _buildAccountSelection().animate()
+                  .fadeIn(duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 400))
+                  .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 400)),
                 const SizedBox(height: 16),
 
                 // Frequency Selection
-                ModernDropdownSelector<RecurringIncomeFrequency>(
-                  label: 'Frequency',
-                  selectedValue: _selectedFrequency,
-                  items: RecurringIncomeFrequency.values.map((frequency) {
-                    return ModernDropdownItem<RecurringIncomeFrequency>(
-                      value: frequency,
-                      label: frequency.displayName,
-                      icon: _getFrequencyIcon(frequency),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        _selectedFrequency = value;
-                      });
-                    }
+                ModernToggleButton(
+                  options: const ['Weekly', 'Monthly', 'Quarterly', 'Annually'],
+                  selectedIndex: _getFrequencyIndex(_selectedFrequency),
+                  onChanged: (index) {
+                    setState(() {
+                      _selectedFrequency = _getFrequencyFromIndex(index);
+                    });
                   },
-                ),
+                ).animate()
+                  .fadeIn(duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 500))
+                  .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 500)),
                 const SizedBox(height: 16),
 
                 // Start Date
@@ -431,7 +454,9 @@ class _EditRecurringIncomeBottomSheetState extends ConsumerState<EditRecurringIn
                     }
                   },
                   showTime: false,
-                ),
+                ).animate()
+                  .fadeIn(duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 600))
+                  .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 600)),
                 const SizedBox(height: 16),
 
                 // End Date (Optional)
@@ -496,36 +521,45 @@ class _EditRecurringIncomeBottomSheetState extends ConsumerState<EditRecurringIn
                   maxLength: 500,
                 ),
 
-                const SizedBox(height: 32),
+                           const SizedBox(height: 32),
+                         ],
+                       ),
+                     ),
+                   ],
+                 ),
+               ),
+             ),
 
-                // Action Button
-                ModernActionButton(
-                  text: 'Update Income',
-                  onPressed: _isSubmitting ? null : _submitIncome,
-                  isLoading: _isSubmitting,
-                ),
-                const SizedBox(height: spacing_lg),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+             // Fixed Action Button
+             ModernActionButton(
+               text: 'Update Income',
+               onPressed: _isSubmitting ? null : () {
+                 developer.log('EditRecurringIncomeBottomSheet: Update Income button pressed', name: 'EditRecurringIncomeBottomSheet');
+                 _submitIncome();
+               },
+               isLoading: _isSubmitting,
+               minimumPressDuration: const Duration(milliseconds: 100),
+             ),
+             const SizedBox(height: spacing_lg),
+           ],
+         );
+       },
+     ),
+   );
+ }
 
   Widget _buildAmountSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Variable Amount Toggle
-        SwitchListTile(
-          title: const Text('Variable Amount'),
-          subtitle: const Text('Income amount varies each period'),
-          value: _isVariableAmount,
-          onChanged: (value) {
+        ModernToggleButton(
+          options: const ['Fixed', 'Variable'],
+          selectedIndex: _isVariableAmount ? 1 : 0,
+          onChanged: (index) {
             setState(() {
-              _isVariableAmount = value;
-              if (!value) {
+              _isVariableAmount = index == 1;
+              if (!_isVariableAmount) {
                 _minAmountController.clear();
                 _maxAmountController.clear();
               }
@@ -541,7 +575,8 @@ class _EditRecurringIncomeBottomSheetState extends ConsumerState<EditRecurringIn
               Expanded(
                 child: ModernTextField(
                   controller: _minAmountController,
-                  label: 'Min Amount',
+                  prefixIcon: Icons.arrow_downward_outlined,
+                  label: ' Min',
                   placeholder: '0.00',
                   keyboardType: TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: [
@@ -565,7 +600,8 @@ class _EditRecurringIncomeBottomSheetState extends ConsumerState<EditRecurringIn
               Expanded(
                 child: ModernTextField(
                   controller: _maxAmountController,
-                  label: 'Max Amount',
+                  prefixIcon: Icons.arrow_upward_outlined,
+                  label: ' Max',
                   placeholder: '0.00',
                   keyboardType: TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: [
@@ -605,7 +641,14 @@ class _EditRecurringIncomeBottomSheetState extends ConsumerState<EditRecurringIn
           amount: double.tryParse(_amountController.text) ?? 0.0,
           isEditable: true,
           onAmountChanged: (amount) {
+            developer.log('EditRecurringIncomeBottomSheet: Amount changed to $amount', name: 'EditRecurringIncomeBottomSheet');
             _amountController.text = amount.toStringAsFixed(2);
+          },
+          onValueChanged: (value) {
+            developer.log('EditRecurringIncomeBottomSheet: Amount value changed to $value', name: 'EditRecurringIncomeBottomSheet');
+            setState(() {
+              _amountController.text = value;
+            });
           },
           currencySymbol: '\$',
         ),
@@ -874,24 +917,38 @@ class _EditRecurringIncomeBottomSheetState extends ConsumerState<EditRecurringIn
     }
   }
 
-  IconData _getFrequencyIcon(RecurringIncomeFrequency frequency) {
+  /// Get index for frequency in toggle button
+  int _getFrequencyIndex(RecurringIncomeFrequency frequency) {
     switch (frequency) {
-      case RecurringIncomeFrequency.daily:
-        return Icons.calendar_view_day;
       case RecurringIncomeFrequency.weekly:
-        return Icons.calendar_view_week;
-      case RecurringIncomeFrequency.biWeekly:
-        return Icons.calendar_month;
+        return 0;
       case RecurringIncomeFrequency.monthly:
-        return Icons.calendar_month;
+        return 1;
       case RecurringIncomeFrequency.quarterly:
-        return Icons.event_repeat;
+        return 2;
       case RecurringIncomeFrequency.annually:
-        return Icons.event;
-      case RecurringIncomeFrequency.custom:
-        return Icons.tune;
+        return 3;
+      default:
+        return 1; // Default to monthly
     }
   }
+
+  /// Get frequency from toggle button index
+  RecurringIncomeFrequency _getFrequencyFromIndex(int index) {
+    switch (index) {
+      case 0:
+        return RecurringIncomeFrequency.weekly;
+      case 1:
+        return RecurringIncomeFrequency.monthly;
+      case 2:
+        return RecurringIncomeFrequency.quarterly;
+      case 3:
+        return RecurringIncomeFrequency.annually;
+      default:
+        return RecurringIncomeFrequency.monthly;
+    }
+  }
+
 
   Future<void> _submitIncome() async {
     if (!_formKey.currentState!.validate()) {

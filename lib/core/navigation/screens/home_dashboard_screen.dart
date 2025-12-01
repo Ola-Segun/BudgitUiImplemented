@@ -6,6 +6,8 @@ import 'dart:developer' as developer;
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimensions.dart';
 import '../../../core/widgets/loading_view.dart';
+import '../../../core/widgets/critical_alerts_banner.dart';
+import '../../../core/widgets/enhanced_critical_alerts_banner.dart';
 import '../../../features/transactions/presentation/widgets/scan_receipt_fab.dart';
 import '../../../features/transactions/presentation/widgets/enhanced_add_transaction_bottom_sheet.dart';
 import '../../../features/transactions/domain/entities/transaction.dart';
@@ -20,6 +22,7 @@ import '../../../features/dashboard/presentation/widgets/enhanced_upcoming_payme
 import '../../../features/bills/presentation/widgets/payment_recording_bottom_sheet.dart';
 import '../../../features/bills/domain/entities/bill.dart';
 import '../../../features/recurring_incomes/domain/entities/recurring_income.dart';
+import '../../../features/recurring_incomes/presentation/widgets/receipt_recording_bottom_sheet.dart';
 import 'package:go_router/go_router.dart';
 import '../../../features/dashboard/presentation/widgets/enhanced_recent_transactions.dart';
 import '../../../features/dashboard/presentation/widgets/enhanced_insights_card.dart';
@@ -73,6 +76,9 @@ class _HomeDashboardScreenEnhancedState extends ConsumerState<HomeDashboardScree
                 });
               },
             ),
+
+            // Critical Alerts Banner
+            const EnhancedCriticalAlertsBanner(),
 
             // Main Content
             Expanded(
@@ -163,7 +169,7 @@ class _HomeDashboardScreenEnhancedState extends ConsumerState<HomeDashboardScree
                   upcomingBills: dashboardData.upcomingBills,
                   upcomingIncomes: dashboardData.upcomingIncomes,
                   onBillPaymentPressed: (bill) => _showPaymentBottomSheet(context, bill),
-                  onIncomeReceiptPressed: (incomeStatus) => _navigateToIncomeReceipt(context, incomeStatus),
+                  onIncomeReceiptPressed: (incomeStatus) => _showIncomeReceiptBottomSheet(context, incomeStatus),
                   onBillDetailPressed: (bill) => _navigateToBillDetail(context, bill),
                   onIncomeDetailPressed: (incomeStatus) => _navigateToIncomeDetail(context, incomeStatus),
                 ).animate()
@@ -264,17 +270,22 @@ class _HomeDashboardScreenEnhancedState extends ConsumerState<HomeDashboardScree
     }
   }
 
-  Future<void> _navigateToIncomeReceipt(BuildContext context, RecurringIncomeStatus incomeStatus) async {
+  Future<void> _showIncomeReceiptBottomSheet(BuildContext context, RecurringIncomeStatus incomeStatus) async {
     if (!context.mounted) return;
 
     try {
-      await context.push('/more/incomes/${incomeStatus.income.id}/receipt');
-      // Refresh dashboard data after receipt recording
-      ref.invalidate(dashboardDataProvider);
+      await ReceiptRecordingBottomSheet.show(
+        context: context,
+        incomeId: incomeStatus.income.id,
+        onReceiptRecorded: () {
+          // Refresh dashboard data after receipt recording
+          ref.invalidate(dashboardDataProvider);
+        },
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error navigating to receipt recording: $e')),
+          SnackBar(content: Text('Error showing receipt recording: $e')),
         );
       }
     }

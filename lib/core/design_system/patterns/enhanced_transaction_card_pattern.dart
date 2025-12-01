@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:intl/intl.dart';
 import '../design_tokens.dart';
 import '../color_tokens.dart';
 import '../typography_tokens.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
+import '../../../features/settings/presentation/widgets/formatting_widgets.dart';
+import '../../../features/settings/presentation/widgets/privacy_mode_text.dart';
 import '../../../features/transactions/domain/entities/transaction.dart';
 import '../../../features/transactions/presentation/providers/transaction_providers.dart';
 import '../../../features/transactions/presentation/widgets/transaction_detail_bottom_sheet.dart';
@@ -173,8 +174,9 @@ class EnhancedTransactionCardPattern extends ConsumerWidget {
                             color: ColorTokens.textSecondary,
                           ),
                           const SizedBox(width: 4),
-                          Text(
-                            DateFormat('HH:mm').format(transaction.date),
+                          SettingsDateText(
+                            date: transaction.date,
+                            format: 'HH:mm',
                             style: TypographyTokens.captionSm.copyWith(
                               color: ColorTokens.textSecondary,
                             ),
@@ -189,12 +191,25 @@ class EnhancedTransactionCardPattern extends ConsumerWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(
-                      '${isExpense ? '-' : '+'}${NumberFormat.currency(symbol: '\$', decimalDigits: 0).format(transaction.amount)}',
-                      style: TypographyTokens.numericMd.copyWith(
-                        fontSize: 16,
-                        color: amountColor,
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          isExpense ? '-' : '+',
+                          style: TypographyTokens.numericMd.copyWith(
+                            fontSize: 16,
+                            color: amountColor,
+                          ),
+                        ),
+                        PrivacyModeAmount(
+                          amount: transaction.amount,
+                          currency: transaction.currencyCode ?? '\$',
+                          style: TypographyTokens.numericMd.copyWith(
+                            fontSize: 16,
+                            color: amountColor,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     Container(

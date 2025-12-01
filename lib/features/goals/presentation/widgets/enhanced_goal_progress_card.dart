@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/app_typography_extended.dart';
@@ -7,7 +8,7 @@ import '../../domain/entities/goal.dart';
 import '../theme/goals_theme_extended.dart';
 
 /// Enhanced Goal Progress Card - Reusable component showing goal progress with metrics
-class EnhancedGoalProgressCard extends StatelessWidget {
+class EnhancedGoalProgressCard extends ConsumerWidget {
   const EnhancedGoalProgressCard({
     super.key,
     required this.goal,
@@ -18,7 +19,7 @@ class EnhancedGoalProgressCard extends StatelessWidget {
   final bool showMetrics;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       // padding: const EdgeInsets.all(24),
       // decoration: BoxDecoration(
@@ -80,15 +81,16 @@ class EnhancedGoalProgressCard extends StatelessWidget {
   Widget _buildGoalMetricCards(Goal goal) {
     // Calculate velocity (how fast the goal is being achieved)
     final totalDays = goal.deadline.difference(goal.createdAt).inDays;
-    final elapsedDays = DateTime.now().difference(goal.createdAt).inDays;
-    final timeProgress = elapsedDays / totalDays;
+    final elapsedDays = DateTime.now().difference(goal.createdAt).inDays.clamp(1, double.infinity).toInt(); // Ensure at least 1 day
+    final timeProgress = elapsedDays / totalDays.clamp(1, double.infinity); // Ensure totalDays is at least 1
     final progressRatio = goal.progressPercentage / (timeProgress == 0 ? 0.01 : timeProgress);
     final velocity = progressRatio.clamp(0.0, 2.0);
 
     // Calculate pace (current vs required)
-    final requiredDailyContribution = goal.remainingAmount / (goal.daysRemaining > 0 ? goal.daysRemaining : 1);
-    final actualDailyContribution = goal.currentAmount / (elapsedDays > 0 ? elapsedDays : 1);
-    final pace = actualDailyContribution / (requiredDailyContribution == 0 ? 0.01 : requiredDailyContribution);
+    final daysRemaining = goal.daysRemaining > 0 ? goal.daysRemaining : 1;
+    final requiredDailyContribution = goal.remainingAmount / daysRemaining;
+    final actualDailyContribution = goal.currentAmount / elapsedDays;
+    final pace = requiredDailyContribution > 0 ? (actualDailyContribution / requiredDailyContribution).clamp(0.0, 2.0) : 0.0;
 
     return Row(
       children: [
@@ -110,7 +112,7 @@ class EnhancedGoalProgressCard extends StatelessWidget {
             percentage: pace.clamp(0.0, 2.0),
             icon: Icons.speed,
             isIncreasing: pace > 1.0,
-            subtitle: '\$${actualDailyContribution.toStringAsFixed(2)}/day',
+            subtitle: '${actualDailyContribution.toStringAsFixed(2)}/day',
           ).animate()
             .fadeIn(duration: 400.ms, delay: 300.ms)
             .slideX(begin: 0.1, duration: 400.ms, delay: 300.ms),
@@ -130,7 +132,7 @@ class EnhancedGoalProgressCard extends StatelessWidget {
 }
 
 /// Goal Metric Card Widget
-class _GoalMetricCard extends StatefulWidget {
+class _GoalMetricCard extends ConsumerStatefulWidget {
   const _GoalMetricCard({
     required this.title,
     required this.percentage,
@@ -146,10 +148,10 @@ class _GoalMetricCard extends StatefulWidget {
   final String subtitle;
 
   @override
-  State<_GoalMetricCard> createState() => _GoalMetricCardState();
+  ConsumerState<_GoalMetricCard> createState() => _GoalMetricCardState();
 }
 
-class _GoalMetricCardState extends State<_GoalMetricCard>
+class _GoalMetricCardState extends ConsumerState<_GoalMetricCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors_extended.dart';
 import '../../../../core/theme/app_typography_extended.dart';
+import '../../../../features/settings/presentation/widgets/privacy_mode_text.dart';
 
 /// Modern account card with gradient styling and animations
-class ModernAccountCard extends StatelessWidget {
+class ModernAccountCard extends ConsumerWidget {
   final String accountId;
   final String name;
   final String type;
@@ -29,9 +30,8 @@ class ModernAccountCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isPositive = balance >= 0;
-    final formatter = NumberFormat.currency(symbol: '\$', decimalDigits: 0);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -47,7 +47,7 @@ class ModernAccountCard extends StatelessWidget {
           },
           borderRadius: BorderRadius.circular(20),
           child: Semantics(
-            label: 'Account $name, $type, balance ${formatter.format(balance.abs())}, ${isPositive ? 'positive' : 'negative'}',
+            label: 'Account $name, $type, balance ${balance.abs()}, ${isPositive ? 'positive' : 'negative'}',
             hint: 'Tap to view account details',
             button: true,
             child: Container(
@@ -115,13 +115,15 @@ class ModernAccountCard extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   // Balance
-                  Text(
-                    formatter.format(balance.abs()),
+                  PrivacyModeAmount(
+                    amount: balance.abs(),
+                    currency: '\$', // Default currency, will be overridden by settings
                     style: AppTypographyExtended.accountBalance.copyWith(
                       color: isPositive
                           ? AppColorsExtended.positive
                           : AppColorsExtended.negative,
                     ),
+                    textAlign: TextAlign.center,
                   ),
 
                   // Utilization bar for credit cards

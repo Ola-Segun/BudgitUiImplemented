@@ -424,32 +424,17 @@ class _GoalDetailScreenState extends ConsumerState<GoalDetailScreen> {
     WidgetRef ref,
     Goal goal,
   ) async {
-    await AppBottomSheet.show(
+    final result = await AppBottomSheet.show<bool>(
       context: context,
-      child: EditGoalBottomSheet(
-        goal: goal,
-        onSubmit: (updatedGoal) async {
-          final success = await ref
-              .read(goalNotifierProvider.notifier)
-              .updateGoal(updatedGoal);
-
-          if (success && mounted) {
-            ref.invalidate(goalProvider(widget.goalId));
-            Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Goal updated successfully')),
-            );
-          } else if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Failed to update goal'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        },
-      ),
+      child: EditGoalBottomSheet(goal: goal),
     );
+
+    if (result == true && mounted) {
+      ref.invalidate(goalProvider(widget.goalId));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Goal updated successfully')),
+      );
+    }
   }
 
   Future<void> _showDeleteConfirmation(

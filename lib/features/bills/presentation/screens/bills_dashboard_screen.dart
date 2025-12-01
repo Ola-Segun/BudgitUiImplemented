@@ -12,6 +12,7 @@ import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../accounts/presentation/providers/account_providers.dart';
 import '../../../recurring_incomes/domain/entities/recurring_income.dart';
+import '../../../settings/presentation/widgets/privacy_mode_text.dart';
 import '../../domain/entities/bill.dart';
 import '../providers/bill_providers.dart';
 import '../widgets/enhanced_bills_dashboard_header.dart';
@@ -22,6 +23,8 @@ import '../widgets/enhanced_bills_bar_chart.dart';
 import '../widgets/enhanced_account_filters.dart';
 import '../widgets/enhanced_bill_card.dart';
 import '../widgets/subscription_spotlight.dart';
+import '../widgets/create_bill_bottom_sheet.dart';
+import '../../../recurring_incomes/presentation/widgets/create_recurring_income_bottom_sheet.dart';
 import '../theme/bills_theme_extended.dart';
 
 /// Dashboard screen for bills and subscriptions management
@@ -65,8 +68,8 @@ class _BillsDashboardScreenState extends ConsumerState<BillsDashboardScreen> {
               selectedDate: _selectedDate,
               onDateChanged: (date) => setState(() => _selectedDate = date),
               onAddBillPressed: () {
-                developer.log('Navigating to add bill screen', name: 'Navigation');
-                context.go('/more/bills/add');
+                developer.log('Showing add bill bottom sheet', name: 'Navigation');
+                CreateBillBottomSheet.show(context);
               },
               onFilterPressed: () {
                 // TODO: Implement filter sheet
@@ -282,12 +285,22 @@ class _BillsDashboardScreenState extends ConsumerState<BillsDashboardScreen> {
         Row(
           children: [
             Expanded(
-              child: _buildSummaryCard(
-                context,
-                'Monthly Total',
-                '\$${totalMonthly.toStringAsFixed(2)}',
-                Icons.attach_money,
-                Colors.purple,
+              child: Consumer(
+                builder: (context, ref, child) {
+                  return _buildSummaryCardWidget(
+                    context,
+                    'Monthly Total',
+                    PrivacyModeAmount(
+                      amount: totalMonthly,
+                      currency: '\$',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    Icons.attach_money,
+                    Colors.purple,
+                  );
+                },
               ),
             ),
             const SizedBox(width: 16),
@@ -306,22 +319,42 @@ class _BillsDashboardScreenState extends ConsumerState<BillsDashboardScreen> {
         Row(
           children: [
             Expanded(
-              child: _buildSummaryCard(
-                context,
-                'Monthly Income',
-                '\$${totalMonthlyIncomes.toStringAsFixed(2)}',
-                Icons.trending_up,
-                Colors.blue,
+              child: Consumer(
+                builder: (context, ref, child) {
+                  return _buildSummaryCardWidget(
+                    context,
+                    'Monthly Income',
+                    PrivacyModeAmount(
+                      amount: totalMonthlyIncomes,
+                      currency: '\$',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    Icons.trending_up,
+                    Colors.blue,
+                  );
+                },
               ),
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: _buildSummaryCard(
-                context,
-                'Received',
-                '\$${receivedIncomesThisMonth.toStringAsFixed(2)}',
-                Icons.account_balance_wallet,
-                Colors.teal,
+              child: Consumer(
+                builder: (context, ref, child) {
+                  return _buildSummaryCardWidget(
+                    context,
+                    'Received',
+                    PrivacyModeAmount(
+                      amount: receivedIncomesThisMonth,
+                      currency: '\$',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    Icons.account_balance_wallet,
+                    Colors.teal,
+                  );
+                },
               ),
             ),
           ],
@@ -374,6 +407,35 @@ class _BillsDashboardScreenState extends ConsumerState<BillsDashboardScreen> {
                     fontWeight: FontWeight.bold,
                   ),
             ),
+            const SizedBox(height: 4),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryCardWidget(
+    BuildContext context,
+    String title,
+    Widget value,
+    IconData icon,
+    Color color,
+  ) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 32),
+            const SizedBox(height: 8),
+            value,
             const SizedBox(height: 4),
             Text(
               title,
@@ -660,8 +722,19 @@ class _BillsDashboardScreenState extends ConsumerState<BillsDashboardScreen> {
           ),
         ),
         title: Text(status.bill.name),
-        subtitle: Text(
-          '${status.daysUntilDue} days • \$${status.bill.amount.toStringAsFixed(2)}',
+        subtitle: Consumer(
+          builder: (context, ref, child) {
+            return Row(
+              children: [
+                Text('${status.daysUntilDue} days • '),
+                PrivacyModeAmount(
+                  amount: status.bill.amount,
+                  currency: '\$',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            );
+          },
         ),
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -758,8 +831,19 @@ class _BillsDashboardScreenState extends ConsumerState<BillsDashboardScreen> {
           ),
         ),
         title: Text(status.income.name),
-        subtitle: Text(
-          '${status.daysUntilExpected} days • \$${status.income.amount.toStringAsFixed(2)}',
+        subtitle: Consumer(
+          builder: (context, ref, child) {
+            return Row(
+              children: [
+                Text('${status.daysUntilExpected} days • '),
+                PrivacyModeAmount(
+                  amount: status.income.amount,
+                  currency: '\$',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            );
+          },
         ),
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -920,7 +1004,7 @@ class _BillsDashboardScreenState extends ConsumerState<BillsDashboardScreen> {
                 'Add Bill',
                 Icons.add,
                 Colors.blue,
-                () => context.go('/more/bills/add'),
+                () => CreateBillBottomSheet.show(context),
               ),
             ),
             const SizedBox(width: 16),
@@ -930,7 +1014,7 @@ class _BillsDashboardScreenState extends ConsumerState<BillsDashboardScreen> {
                 'Add Income',
                 Icons.trending_up,
                 Colors.teal,
-                () => context.go('/more/incomes/add'), // Assuming this route exists
+                () => CreateRecurringIncomeBottomSheet.show(context),
               ),
             ),
           ],
@@ -1084,8 +1168,8 @@ class _BillsDashboardScreenState extends ConsumerState<BillsDashboardScreen> {
 
   void _showEditSheet(BuildContext context, Bill bill) {
     HapticFeedback.lightImpact();
-    // Navigate to edit screen
-    context.go('/more/bills/${bill.id}/edit');
+    // Navigate to detail screen where edit is available
+    context.go('/more/bills/${bill.id}');
   }
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref, Bill bill) async {

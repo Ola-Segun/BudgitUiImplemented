@@ -130,20 +130,38 @@ class GoalNotifier extends StateNotifier<AsyncValue<GoalState>> {
 
   /// Update an existing goal
   Future<bool> updateGoal(Goal goal) async {
+    debugPrint('🔍 GoalNotifier: updateGoal called with goal: ${goal.title ?? "null"}');
+    debugPrint('🔍 GoalNotifier: goal is null: ${goal == null}');
+    debugPrint('🔍 GoalNotifier: goal.id: ${goal.id}');
+    debugPrint('🔍 GoalNotifier: goal.title: ${goal.title}');
+
     final currentState = state.value;
-    if (currentState == null) return false;
+    debugPrint('🔍 GoalNotifier: currentState is null: ${currentState == null}');
+    if (currentState == null) {
+      debugPrint('🔍 GoalNotifier: ERROR - currentState is null!');
+      return false;
+    }
+    debugPrint('🔍 GoalNotifier: currentState.goals length: ${currentState.goals.length}');
 
     final result = await _updateGoal(goal);
+    debugPrint('🔍 GoalNotifier: _updateGoal result: ${result.runtimeType}');
 
     return result.when(
       success: (updatedGoal) {
+        debugPrint('🔍 GoalNotifier: updateGoal success - updatedGoal: ${updatedGoal.title ?? "null"}');
+        debugPrint('🔍 GoalNotifier: updatedGoal is null: ${updatedGoal == null}');
         final updatedGoals = currentState.goals.map((g) {
+          debugPrint('🔍 GoalNotifier: Checking goal ${g.id} against ${goal.id}');
           return g.id == goal.id ? updatedGoal : g;
         }).toList();
+        debugPrint('🔍 GoalNotifier: updatedGoals length: ${updatedGoals.length}');
         state = AsyncValue.data(currentState.copyWith(goals: updatedGoals));
+        debugPrint('🔍 GoalNotifier: State updated successfully');
         return true;
       },
       error: (failure) {
+        debugPrint('🔍 GoalNotifier: updateGoal error: ${failure.message ?? "null"}');
+        debugPrint('🔍 GoalNotifier: failure is null: ${failure == null}');
         state = AsyncValue.error(failure.message, StackTrace.current);
         return false;
       },

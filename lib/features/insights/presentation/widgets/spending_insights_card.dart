@@ -5,6 +5,7 @@ import 'package:gap/gap.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../settings/presentation/widgets/privacy_mode_text.dart';
 import '../../domain/entities/insight.dart';
 
 /// Card widget to display spending insights and anomalies
@@ -133,8 +134,9 @@ class SpendingInsightsCard extends ConsumerWidget {
                 ),
                 if (insight.amount != null) ...[
                   Gap(AppSpacing.xs),
-                  Text(
-                    '\$${insight.amount!.toStringAsFixed(2)}',
+                  PrivacyModeAmount(
+                    amount: insight.amount!,
+                    currency: '\$',
                     style: AppTypography.bodySmall.copyWith(
                       color: _getInsightIconColor(insight.priority),
                       fontWeight: FontWeight.w600,

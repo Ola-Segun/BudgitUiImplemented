@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../core/design_system/modern/modern.dart';
 import '../../../../core/design_system/design_tokens.dart';
 import '../../../../core/design_system/form_tokens.dart';
 import '../../../../core/design_system/haptic_feedback_utils.dart';
+import '../../../settings/presentation/widgets/formatting_widgets.dart';
+import '../../../settings/presentation/widgets/privacy_mode_text.dart';
 import '../../domain/entities/transaction.dart';
 import '../providers/transaction_providers.dart';
 
@@ -61,14 +62,29 @@ class _TransactionDetailBottomSheetState extends ConsumerState<TransactionDetail
             padding: const EdgeInsets.all(24),
             child: Column(
               children: [
-                Text(
-                  widget.transaction.signedAmount,
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      widget.transaction.isIncome ? '+' : '-',
+                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
                         fontWeight: FontWeight.w600,
                         color: widget.transaction.isIncome
                             ? Colors.green
                             : Theme.of(context).colorScheme.onSurface,
                       ),
+                    ),
+                    PrivacyModeAmount(
+                      amount: widget.transaction.amount,
+                      currency: widget.transaction.currencyCode ?? 'USD',
+                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: widget.transaction.isIncome
+                            ? Colors.green
+                            : Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -96,8 +112,8 @@ class _TransactionDetailBottomSheetState extends ConsumerState<TransactionDetail
         _buildDetailRow('Title', widget.transaction.title),
         _buildDetailRow('Description', widget.transaction.description ?? 'No description'),
         _buildDetailRow('Category', _getCategoryName(widget.transaction.categoryId)),
-        _buildDetailRow('Date', DateFormat('EEEE, MMMM dd, yyyy').format(widget.transaction.date)),
-        _buildDetailRow('Time', DateFormat('HH:mm').format(widget.transaction.date)),
+        _buildDetailRow('Date', _buildFormattedDate(widget.transaction.date)),
+        _buildDetailRow('Time', _buildFormattedTime(widget.transaction.date)),
 
         if (widget.transaction.receiptUrl != null) ...[
           const SizedBox(height: 16),
@@ -188,7 +204,7 @@ class _TransactionDetailBottomSheetState extends ConsumerState<TransactionDetail
 
 
 
-  Widget _buildDetailRow(String label, String value) {
+  Widget _buildDetailRow(String label, dynamic value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -206,10 +222,12 @@ class _TransactionDetailBottomSheetState extends ConsumerState<TransactionDetail
           ),
           const SizedBox(width: 16),
           Expanded(
-            child: Text(
-              value,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
+            child: value is Widget
+                ? value
+                : Text(
+                    value.toString(),
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
           ),
         ],
       ),
@@ -220,6 +238,20 @@ class _TransactionDetailBottomSheetState extends ConsumerState<TransactionDetail
     final categories = ref.read(transactionCategoriesProvider);
     final category = categories.where((c) => c.id == categoryId).firstOrNull;
     return category?.name ?? 'Unknown Category';
+  }
+
+  Widget _buildFormattedDate(DateTime date) {
+    return SettingsDateText(
+      date: date,
+      format: 'EEEE, MMMM dd, yyyy',
+    );
+  }
+
+  Widget _buildFormattedTime(DateTime dateTime) {
+    return SettingsDateTimeText(
+      dateTime: dateTime,
+      timeFormat: 'HH:mm',
+    );
   }
 
   Future<void> _confirmDeleteTransaction(BuildContext context) async {

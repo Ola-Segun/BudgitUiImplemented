@@ -43,7 +43,10 @@ class CategoryIconColorService {
   }
 
   /// Convert icon string to IconData
-  IconData _getIconFromString(String iconName) {
+  IconData _getIconFromString(String? iconName) {
+    if (iconName == null) {
+      return _getFallbackIcon();
+    }
     switch (iconName) {
       // Food & Dining
       case 'restaurant':

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math' as math;
 import '../../../../core/theme/app_colors_extended.dart';
 import '../../../../core/theme/app_typography_extended.dart';
+import '../../../settings/presentation/providers/settings_providers.dart';
 
 /// A circular progress indicator showing budget usage with animations.
 /// Displays percentage completion, spent vs total amount, and color-coded health status.
-class CircularBudgetIndicator extends StatefulWidget {
+class CircularBudgetIndicator extends ConsumerStatefulWidget {
   const CircularBudgetIndicator({
     super.key,
     required this.percentage,
@@ -35,10 +37,10 @@ class CircularBudgetIndicator extends StatefulWidget {
   final Duration animationDuration;
 
   @override
-  State<CircularBudgetIndicator> createState() => _CircularBudgetIndicatorState();
+  ConsumerState<CircularBudgetIndicator> createState() => _CircularBudgetIndicatorState();
 }
 
-class _CircularBudgetIndicatorState extends State<CircularBudgetIndicator>
+class _CircularBudgetIndicatorState extends ConsumerState<CircularBudgetIndicator>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
@@ -141,24 +143,30 @@ class _CircularBudgetIndicatorState extends State<CircularBudgetIndicator>
                       tween: Tween(begin: 0.0, end: widget.spent!),
                       duration: widget.animationDuration,
                       builder: (context, value, child) {
-                        return RichText(
-                          text: TextSpan(
-                            style: AppTypographyExtended.circularProgressAmount.copyWith(
-                              color: const Color(0xFF6B7280),
-                            ),
-                            children: [
-                              TextSpan(
-                                text: '\$${value.toInt()}',
-                                style: const TextStyle(
-                                  color: Color(0xFF0F172A),
-                                  fontWeight: FontWeight.w700,
+                        return Consumer(
+                          builder: (context, ref, child) {
+                            final spentFormatted = ref.watch(formattingServiceProvider).formatCurrency(value, decimalDigits: 0);
+                            final totalFormatted = ref.watch(formattingServiceProvider).formatCurrency(widget.total!, decimalDigits: 0);
+                            return RichText(
+                              text: TextSpan(
+                                style: AppTypographyExtended.circularProgressAmount.copyWith(
+                                  color: const Color(0xFF6B7280),
                                 ),
+                                children: [
+                                  TextSpan(
+                                    text: spentFormatted,
+                                    style: const TextStyle(
+                                      color: Color(0xFF0F172A),
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: ' / $totalFormatted',
+                                  ),
+                                ],
                               ),
-                              TextSpan(
-                                text: ' / \$${widget.total!.toInt()}',
-                              ),
-                            ],
-                          ),
+                            );
+                          },
                         );
                       },
                     ),

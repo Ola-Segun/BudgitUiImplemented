@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/design_system/modern/modern.dart';
+import '../../../../core/design_system/design_tokens.dart';
 import '../../../accounts/domain/entities/account.dart';
 import '../../../accounts/presentation/providers/account_providers.dart';
 import '../../../dashboard/presentation/providers/dashboard_providers.dart';
@@ -32,6 +35,7 @@ class CreateRecurringIncomeBottomSheet extends ConsumerStatefulWidget {
 
 class _CreateRecurringIncomeBottomSheetState extends ConsumerState<CreateRecurringIncomeBottomSheet> {
   final _formKey = GlobalKey<FormState>();
+  final _contentKey = GlobalKey();
   final _nameController = TextEditingController();
   final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -46,7 +50,6 @@ class _CreateRecurringIncomeBottomSheetState extends ConsumerState<CreateRecurri
   DateTime? _selectedEndDate;
   String _selectedCategoryId = '';
   String? _selectedDefaultAccountId;
-  final List<String> _selectedAllowedAccountIds = [];
   bool _isVariableAmount = false;
 
   bool _isSubmitting = false;
@@ -147,275 +150,319 @@ class _CreateRecurringIncomeBottomSheetState extends ConsumerState<CreateRecurri
   @override
   Widget build(BuildContext context) {
     return ModernBottomSheet(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: spacing_md),
-            child: Row(
-              children: [
-                Text(
-                  'Add Recurring Income',
-                  style: ModernTypography.titleLarge.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const Spacer(),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
-                ),
-              ],
-            ),
-          ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Diagnostic logging to monitor screen height, content height, and overflow amounts
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final contentSize = _contentKey.currentContext?.size;
+            final mediaQuery = MediaQuery.of(context);
+            if (contentSize != null) {
+              developer.log(
+                'CreateRecurringIncomeBottomSheet - Screen height: ${mediaQuery.size.height}, '
+                'Content height: ${contentSize.height}, '
+                'Available height: ${constraints.maxHeight}, '
+                'Overflow amount: ${contentSize.height - constraints.maxHeight}, '
+                'Keyboard height: ${mediaQuery.viewInsets.bottom}, '
+                'View padding: ${mediaQuery.viewPadding.bottom}',
+                name: 'CreateRecurringIncomeBottomSheet',
+              );
+            }
+          });
 
-          // Form
-          Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Income Name with validation
-                ModernTextField(
-                  controller: _nameController,
-                  placeholder: 'e.g., Salary, Freelance Work',
-                  label: 'Income Name',
-                  errorText: _nameValidationError,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter an income name';
-                    }
-                    if (value.trim().length < 2) {
-                      return 'Income name must be at least 2 characters';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Amount Section
-                _buildAmountSection(),
-                const SizedBox(height: 16),
-
-                // Category Selection
-                Consumer(
-                  builder: (context, ref, child) {
-                    final categoryState = ref.watch(categoryNotifierProvider);
-                    final categoryIconColorService = ref.watch(categoryIconColorServiceProvider);
-
-                    return categoryState.when(
-                      data: (state) {
-                        final incomeCategories = state.getCategoriesByType(TransactionType.income);
-
-                        // Update default category if not set or invalid
-                        if (_selectedCategoryId.isEmpty ||
-                            !incomeCategories.any((cat) => cat.id == _selectedCategoryId)) {
-                          _selectedCategoryId = _getSmartDefaultCategoryId(incomeCategories);
-                        }
-
-                        if (incomeCategories.isEmpty) {
-                          return Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.info_outline,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                                const SizedBox(width: 12),
-                                const Expanded(
-                                  child: Text(
-                                    'No income categories available. Please add categories first.',
-                                    style: TextStyle(fontSize: 14),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-
-                        return ModernDropdownSelector<String>(
-                          label: 'Category',
-                          selectedValue: _selectedCategoryId,
-                          items: incomeCategories.map((category) {
-                            final iconAndColor = categoryIconColorService.getIconAndColorForCategory(category.id);
-                            return ModernDropdownItem(
-                              value: category.id,
-                              label: category.name,
-                              icon: iconAndColor.icon,
-                              color: iconAndColor.color,
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            if (value != null) {
-                              setState(() {
-                                _selectedCategoryId = value;
-                              });
-                            }
-                          },
-                        );
-                      },
-                      loading: () => const SizedBox(
-                        height: 60,
-                        child: Center(child: CircularProgressIndicator()),
-                      ),
-                      error: (error, stack) => Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.errorContainer,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.error_outline,
-                              color: Theme.of(context).colorScheme.error,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                'Error loading categories: $error',
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.error,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Account Selection
-                _buildAccountSelection(),
-                const SizedBox(height: 16),
-
-                // Frequency Selection
-                ModernDropdownSelector<RecurringIncomeFrequency>(
-                  label: 'Frequency',
-                  selectedValue: _selectedFrequency,
-                  items: RecurringIncomeFrequency.values.map((frequency) {
-                    return ModernDropdownItem(
-                      value: frequency,
-                      label: frequency.displayName,
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        _selectedFrequency = value;
-                      });
-                    }
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Start Date
-                ModernDateTimePicker(
-                  selectedDate: _selectedStartDate,
-                  onDateChanged: (date) {
-                    if (date != null) {
-                      setState(() {
-                        _selectedStartDate = date;
-                      });
-                    }
-                  },
-                  showTime: false,
-                ),
-                const SizedBox(height: 16),
-
-                // End Date (Optional)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          return Column(
+            children: [
+              // Fixed Header
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: spacing_md),
+                child: Row(
                   children: [
-                    ModernDateTimePicker(
-                      selectedDate: _selectedEndDate,
-                      onDateChanged: (date) {
-                        setState(() {
-                          _selectedEndDate = date;
-                        });
-                      },
-                      showTime: false,
-                    ),
-                    if (_selectedEndDate != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: TextButton.icon(
-                          onPressed: () {
-                            setState(() {
-                              _selectedEndDate = null;
-                            });
-                          },
-                          icon: const Icon(Icons.clear),
-                          label: const Text('Clear end date'),
-                        ),
-                      ),
-                    const SizedBox(height: 4),
                     Text(
-                      'Leave empty for indefinite income',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                      'Add Recurring Income',
+                      style: ModernTypography.titleLarge.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+              ),
 
-                // Payer
-                ModernTextField(
-                  controller: _payerController,
-                  label: 'Payer (optional)',
-                  placeholder: 'e.g., Employer Name, Client',
+              // Scrollable Content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom + 16),
+                  child: Column(
+                    key: _contentKey,
+                    children: [
+                      // Form
+                      Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Amount Section
+                            _buildAmountSection().animate()
+                              .fadeIn(duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 100))
+                              .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 100)),
+                            const SizedBox(height: 16),
+
+                            // Category Selection
+                            Consumer(
+                              builder: (context, ref, child) {
+                                final categoryState = ref.watch(categoryNotifierProvider);
+                                final categoryIconColorService = ref.watch(categoryIconColorServiceProvider);
+
+                                return categoryState.when(
+                                  data: (state) {
+                                    final incomeCategories = state.getCategoriesByType(TransactionType.income);
+
+                                    // Update default category if not set or invalid
+                                    if (_selectedCategoryId.isEmpty ||
+                                        !incomeCategories.any((cat) => cat.id == _selectedCategoryId)) {
+                                      _selectedCategoryId = _getSmartDefaultCategoryId(incomeCategories);
+                                    }
+
+                                    if (incomeCategories.isEmpty) {
+                                      return Container(
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.info_outline,
+                                              color: Theme.of(context).colorScheme.primary,
+                                            ),
+                                            const SizedBox(width: 12),
+                                            const Expanded(
+                                              child: Text(
+                                                'No income categories available. Please add categories first.',
+                                                style: TextStyle(fontSize: 14),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }
+
+                                    final categoryItems = incomeCategories.map((category) {
+                                      final iconAndColor = categoryIconColorService.getIconAndColorForCategory(category.id);
+                                      return CategoryItem(
+                                        id: category.id,
+                                        name: category.name,
+                                        icon: iconAndColor.icon,
+                                        color: iconAndColor.color.toARGB32(),
+                                      );
+                                    }).toList();
+
+                                    return ModernCategorySelector(
+                                      categories: categoryItems,
+                                      selectedId: _selectedCategoryId,
+                                      onChanged: (value) {
+                                        if (value != null) {
+                                          setState(() {
+                                            _selectedCategoryId = value;
+                                          });
+                                        }
+                                      },
+                                    );
+                                  },
+                                  loading: () => const SizedBox(
+                                    height: 60,
+                                    child: Center(child: CircularProgressIndicator()),
+                                  ),
+                                  error: (error, stack) => Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context).colorScheme.errorContainer,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.error_outline,
+                                          color: Theme.of(context).colorScheme.error,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            'Error loading categories: $error',
+                                            style: TextStyle(
+                                              color: Theme.of(context).colorScheme.error,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ).animate()
+                              .fadeIn(duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 300))
+                              .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 300)),
+                            const SizedBox(height: 16),
+
+                                                        // Income Name with validation
+                            ModernTextField(
+                              controller: _nameController,
+                              placeholder: 'e.g., Salary, Freelance Work',
+                              prefixIcon: Icons.title,
+                              errorText: _nameValidationError,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Please enter an income name';
+                                }
+                                if (value.trim().length < 2) {
+                                  return 'Income name must be at least 2 characters';
+                                }
+                                return null;
+                              },
+                            ).animate()
+                              .fadeIn(duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 200))
+                              .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 200)),
+                            const SizedBox(height: 16),
+
+                            // Account Selection
+                            _buildAccountSelection().animate()
+                              .fadeIn(duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 400))
+                              .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 400)),
+                            const SizedBox(height: 16),
+
+                            // Frequency Selection
+                            ModernToggleButton(
+                              options: const ['Weekly', 'Monthly', 'Quarterly', 'Annually'],
+                              selectedIndex: _getFrequencyIndex(_selectedFrequency),
+                              onChanged: (index) {
+                                setState(() {
+                                  _selectedFrequency = _getFrequencyFromIndex(index);
+                                });
+                              },
+                            ).animate()
+                              .fadeIn(duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 500))
+                              .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 500)),
+                            const SizedBox(height: 16),
+
+                            // Start Date
+                            ModernDateTimePicker(
+                              selectedDate: _selectedStartDate,
+                              onDateChanged: (date) {
+                                if (date != null) {
+                                  setState(() {
+                                    _selectedStartDate = date;
+                                  });
+                                }
+                              },
+                              showTime: false,
+                            ).animate()
+                              .fadeIn(duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 600))
+                              .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: Duration(milliseconds: 600)),
+                            const SizedBox(height: 16),
+
+                            // End Date (Optional)
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ModernDateTimePicker(
+                                  selectedDate: _selectedEndDate,
+                                  onDateChanged: (date) {
+                                    setState(() {
+                                      _selectedEndDate = date;
+                                    });
+                                  },
+                                  showTime: false,
+                                ),
+                                if (_selectedEndDate != null)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8),
+                                    child: TextButton.icon(
+                                      onPressed: () {
+                                        setState(() {
+                                          _selectedEndDate = null;
+                                        });
+                                      },
+                                      icon: const Icon(Icons.clear),
+                                      label: const Text('Clear end date'),
+                                    ),
+                                  ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Leave empty for indefinite income',
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Payer
+                            ModernTextField(
+                              controller: _payerController,
+                              label: '',
+                              prefixIcon: Icons.business_outlined,
+                              placeholder: 'Payer (optional)',
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Description
+                            ModernTextField(
+                              controller: _descriptionController,
+                              label: '',
+                              prefixIcon: Icons.description_outlined,
+                              placeholder: 'Additional details (optional)',
+                              maxLength: 200,
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Website
+                            ModernTextField(
+                              controller: _websiteController,
+                              label: '',
+                              prefixIcon: Icons.link,
+                              placeholder: 'Website (optional) - e.g., https://example.com',
+                              keyboardType: TextInputType.url,
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Notes
+                            ModernTextField(
+                              controller: _notesController,
+                              label: '',
+                              prefixIcon: Icons.note_outlined,
+                              placeholder: 'Notes (optional)',
+                              maxLength: 500,
+                            ),
+
+                            const SizedBox(height: 32),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 16),
+              ),
 
-                // Description
-                ModernTextField(
-                  controller: _descriptionController,
-                  label: 'Description (optional)',
-                  placeholder: 'Additional details about this income',
-                  maxLength: 200,
-                ),
-                const SizedBox(height: 16),
-
-                // Website
-                ModernTextField(
-                  controller: _websiteController,
-                  label: 'Website (optional)',
-                  placeholder: 'https://example.com',
-                  keyboardType: TextInputType.url,
-                ),
-                const SizedBox(height: 16),
-
-                // Notes
-                ModernTextField(
-                  controller: _notesController,
-                  label: 'Notes (optional)',
-                  placeholder: 'Any additional notes',
-                  maxLength: 500,
-                ),
-
-                const SizedBox(height: 32),
-
-                // Action Button
-                ModernActionButton(
-                  text: 'Add Income',
-                  onPressed: _isSubmitting ? null : _submitIncome,
-                  isLoading: _isSubmitting,
-                ),
-                const SizedBox(height: spacing_lg),
-              ],
-            ),
-          ),
-        ],
+              // Fixed Action Button
+              ModernActionButton(
+                text: 'Add Income',
+                onPressed: _isSubmitting ? null : () {
+                  developer.log('CreateRecurringIncomeBottomSheet: Add Income button pressed', name: 'CreateRecurringIncomeBottomSheet');
+                  _submitIncome();
+                },
+                isLoading: _isSubmitting,
+                minimumPressDuration: const Duration(milliseconds: 100),
+              ),
+              const SizedBox(height: spacing_lg),
+            ],
+          );
+        },
       ),
     );
   }
@@ -447,7 +494,8 @@ class _CreateRecurringIncomeBottomSheetState extends ConsumerState<CreateRecurri
               Expanded(
                 child: ModernTextField(
                   controller: _minAmountController,
-                  label: 'Min Amount',
+                  prefixIcon: Icons.arrow_downward_outlined,
+                  label: ' Min',
                   placeholder: '0.00',
                   keyboardType: TextInputType.number,
                   inputFormatters: [
@@ -471,7 +519,8 @@ class _CreateRecurringIncomeBottomSheetState extends ConsumerState<CreateRecurri
               Expanded(
                 child: ModernTextField(
                   controller: _maxAmountController,
-                  label: 'Max Amount',
+                  prefixIcon: Icons.arrow_upward_outlined,
+                  label: ' Max',
                   placeholder: '0.00',
                   keyboardType: TextInputType.number,
                   inputFormatters: [
@@ -511,7 +560,14 @@ class _CreateRecurringIncomeBottomSheetState extends ConsumerState<CreateRecurri
           amount: double.tryParse(_amountController.text) ?? 0.0,
           isEditable: true,
           onAmountChanged: (amount) {
+            developer.log('CreateRecurringIncomeBottomSheet: Amount changed to $amount', name: 'CreateRecurringIncomeBottomSheet');
             _amountController.text = amount.toStringAsFixed(2);
+          },
+          onValueChanged: (value) {
+            developer.log('CreateRecurringIncomeBottomSheet: Amount value changed to $value', name: 'CreateRecurringIncomeBottomSheet');
+            setState(() {
+              _amountController.text = value;
+            });
           },
         ),
         const SizedBox(height: 8),
@@ -576,16 +632,13 @@ class _CreateRecurringIncomeBottomSheetState extends ConsumerState<CreateRecurri
                 !accounts.any((account) => account.id == _selectedDefaultAccountId)) {
               _selectedDefaultAccountId = null;
             }
-            _selectedAllowedAccountIds.removeWhere(
-              (id) => !accounts.any((account) => account.id == id),
-            );
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Default Account
                 ModernDropdownSelector<String?>(
-                  label: 'Default Account (Optional)',
+                  label: '',
                   placeholder: 'No default account',
                   selectedValue: _selectedDefaultAccountId,
                   items: [
@@ -607,87 +660,6 @@ class _CreateRecurringIncomeBottomSheetState extends ConsumerState<CreateRecurri
                   },
                 ),
 
-                // Allowed Accounts (Multi-select)
-                const SizedBox(height: 16),
-                Text(
-                  'Allowed Accounts (Optional)',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: accounts.map((account) {
-                    final isSelected = _selectedAllowedAccountIds.contains(account.id);
-                    return FilterChip(
-                      avatar: Icon(
-                        Icons.account_balance_wallet,
-                        size: 16,
-                        color: isSelected ? Colors.white : Color(account.type.color),
-                      ),
-                      label: Text(
-                        account.displayName,
-                        style: TextStyle(
-                          color: isSelected ? Colors.white : null,
-                          fontSize: 12,
-                        ),
-                      ),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        setState(() {
-                          if (selected) {
-                            _selectedAllowedAccountIds.add(account.id);
-                          } else {
-                            _selectedAllowedAccountIds.remove(account.id);
-                          }
-                        });
-                      },
-                      backgroundColor: isSelected
-                          ? Color(account.type.color)
-                          : Theme.of(context).colorScheme.surfaceContainerHighest,
-                    );
-                  }).toList(),
-                ),
-
-                // Info message
-                if (_selectedDefaultAccountId != null) ...[
-                  const SizedBox(height: 8),
-                  Builder(
-                    builder: (context) {
-                      final selectedAccount = accounts.firstWhere(
-                        (account) => account.id == _selectedDefaultAccountId,
-                      );
-                      return Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.info_outline,
-                              color: Theme.of(context).colorScheme.primary,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Income will be deposited to ${selectedAccount.displayName}',
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ],
               ],
             );
           },
@@ -709,6 +681,38 @@ class _CreateRecurringIncomeBottomSheetState extends ConsumerState<CreateRecurri
         );
       },
     );
+  }
+
+  /// Get index for frequency in toggle button
+  int _getFrequencyIndex(RecurringIncomeFrequency frequency) {
+    switch (frequency) {
+      case RecurringIncomeFrequency.weekly:
+        return 0;
+      case RecurringIncomeFrequency.monthly:
+        return 1;
+      case RecurringIncomeFrequency.quarterly:
+        return 2;
+      case RecurringIncomeFrequency.annually:
+        return 3;
+      default:
+        return 1; // Default to monthly
+    }
+  }
+
+  /// Get frequency from toggle button index
+  RecurringIncomeFrequency _getFrequencyFromIndex(int index) {
+    switch (index) {
+      case 0:
+        return RecurringIncomeFrequency.weekly;
+      case 1:
+        return RecurringIncomeFrequency.monthly;
+      case 2:
+        return RecurringIncomeFrequency.quarterly;
+      case 3:
+        return RecurringIncomeFrequency.annually;
+      default:
+        return RecurringIncomeFrequency.monthly;
+    }
   }
 
   /// Get smart default category ID for income categories
@@ -795,9 +799,7 @@ class _CreateRecurringIncomeBottomSheetState extends ConsumerState<CreateRecurri
             ? _notesController.text.trim()
             : null,
         defaultAccountId: _selectedDefaultAccountId,
-        allowedAccountIds: _selectedAllowedAccountIds.isNotEmpty
-            ? _selectedAllowedAccountIds
-            : null,
+        allowedAccountIds: null,
         isVariableAmount: _isVariableAmount,
         minAmount: minAmount,
         maxAmount: maxAmount,

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../accounts/presentation/providers/account_providers.dart';
+import '../../../settings/presentation/widgets/formatting_widgets.dart';
+import '../../../settings/presentation/widgets/privacy_mode_text.dart';
 import '../../domain/entities/bill.dart';
 import '../providers/bill_providers.dart';
 import '../widgets/edit_bill_bottom_sheet.dart';
@@ -171,8 +172,9 @@ class _BillDetailScreenState extends ConsumerState<BillDetailScreen> {
                   'Amount',
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
-                Text(
-                  '\$${bill.amount.toStringAsFixed(2)}',
+                PrivacyModeAmount(
+                  amount: bill.amount,
+                  currency: '\$',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: color,
@@ -188,8 +190,9 @@ class _BillDetailScreenState extends ConsumerState<BillDetailScreen> {
                   'Due Date',
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
-                Text(
-                  DateFormat('MMM dd, yyyy').format(bill.dueDate),
+                SettingsDateText(
+                  date: bill.dueDate,
+                  format: 'MMM dd, yyyy',
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.w500,
                       ),
@@ -240,16 +243,40 @@ class _BillDetailScreenState extends ConsumerState<BillDetailScreen> {
             _buildInfoRow('Name', bill.name),
 
             // Amount
-            _buildInfoRow('Amount', '\$${bill.amount.toStringAsFixed(2)}'),
+            Consumer(
+              builder: (context, ref, child) {
+                return _buildInfoRowWidget('Amount', PrivacyModeAmount(
+                  amount: bill.amount,
+                  currency: '\$',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ));
+              },
+            ),
 
             // Frequency
             _buildInfoRow('Frequency', bill.frequency.displayName),
 
             // Due Date
-            _buildInfoRow('Due Date', DateFormat('MMM dd, yyyy').format(bill.dueDate)),
+            Consumer(
+              builder: (context, ref, child) {
+                return _buildInfoRowWidget('Due Date', SettingsDateText(
+                  date: bill.dueDate,
+                  format: 'MMM dd, yyyy',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ));
+              },
+            ),
 
             // Next Due Date
-            _buildInfoRow('Next Due Date', DateFormat('MMM dd, yyyy').format(bill.calculatedNextDueDate)),
+            Consumer(
+              builder: (context, ref, child) {
+                return _buildInfoRowWidget('Next Due Date', SettingsDateText(
+                  date: bill.calculatedNextDueDate,
+                  format: 'MMM dd, yyyy',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ));
+              },
+            ),
 
             // Account Information
             if (bill.accountId != null) ...[
@@ -605,6 +632,30 @@ class _BillDetailScreenState extends ConsumerState<BillDetailScreen> {
     );
   }
 
+  Widget _buildInfoRowWidget(String label, Widget value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                  ),
+            ),
+          ),
+          Expanded(
+            child: value,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPaymentHistory(BuildContext context, Bill bill) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -675,8 +726,9 @@ class _BillDetailScreenState extends ConsumerState<BillDetailScreen> {
                       color: Colors.green,
                     ),
                   ),
-                  title: Text(
-                    '\$${payment.amount.toStringAsFixed(2)}',
+                  title: PrivacyModeAmount(
+                    amount: payment.amount,
+                    currency: '\$',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: Colors.green,
                           fontWeight: FontWeight.w600,
@@ -685,7 +737,11 @@ class _BillDetailScreenState extends ConsumerState<BillDetailScreen> {
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(DateFormat('MMM dd, yyyy').format(payment.paymentDate)),
+                      SettingsDateText(
+                        date: payment.paymentDate,
+                        format: 'MMM dd, yyyy',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                       if (payment.notes != null && payment.notes!.isNotEmpty)
                         Text(payment.notes!),
                     ],

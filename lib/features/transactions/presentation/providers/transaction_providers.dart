@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/di/providers.dart' as core_providers;
 import '../../../goals/presentation/providers/goal_providers.dart';
+import '../../../notifications/presentation/providers/notification_providers.dart' as notification_providers;
 import '../../domain/entities/transaction.dart';
 import '../../domain/services/category_icon_color_service.dart';
 import '../../domain/usecases/add_transaction.dart';
@@ -88,6 +89,12 @@ final transactionNotifierProvider =
   // Get goal notifier for cross-feature state updates
   final goalNotifier = ref.watch(goalNotifierProvider.notifier);
 
+  // Get budget alert checker for real-time monitoring
+  final checkBudgetAlerts = ref.watch(notification_providers.checkBudgetAlertsProvider);
+
+  // Get notification service for transaction receipts
+  final notificationService = ref.watch(notification_providers.notificationServiceProvider);
+
   return TransactionNotifier(
     getTransactions: getTransactions,
     getPaginatedTransactions: getPaginatedTransactions,
@@ -95,6 +102,8 @@ final transactionNotifierProvider =
     updateTransaction: updateTransaction,
     deleteTransaction: deleteTransaction,
     goalNotifier: goalNotifier,
+    checkBudgetAlerts: checkBudgetAlerts,
+    notificationService: notificationService,
   );
 });
 

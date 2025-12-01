@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../domain/entities/goal_template.dart';
 
 /// Card widget for displaying goal template information
+@Deprecated('Use EnhancedGoalTemplateCard instead')
 class GoalTemplateCard extends StatelessWidget {
   final GoalTemplate template;
   final bool isSelected;

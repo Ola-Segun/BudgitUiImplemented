@@ -5,6 +5,8 @@ import 'package:gap/gap.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../settings/presentation/widgets/formatting_widgets.dart';
+import '../../../settings/presentation/widgets/privacy_mode_text.dart';
 
 /// Card widget for What-If scenario analysis
 class WhatIfScenarioCard extends ConsumerStatefulWidget {
@@ -116,7 +118,11 @@ class _WhatIfScenarioCardState extends ConsumerState<WhatIfScenarioCard> {
               initialValue: _changeAmount.toString(),
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                prefixText: '\$',
+                prefix: SettingsCurrencyText(
+                  amount: 0,
+                  style: AppTypography.bodyMedium,
+                  currencyCode: 'USD',
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
                 ),
@@ -234,17 +240,42 @@ class _WhatIfScenarioCardState extends ConsumerState<WhatIfScenarioCard> {
             ),
           ),
           Gap(AppSpacing.md),
-          _buildResultRow('Monthly Impact', '\$${_scenarioResult!.monthlyImpact.toStringAsFixed(0)}'),
-          _buildResultRow('Total Impact', '\$${_scenarioResult!.totalImpact.toStringAsFixed(0)}'),
-          _buildResultRow('Projected Savings', '\$${_scenarioResult!.projectedSavings.toStringAsFixed(0)}'),
+          _buildResultRow('Monthly Impact', _scenarioResult!.monthlyImpact),
+          _buildResultRow('Total Impact', _scenarioResult!.totalImpact),
+          _buildResultRow('Projected Savings', _scenarioResult!.projectedSavings),
           if (_scenarioResult!.breakEvenMonths > 0)
-            _buildResultRow('Break-even Period', '${_scenarioResult!.breakEvenMonths} months'),
+            _buildTextResultRow('Break-even Period', '${_scenarioResult!.breakEvenMonths} months'),
         ],
       ),
     );
   }
 
-  Widget _buildResultRow(String label, String value) {
+  Widget _buildResultRow(String label, double value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: AppTypography.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          PrivacyModeAmount(
+            amount: value,
+            currency: '\$',
+            style: AppTypography.bodyMedium.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextResultRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(

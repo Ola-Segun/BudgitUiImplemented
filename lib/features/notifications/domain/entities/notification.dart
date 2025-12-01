@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'notification.freezed.dart';
@@ -36,10 +37,28 @@ class AppNotification with _$AppNotification {
 /// Notification types
 enum NotificationType {
   budgetAlert,
+  budgetThreshold,
+  budgetRollover,
+  budgetCategoryAlert,
   billReminder,
+  billConfirmation,
+  billOverdue,
   goalMilestone,
+  goalReminder,
+  goalCelebration,
   accountAlert,
+  accountBalance,
+  accountTransaction,
+  accountSync,
+  transactionReceipt,
+  transactionSplit,
+  transactionSuggestion,
+  incomeReminder,
+  incomeConfirmation,
   systemUpdate,
+  systemBackup,
+  systemExport,
+  systemSecurity,
   custom,
 }
 
@@ -59,3 +78,4 @@ enum NotificationChannel {
   accounts,
   system,
 }
+

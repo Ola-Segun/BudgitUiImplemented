@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors_extended.dart';
 import '../../../../core/theme/app_typography_extended.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../budgets/presentation/widgets/date_selector_pills.dart';
+import '../../../notifications/presentation/providers/notification_providers.dart';
 
 /// Enhanced dashboard header with date navigation
 class EnhancedDashboardHeader extends ConsumerStatefulWidget {
@@ -29,6 +30,7 @@ class _EnhancedDashboardHeaderState extends ConsumerState<EnhancedDashboardHeade
   @override
   Widget build(BuildContext context) {
     final currentPeriod = DateFormat('MMMM yyyy').format(widget.selectedDate);
+    final unreadCount = ref.watch(unreadNotificationsCountProvider);
 
     return Container(
       decoration: BoxDecoration(
@@ -117,7 +119,7 @@ class _EnhancedDashboardHeaderState extends ConsumerState<EnhancedDashboardHeade
                           }
                         },
                         tooltip: 'Notifications',
-                        badgeCount: 3,
+                        badgeCount: unreadCount,
                       ),
                       SizedBox(width: AppDimensions.spacing1),
                       _HeaderIconButton(

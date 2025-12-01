@@ -3,12 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_colors_extended.dart';
 import '../../../../core/theme/app_typography_extended.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
+import '../../../settings/presentation/widgets/formatting_widgets.dart';
+import '../../../settings/presentation/widgets/privacy_mode_text.dart';
 import '../../../transactions/domain/entities/transaction.dart';
 import '../../../transactions/presentation/providers/transaction_providers.dart';
 import '../../../transactions/presentation/widgets/transaction_detail_bottom_sheet.dart';
@@ -234,13 +235,7 @@ class _EnhancedTransactionCard extends ConsumerWidget {
                           color: AppColors.textSecondary,
                         ),
                         const SizedBox(width: 4),
-                        Text(
-                          _formatTime(transaction.date),
-                          style: AppTypographyExtended.metricLabel.copyWith(
-                            color: AppColors.textSecondary,
-                            fontSize: 11,
-                          ),
-                        ),
+                        _buildSmartDateText(transaction.date),
                       ],
                     ),
                   ],
@@ -251,13 +246,27 @@ class _EnhancedTransactionCard extends ConsumerWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    '${isExpense ? '-' : '+'}${NumberFormat.currency(symbol: '\$', decimalDigits: 0).format(transaction.amount)}',
-                    style: AppTypographyExtended.metricLabel.copyWith(
-                      color: amountColor,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15,
-                    ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        isExpense ? '-' : '+',
+                        style: AppTypographyExtended.metricLabel.copyWith(
+                          color: amountColor,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      ),
+                      PrivacyModeAmount(
+                        amount: transaction.amount,
+                        currency: transaction.currencyCode ?? '\$',
+                        style: AppTypographyExtended.metricLabel.copyWith(
+                          color: amountColor,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 2),
                   Container(
@@ -284,19 +293,46 @@ class _EnhancedTransactionCard extends ConsumerWidget {
     );
   }
 
-  String _formatTime(DateTime date) {
+  Widget _buildSmartDateText(DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final transactionDate = DateTime(date.year, date.month, date.day);
 
     if (transactionDate == today) {
-      return DateFormat('HH:mm').format(date);
+      return SettingsDateText(
+        date: date,
+        format: 'HH:mm',
+        style: AppTypographyExtended.metricLabel.copyWith(
+          color: AppColors.textSecondary,
+          fontSize: 11,
+        ),
+      );
     } else if (transactionDate == today.subtract(const Duration(days: 1))) {
-      return 'Yesterday';
+      return Text(
+        'Yesterday',
+        style: AppTypographyExtended.metricLabel.copyWith(
+          color: AppColors.textSecondary,
+          fontSize: 11,
+        ),
+      );
     } else if (now.difference(date).inDays < 7) {
-      return DateFormat('EEEE').format(date);
+      return SettingsDateText(
+        date: date,
+        format: 'EEEE',
+        style: AppTypographyExtended.metricLabel.copyWith(
+          color: AppColors.textSecondary,
+          fontSize: 11,
+        ),
+      );
     } else {
-      return DateFormat('MMM dd').format(date);
+      return SettingsDateText(
+        date: date,
+        format: 'MMM dd',
+        style: AppTypographyExtended.metricLabel.copyWith(
+          color: AppColors.textSecondary,
+          fontSize: 11,
+        ),
+      );
     }
   }
 

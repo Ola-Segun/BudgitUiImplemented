@@ -15,7 +15,6 @@ import '../../../transactions/presentation/providers/transaction_providers.dart'
 import '../../domain/entities/budget.dart';
 import '../../domain/entities/budget_template.dart';
 import '../providers/budget_providers.dart';
-import '../states/budget_state.dart';
 
 /// Modern budget creation bottom sheet with split transaction-style UI
 class BudgetCreationBottomSheet extends ConsumerWidget {

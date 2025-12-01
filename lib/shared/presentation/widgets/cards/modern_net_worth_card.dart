@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/design_system/haptic_feedback_utils.dart';
 import '../../../../core/theme/app_colors_extended.dart';
 import '../../../../core/theme/app_typography_extended.dart';
+import '../../../../features/settings/presentation/widgets/privacy_mode_text.dart';
 
 /// Modern net worth card with gradient styling and animations
-class ModernNetWorthCard extends StatelessWidget {
+class ModernNetWorthCard extends ConsumerWidget {
   final double netWorth;
   final double totalAssets;
   final double totalLiabilities;
@@ -19,16 +20,15 @@ class ModernNetWorthCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isPositive = netWorth >= 0;
-    final formatter = NumberFormat.currency(symbol: '\$', decimalDigits: 0);
     final gradient = isPositive
         ? AppColorsExtended.positiveGradient
         : AppColorsExtended.negativeGradient;
 
     return Semantics(
-      label: 'Net worth card showing ${formatter.format(netWorth.abs())} ${isPositive ? 'positive' : 'negative'} net worth',
-      hint: 'Displays total assets of ${formatter.format(totalAssets)} and liabilities of ${formatter.format(totalLiabilities)}',
+      label: 'Net worth card showing ${netWorth.abs()} ${isPositive ? 'positive' : 'negative'} net worth',
+      hint: 'Displays total assets and liabilities',
       child: GestureDetector(
         onTap: () => HapticFeedbackUtils.medium(),
         child: Container(
@@ -104,11 +104,13 @@ class ModernNetWorthCard extends StatelessWidget {
                   style: AppTypographyExtended.accountLabel,
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  formatter.format(netWorth.abs()),
+                PrivacyModeAmount(
+                  amount: netWorth.abs(),
+                  currency: '\$', // Default currency, will be overridden by settings
                   style: AppTypographyExtended.accountBalanceHero.copyWith(
                     color: Colors.white,
                   ),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
 
@@ -120,7 +122,6 @@ class ModernNetWorthCard extends StatelessWidget {
                         'Assets',
                         totalAssets,
                         Icons.arrow_upward,
-                        formatter,
                       ),
                     ),
                     Container(
@@ -133,7 +134,6 @@ class ModernNetWorthCard extends StatelessWidget {
                         'Liabilities',
                         totalLiabilities,
                         Icons.arrow_downward,
-                        formatter,
                       ),
                     ),
                   ],
@@ -152,10 +152,9 @@ class ModernNetWorthCard extends StatelessWidget {
     String label,
     double amount,
     IconData icon,
-    NumberFormat formatter,
   ) {
     return Semantics(
-      label: '$label amount: ${formatter.format(amount)}',
+      label: '$label amount',
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
@@ -179,11 +178,13 @@ class ModernNetWorthCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 6),
-            Text(
-              formatter.format(amount),
+            PrivacyModeAmount(
+              amount: amount,
+              currency: '\$', // Default currency, will be overridden by settings
               style: AppTypographyExtended.accountBalanceSmall.copyWith(
                 color: Colors.white,
               ),
+              textAlign: TextAlign.start,
             ),
           ],
         ),

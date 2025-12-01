@@ -102,7 +102,6 @@ class _RatePillButton extends StatefulWidget {
   final VoidCallback onTap;
 
   const _RatePillButton({
-    super.key,
     required this.label,
     required this.isSelected,
     this.isCustom = false,

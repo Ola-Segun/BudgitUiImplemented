@@ -12,7 +12,6 @@ import '../../../transactions/domain/services/category_icon_color_service.dart';
 import '../../../transactions/presentation/providers/transaction_providers.dart';
 import '../../domain/entities/budget.dart';
 import '../providers/budget_providers.dart';
-import '../states/budget_state.dart';
 
 /// Modern budget edit bottom sheet with split transaction-style UI
 class BudgetEditBottomSheet extends ConsumerWidget {
@@ -180,17 +179,13 @@ class _BudgetEditState extends ConsumerState<_BudgetEditContent> {
       _amountControllers.remove(index);
       _percentageControllers.remove(index);
 
-      // Reindex controllers
-      final newAmountControllers = <int, TextEditingController>{};
-      final newPercentageControllers = <int, TextEditingController>{};
-      for (int i = 0; i < _categories.length; i++) {
-        newAmountControllers[i] = _amountControllers[i] ?? TextEditingController();
-        newPercentageControllers[i] = _percentageControllers[i] ?? TextEditingController();
+      // Shift controllers down
+      for (int i = index; i < _categories.length; i++) {
+        _amountControllers[i] = _amountControllers[i + 1]!;
+        _percentageControllers[i] = _percentageControllers[i + 1]!;
       }
-      _amountControllers.clear();
-      _percentageControllers.clear();
-      _amountControllers.addAll(newAmountControllers);
-      _percentageControllers.addAll(newPercentageControllers);
+      _amountControllers.remove(_categories.length);
+      _percentageControllers.remove(_categories.length);
 
       _setupCategoryListeners();
       _updateTotalBudget();
@@ -826,6 +821,7 @@ class _BudgetEditState extends ConsumerState<_BudgetEditContent> {
                   final index = entry.key;
                   final category = entry.value;
                   return Padding(
+                    key: ValueKey(category),
                     padding: EdgeInsets.only(
                       bottom: index < _categories.length - 1 ? spacing_sm : 0,
                     ),

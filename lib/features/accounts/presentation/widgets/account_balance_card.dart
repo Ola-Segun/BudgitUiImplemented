@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../settings/presentation/widgets/privacy_mode_text.dart';
 import '../../domain/entities/account.dart';
 
 /// Widget for displaying account balance information
-class AccountBalanceCard extends StatelessWidget {
+class AccountBalanceCard extends ConsumerWidget {
   const AccountBalanceCard({
     super.key,
     required this.account,
@@ -12,7 +14,7 @@ class AccountBalanceCard extends StatelessWidget {
   final Account account;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -67,8 +69,10 @@ class AccountBalanceCard extends StatelessWidget {
                 Expanded(
                   child: _buildBalanceSection(
                     context,
+                    ref,
                     'Current Balance',
-                    account.formattedBalance,
+                    account.currentBalance.abs(),
+                    account.currency ?? 'USD',
                     account.isLiability
                         ? Colors.red
                         : Colors.green,
@@ -79,10 +83,12 @@ class AccountBalanceCard extends StatelessWidget {
                   Expanded(
                     child: _buildBalanceSection(
                       context,
+                      ref,
                       account.type == AccountType.creditCard
                           ? 'Available Credit'
                           : 'Available Balance',
-                      account.formattedAvailableBalance,
+                      account.availableBalance.abs(),
+                      account.currency ?? 'USD',
                       account.availableBalance >= 0
                           ? Colors.green
                           : Colors.red,
@@ -105,8 +111,10 @@ class AccountBalanceCard extends StatelessWidget {
 
   Widget _buildBalanceSection(
     BuildContext context,
+    WidgetRef ref,
     String label,
-    String amount,
+    double amount,
+    String currency,
     Color amountColor,
   ) {
     return Column(
@@ -119,12 +127,14 @@ class AccountBalanceCard extends StatelessWidget {
               ),
         ),
         const SizedBox(height: 4),
-        Text(
-          amount,
+        PrivacyModeAmount(
+          amount: amount,
+          currency: currency,
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: amountColor,
               ),
+          textAlign: TextAlign.start,
         ),
       ],
     );

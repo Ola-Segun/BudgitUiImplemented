@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_colors_extended.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../features/settings/presentation/widgets/privacy_mode_text.dart';
 import '../theme/goals_theme_extended.dart';
 import '../../domain/entities/goal.dart';
 
 /// Enhanced Goal Information Card - Reusable component using _InfoRow pattern from budget screens
-class EnhancedGoalInformationCard extends StatelessWidget {
+class EnhancedGoalInformationCard extends ConsumerWidget {
   const EnhancedGoalInformationCard({
     super.key,
     required this.goal,
@@ -20,7 +22,7 @@ class EnhancedGoalInformationCard extends StatelessWidget {
   final Color? categoryColor;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final displayCategoryName = categoryName ?? goal.categoryId.replaceAll('_', ' ').toUpperCase();
     final displayCategoryColor = categoryColor ?? GoalsThemeExtended.goalPrimary;
 
@@ -67,33 +69,37 @@ class EnhancedGoalInformationCard extends StatelessWidget {
 
           _InfoRow(
             label: 'Category',
-            value: displayCategoryName,
+            value: Text(displayCategoryName),
             icon: Icons.category_outlined,
             valueColor: displayCategoryColor,
           ),
           const SizedBox(height: 12),
           _InfoRow(
             label: 'Priority',
-            value: goal.priority.displayName,
+            value: Text(goal.priority.displayName),
             icon: Icons.flag_outlined,
             valueColor: _getPriorityColor(goal.priority),
           ),
           const SizedBox(height: 12),
           _InfoRow(
             label: 'Target Amount',
-            value: goal.formattedTargetAmount,
+            value: PrivacyModeAmount(
+              amount: goal.targetAmount,
+            ),
             icon: Icons.account_balance_wallet_outlined,
           ),
           const SizedBox(height: 12),
           _InfoRow(
             label: 'Monthly Required',
-            value: '\$${goal.requiredMonthlyContribution.toStringAsFixed(2)}',
+            value: PrivacyModeAmount(
+              amount: goal.requiredMonthlyContribution,
+            ),
             icon: Icons.calendar_month,
           ),
           const SizedBox(height: 12),
           _InfoRow(
             label: 'Status',
-            value: goal.isCompleted ? 'Completed' : goal.isOverdue ? 'Overdue' : 'In Progress',
+            value: Text(goal.isCompleted ? 'Completed' : goal.isOverdue ? 'Overdue' : 'In Progress'),
             icon: goal.isCompleted ? Icons.check_circle_outline : Icons.pending_outlined,
             valueColor: goal.isCompleted
                 ? GoalsThemeExtended.goalSuccess
@@ -204,7 +210,7 @@ class _InfoRow extends StatelessWidget {
   });
 
   final String label;
-  final String value;
+  final Widget value;
   final IconData icon;
   final Color? valueColor;
 
@@ -226,12 +232,12 @@ class _InfoRow extends StatelessWidget {
             ),
           ),
         ),
-        Text(
-          value,
+        DefaultTextStyle(
           style: AppTypography.bodyMedium.copyWith(
             fontWeight: FontWeight.w600,
             color: valueColor ?? AppColors.textPrimary,
           ),
+          child: value,
         ),
       ],
     );

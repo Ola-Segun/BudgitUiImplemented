@@ -27,6 +27,7 @@ import '../widgets/enhanced_goal_timeline_card.dart';
 import '../widgets/enhanced_goal_information_card.dart';
 import '../widgets/enhanced_contribution_history.dart';
 import '../widgets/enhanced_goal_app_bar.dart';
+import '../widgets/goal_celebration_widget.dart';
 
 /// Enhanced Goal Detail Screen with advanced visualizations
 class GoalDetailScreenEnhanced extends ConsumerStatefulWidget {
@@ -271,6 +272,9 @@ class _GoalDetailScreenEnhancedState extends ConsumerState<GoalDetailScreenEnhan
                   child: contributionsAsync.when(
                     data: (contributions) {
                       debugPrint('🔍 GoalDetailScreenEnhanced: Weekly contributions data: ${contributions.length} items');
+                      for (final contribution in contributions) {
+                        debugPrint('🔍 GoalDetailScreenEnhanced: contribution date: ${contribution.date}');
+                      }
                       final data = _getWeeklyContributionData(contributions);
                       debugPrint('🔍 GoalDetailScreenEnhanced: Weekly chart data: ${data.length} points');
                       return BudgetBarChart(
@@ -400,13 +404,31 @@ class _GoalDetailScreenEnhancedState extends ConsumerState<GoalDetailScreenEnhan
           if (success && mounted) {
             HapticFeedback.mediumImpact();
             Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Contribution added successfully'),
-                backgroundColor: GoalsThemeExtended.goalSuccess,
-                behavior: SnackBarBehavior.floating,
-              ),
+
+            // Get updated goal to check for milestones
+            final goalState = ref.read(goalNotifierProvider);
+            final updatedGoal = goalState.maybeWhen(
+              data: (state) => state.goals.where((g) => g.id == widget.goalId).firstOrNull,
+              orElse: () => null,
             );
+
+            if (updatedGoal != null) {
+              // Check for milestone achievements
+              final milestoneReached = _checkMilestoneAchievement(updatedGoal);
+              if (milestoneReached != null) {
+                // Show celebration
+                _showMilestoneCelebration(context, updatedGoal, milestoneReached);
+              } else {
+                // Show regular success message
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Contribution added successfully'),
+                    backgroundColor: GoalsThemeExtended.goalSuccess,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            }
           } else if (mounted) {
             debugPrint('🔍 GoalDetailScreenEnhanced: Contribution submission failed');
             ScaffoldMessenger.of(context).showSnackBar(
@@ -496,43 +518,28 @@ class _GoalDetailScreenEnhancedState extends ConsumerState<GoalDetailScreenEnhan
 
   Future<void> _showEditGoalSheet(BuildContext context, Goal goal) async {
     debugPrint('🔍 GoalDetailScreenEnhanced: Showing edit goal sheet for: ${goal.title}');
+    debugPrint('🔍 GoalDetailScreenEnhanced: goal is null: ${goal == null}');
+    debugPrint('🔍 GoalDetailScreenEnhanced: goal.id: ${goal.id}');
+    debugPrint('🔍 GoalDetailScreenEnhanced: goal.title: ${goal.title}');
 
-    await AppBottomSheet.show(
+    final result = await AppBottomSheet.show<bool>(
       context: context,
-      child: EditGoalBottomSheet(
-        goal: goal,
-        onSubmit: (updatedGoal) async {
-          debugPrint('🔍 GoalDetailScreenEnhanced: Updating goal: ${updatedGoal.title}');
-          final success = await ref
-              .read(goalNotifierProvider.notifier)
-              .updateGoal(updatedGoal);
-
-          debugPrint('🔍 GoalDetailScreenEnhanced: Goal update result: $success');
-
-          if (success && mounted) {
-            HapticFeedback.mediumImpact();
-            ref.invalidate(goalProvider(widget.goalId));
-            Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Goal updated successfully'),
-                backgroundColor: GoalsThemeExtended.goalSuccess,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          } else if (mounted) {
-            debugPrint('🔍 GoalDetailScreenEnhanced: Goal update failed');
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Failed to update goal'),
-                backgroundColor: Colors.red,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          }
-        },
-      ),
+      child: EditGoalBottomSheet(goal: goal),
     );
+
+    debugPrint('🔍 GoalDetailScreenEnhanced: Edit goal sheet result: $result');
+
+    if (result == true && mounted) {
+      HapticFeedback.mediumImpact();
+      ref.invalidate(goalProvider(widget.goalId));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Goal updated successfully'),
+          backgroundColor: GoalsThemeExtended.goalSuccess,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Future<void> _showDeleteConfirmation(BuildContext context, Goal goal) async {
@@ -592,6 +599,42 @@ class _GoalDetailScreenEnhancedState extends ConsumerState<GoalDetailScreenEnhan
         );
       }
     }
+  }
+
+  // Milestone checking and celebration methods
+  double? _checkMilestoneAchievement(Goal goal) {
+    final progressPercentage = goal.progressPercentage * 100;
+    final milestones = [25.0, 50.0, 75.0, 100.0];
+
+    for (final milestone in milestones) {
+      if (progressPercentage >= milestone) {
+        // Check if this milestone was recently achieved (within the last contribution)
+        // For simplicity, we'll consider it achieved if we're at or above the milestone
+        return milestone;
+      }
+    }
+    return null;
+  }
+
+  void _showMilestoneCelebration(BuildContext context, Goal goal, double milestone) {
+    final isCompleted = milestone >= 100.0;
+    final title = isCompleted
+        ? '🎉 Goal Completed!'
+        : '🎯 Milestone Reached!';
+    final subtitle = isCompleted
+        ? 'Congratulations! You\'ve achieved your goal of \$${goal.targetAmount.toStringAsFixed(2)}.'
+        : 'Amazing! You\'ve reached ${milestone.round()}% of your \$${goal.targetAmount.toStringAsFixed(2)} goal.';
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => GoalCelebrationWidget(
+        title: title,
+        subtitle: subtitle,
+        icon: isCompleted ? Icons.emoji_events : Icons.star,
+        onComplete: () => Navigator.pop(context),
+      ),
+    );
   }
 
   // Helper methods for chart data processing

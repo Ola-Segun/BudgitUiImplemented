@@ -123,18 +123,20 @@ class CalculateBudgetStatus {
         final effectiveStartDate = budgetCreatedAt ?? startDate;
         developer.log('CalculateBudgetStatus: Using effective start date: $effectiveStartDate');
 
-        final filteredTransactions = allTransactions
-            .where((transaction) {
-              final inDateRange = transaction.date.compareTo(effectiveStartDate) >= 0 &&
-                                 transaction.date.isBefore(endDate.add(const Duration(days: 1)));
-              final isExpense = transaction.type == TransactionType.expense;
-              return inDateRange && isExpense;
-            })
-            .toList();
+        final spending = await Future.microtask(() {
+          final filteredTransactions = allTransactions
+              .where((transaction) {
+                final inDateRange = transaction.date.compareTo(effectiveStartDate) >= 0 &&
+                                    transaction.date.isBefore(endDate.add(const Duration(days: 1)));
+                final isExpense = transaction.type == TransactionType.expense;
+                return inDateRange && isExpense;
+              })
+              .toList();
 
-        developer.log('CalculateBudgetStatus: Filtered to ${filteredTransactions.length} expense transactions in date range for category $categoryId');
+          developer.log('CalculateBudgetStatus: Filtered to ${filteredTransactions.length} expense transactions in date range for category $categoryId');
 
-        final spending = filteredTransactions.fold<double>(0.0, (sum, transaction) => sum + transaction.amount);
+          return filteredTransactions.fold<double>(0.0, (sum, transaction) => sum + transaction.amount);
+        });
         developer.log('CalculateBudgetStatus: CALCULATION COMPLETE - Total spending for category $categoryId: \$${spending.toStringAsFixed(2)}');
 
         return Result.success(spending);

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/design_system/modern/modern.dart';
+import '../../../settings/presentation/widgets/privacy_mode_text.dart';
 import '../../domain/entities/account.dart';
 import '../providers/account_providers.dart';
 
@@ -172,7 +173,7 @@ class _ModernAccountSelectorState extends ConsumerState<ModernAccountSelector> {
     return Semantics(
       button: true,
       selected: isSelected,
-      label: '${account.displayName}, balance: \$${account.currentBalance.toStringAsFixed(2)}',
+      label: account.displayName,
       child: GestureDetector(
         onTap: () {
           HapticFeedback.lightImpact();
@@ -223,11 +224,13 @@ class _ModernAccountSelectorState extends ConsumerState<ModernAccountSelector> {
                     ),
                     if (widget.showBalance) ...[
                       const SizedBox(height: spacing_xs),
-                      Text(
-                        '\$${account.currentBalance.toStringAsFixed(2)}',
+                      PrivacyModeAmount(
+                        amount: account.currentBalance,
+                        currency: account.currency ?? 'USD',
                         style: ModernTypography.labelMedium.copyWith(
                           color: ModernColors.textSecondary,
                         ),
+                        textAlign: TextAlign.start,
                       ),
                     ],
                   ],

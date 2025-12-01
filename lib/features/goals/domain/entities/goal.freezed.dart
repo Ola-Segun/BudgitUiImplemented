@@ -233,7 +233,7 @@ class __$$GoalImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$GoalImpl extends _Goal {
+class _$GoalImpl extends _Goal with DiagnosticableTreeMixin {
   const _$GoalImpl(
       {required this.id,
       required this.title,
@@ -290,8 +290,27 @@ class _$GoalImpl extends _Goal {
   }
 
   @override
-  String toString() {
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
     return 'Goal(id: $id, title: $title, description: $description, targetAmount: $targetAmount, currentAmount: $currentAmount, deadline: $deadline, priority: $priority, categoryId: $categoryId, createdAt: $createdAt, updatedAt: $updatedAt, tags: $tags, contributions: $contributions)';
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties
+      ..add(DiagnosticsProperty('type', 'Goal'))
+      ..add(DiagnosticsProperty('id', id))
+      ..add(DiagnosticsProperty('title', title))
+      ..add(DiagnosticsProperty('description', description))
+      ..add(DiagnosticsProperty('targetAmount', targetAmount))
+      ..add(DiagnosticsProperty('currentAmount', currentAmount))
+      ..add(DiagnosticsProperty('deadline', deadline))
+      ..add(DiagnosticsProperty('priority', priority))
+      ..add(DiagnosticsProperty('categoryId', categoryId))
+      ..add(DiagnosticsProperty('createdAt', createdAt))
+      ..add(DiagnosticsProperty('updatedAt', updatedAt))
+      ..add(DiagnosticsProperty('tags', tags))
+      ..add(DiagnosticsProperty('contributions', contributions));
   }
 
   @override

@@ -3,10 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_spacing.dart';
 import '../../../accounts/presentation/providers/account_providers.dart';
+import '../../../settings/presentation/widgets/formatting_widgets.dart';
+import '../../../settings/presentation/widgets/privacy_mode_text.dart';
 import '../../domain/entities/bill.dart';
 import '../providers/bill_providers.dart';
 
@@ -271,13 +272,14 @@ class BillCard extends ConsumerWidget {
                                 ),
                                 const SizedBox(width: 8),
                                 // Amount
-                                Text(
-                                  '\$${bill.amount.toStringAsFixed(2)}',
-                                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                        color: _getUrgencyColor(),
-                                      ),
-                                ),
+                                 PrivacyModeAmount(
+                                   amount: bill.amount,
+                                   currency: '\$',
+                                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                         fontWeight: FontWeight.w600,
+                                         color: _getUrgencyColor(),
+                                       ),
+                                 ),
                               ],
                             ),
 
@@ -291,8 +293,9 @@ class BillCard extends ConsumerWidget {
                                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 ),
                                 const SizedBox(width: 4),
-                                Text(
-                                  DateFormat('MMM dd').format(bill.dueDate),
+                                SettingsDateText(
+                                  date: bill.dueDate,
+                                  format: 'MMM dd',
                                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                                       ),

@@ -10,23 +10,26 @@ import '../../features/bills/presentation/screens/bills_dashboard_screen.dart';
 import '../../features/bills/presentation/screens/bill_detail_screen.dart';
 import '../../features/goals/presentation/screens/goals_list_screen.dart';
 import '../../features/goals/presentation/screens/goal_detail_screen_enhanced.dart';
-import '../../features/goals/presentation/screens/goal_template_selection_screen.dart';
+import '../../features/goals/presentation/screens/enhanced_goal_template_selection_screen.dart';
 import '../../features/insights/presentation/screens/insights_dashboard_screen.dart';
 import '../../features/receipt_scanning/presentation/screens/receipt_scanning_screen.dart';
 import '../../features/receipt_scanning/presentation/screens/receipt_review_screen.dart';
 import '../../features/receipt_scanning/domain/entities/receipt_data.dart';
 import '../../features/settings/presentation/screens/settings_screen_enhanced.dart';
+import '../../features/settings/presentation/screens/terms_of_service_screen.dart';
+import '../../features/settings/presentation/screens/privacy_policy_screen.dart';
 import '../../features/accounts/presentation/screens/accounts_overview_screen.dart';
 import '../../features/accounts/presentation/screens/account_detail_screen.dart';
 import '../../features/accounts/presentation/screens/bank_connection_screen.dart';
 import '../../features/accounts/presentation/screens/transfer_screen.dart';
 import '../../features/accounts/presentation/screens/reconciliation_screen.dart';
-import '../../features/notifications/presentation/screens/notification_center_screen_enhanced.dart';
+import '../../features/notifications/presentation/screens/minimal_notification_screen.dart';
+import '../../features/notifications/presentation/screens/minimal_notification_settings_screen.dart';
 import '../../features/more/presentation/screens/help_center_screen_enhanced.dart';
 import '../../features/debt/presentation/screens/debt_dashboard_screen.dart';
 import '../../features/recurring_incomes/presentation/screens/recurring_income_dashboard_enhanced.dart';
 import '../../features/recurring_incomes/presentation/screens/recurring_income_detail_screen.dart';
-import '../../features/recurring_incomes/presentation/screens/recurring_income_receipt_recording_screen.dart';
+import '../../features/financial_obligations/presentation/screens/unified_obligations_dashboard.dart';
 import '../navigation/main_navigation_scaffold.dart';
 import '../navigation/screens/home_dashboard_screen.dart';
 import '../navigation/screens/more_menu_screen.dart';
@@ -99,7 +102,7 @@ class AppRouter {
             routes: [
               GoRoute(
                 path: 'templates',
-                builder: (context, state) => const GoalTemplateSelectionScreen(),
+                builder: (context, state) => const EnhancedGoalTemplateSelectionScreen(),
               ),
               GoRoute(
                 path: ':id',
@@ -150,14 +153,21 @@ class AppRouter {
                 ],
               ),
               GoRoute(
-                path: 'bills',
-                builder: (context, state) => const BillsDashboardScreen(),
+                path: 'cash-flow',
+                builder: (context, state) => const UnifiedObligationsDashboard(),
                 routes: [
                   GoRoute(
-                    path: ':id',
+                    path: 'bills/:id',
                     builder: (context, state) {
                       final id = state.pathParameters['id']!;
                       return BillDetailScreen(billId: id);
+                    },
+                  ),
+                  GoRoute(
+                    path: 'incomes/:id',
+                    builder: (context, state) {
+                      final id = state.pathParameters['id']!;
+                      return RecurringIncomeDetailScreen(incomeId: id);
                     },
                   ),
                 ],
@@ -176,7 +186,13 @@ class AppRouter {
               ),
               GoRoute(
                 path: 'notifications',
-                builder: (context, state) => const NotificationCenterScreenEnhanced(),
+                builder: (context, state) => const MinimalNotificationScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'settings',
+                    builder: (context, state) => const MinimalNotificationSettingsScreen(),
+                  ),
+                ],
               ),
               GoRoute(
                 path: 'help',
@@ -185,26 +201,14 @@ class AppRouter {
               GoRoute(
                 path: 'settings',
                 builder: (context, state) => const SettingsScreenEnhanced(),
-              ),
-              GoRoute(
-                path: 'incomes',
-                builder: (context, state) => const RecurringIncomeDashboardEnhanced(),
                 routes: [
                   GoRoute(
-                    path: ':id',
-                    builder: (context, state) {
-                      final id = state.pathParameters['id']!;
-                      return RecurringIncomeDetailScreen(incomeId: id);
-                    },
-                    routes: [
-                      GoRoute(
-                        path: 'receipt',
-                        builder: (context, state) {
-                          final id = state.pathParameters['id']!;
-                          return RecurringIncomeReceiptRecordingScreen(incomeId: id);
-                        },
-                      ),
-                    ],
+                    path: 'terms',
+                    builder: (context, state) => const TermsOfServiceScreen(),
+                  ),
+                  GoRoute(
+                    path: 'privacy',
+                    builder: (context, state) => const PrivacyPolicyScreen(),
                   ),
                 ],
               ),

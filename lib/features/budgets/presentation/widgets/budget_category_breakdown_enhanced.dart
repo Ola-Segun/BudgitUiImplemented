@@ -8,6 +8,8 @@ import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/design_system/models/circular_segment.dart';
 import '../../../../core/design_system/widgets/segmented_circular_indicator.dart';
 import '../../../../core/widgets/crash_detector.dart';
+import '../../../settings/presentation/widgets/formatting_widgets.dart';
+import '../../../settings/presentation/widgets/privacy_mode_text.dart';
 import '../../../transactions/presentation/providers/transaction_providers.dart';
 import '../../domain/entities/budget.dart' as budget_entity;
 import '../../domain/models/aggregated_category.dart';
@@ -708,8 +710,9 @@ class _EnhancedCategoryCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    '\$${segment.value.toInt()}',
+                  PrivacyModeAmount(
+                    amount: segment.value,
+                    currency: '\$',
                     style: AppTypographyExtended.statsValue.copyWith(
                       fontSize: 16,
                       color: segment.color,
@@ -855,8 +858,9 @@ class _CategoryDetailsSheet extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        '\$${segment.value.toStringAsFixed(2)} spent',
+                      PrivacyModeAmount(
+                        amount: segment.value,
+                        currency: '\$',
                         style: AppTypographyExtended.metricLabel.copyWith(
                           color: segment.color,
                           fontSize: 15,
@@ -932,18 +936,20 @@ class _CategoryDetailsSheet extends StatelessWidget {
         Expanded(
           child: _StatCard(
             label: 'Spent',
-            value: '\$${segment.value.toInt()}',
+            segment: segment,
             icon: Icons.trending_up,
             color: segment.color,
+            isSpent: true,
           ),
         ),
         SizedBox(width: AppDimensions.spacing3),
         Expanded(
           child: _StatCard(
             label: 'Budget',
-            value: '\$${segment.budget.toInt()}',
+            segment: segment,
             icon: Icons.account_balance_wallet,
             color: AppColors.textSecondary,
+            isSpent: false,
           ),
         ),
       ],
@@ -1005,21 +1011,23 @@ class _CategoryDetailsSheet extends StatelessWidget {
   }
 }
 
-class _StatCard extends StatelessWidget {
+class _StatCard extends ConsumerWidget {
   const _StatCard({
     required this.label,
-    required this.value,
+    required this.segment,
     required this.icon,
     required this.color,
+    required this.isSpent,
   });
 
   final String label;
-  final String value;
+  final CircularSegment segment;
   final IconData icon;
   final Color color;
+  final bool isSpent;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       padding: EdgeInsets.all(AppDimensions.spacing3),
       decoration: BoxDecoration(
@@ -1033,13 +1041,22 @@ class _StatCard extends StatelessWidget {
         children: [
           Icon(icon, size: 24, color: color),
           SizedBox(height: AppDimensions.spacing2),
-          Text(
-            value,
-            style: AppTypographyExtended.statsValue.copyWith(
-              fontSize: 18,
-              color: color,
-            ),
-          ),
+          isSpent
+              ? PrivacyModeAmount(
+                  amount: segment.value,
+                  currency: '\$',
+                  style: AppTypographyExtended.statsValue.copyWith(
+                    fontSize: 18,
+                    color: color,
+                  ),
+                )
+              : SettingsCurrencyText(
+                  amount: segment.budget,
+                  style: AppTypographyExtended.statsValue.copyWith(
+                    fontSize: 18,
+                    color: color,
+                  ),
+                ),
           const SizedBox(height: 4),
           Text(
             label,

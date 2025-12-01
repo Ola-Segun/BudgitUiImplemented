@@ -1,11 +1,12 @@
 import 'dart:async';
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../core/design_system/modern/modern.dart';
-import '../../../accounts/presentation/widgets/modern_account_selector.dart';
+import '../../../../core/design_system/design_tokens.dart';
 import '../../../accounts/presentation/providers/account_providers.dart';
 import '../../../transactions/presentation/providers/transaction_providers.dart';
 import '../../../transactions/domain/entities/transaction.dart';
@@ -60,9 +61,9 @@ class _EnhancedEditBillBottomSheetState
   late String _selectedCategoryId;
   late String? _selectedAccountId;
   late bool _isAutoPay;
-  final bool _showOptionalFields = false;
+  final bool _showOptionalFields = true;
 
-  final bool _isSubmitting = false;
+  bool _isSubmitting = false;
 
   // Reactive validation state
   Timer? _nameValidationTimer;
@@ -113,37 +114,84 @@ class _EnhancedEditBillBottomSheetState
     final accountsAsync = ref.watch(filteredAccountsProvider);
     final categoryIconColorService = ref.watch(categoryIconColorServiceProvider);
 
-    // Show the bottom sheet when the widget is built
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        showModernBottomSheet(
-          context: context,
-          builder: (context) => ModernBottomSheet(
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Header
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: spacing_lg),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Edit Bill',
-                          style: ModernTypography.titleLarge,
-                        ),
-                        const SizedBox(height: spacing_xs),
-                        Text(
-                          'Update your bill details',
-                          style: ModernTypography.bodyLarge.copyWith(
-                            color: ModernColors.textSecondary,
-                          ),
-                        ),
-                      ],
+    return ModernBottomSheet(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Diagnostic logging to monitor screen height, content height, and overflow amounts
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final contentSize = context.findRenderObject()?.semanticBounds.size;
+            final mediaQuery = MediaQuery.of(context);
+            if (contentSize != null) {
+              developer.log(
+                'EditBillBottomSheet - Screen height: ${mediaQuery.size.height}, '
+                'Content height: ${contentSize.height}, '
+                'Available height: ${constraints.maxHeight}, '
+                'Overflow amount: ${contentSize.height - constraints.maxHeight}, '
+                'Keyboard height: ${mediaQuery.viewInsets.bottom}, '
+                'View padding: ${mediaQuery.viewPadding.bottom}',
+                name: 'EditBillBottomSheet',
+              );
+            }
+          });
+
+          return Column(
+            children: [
+              // Fixed Header
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: spacing_md),
+                child: Row(
+                  children: [
+                    Text(
+                      'Edit Bill',
+                      style: ModernTypography.titleLarge.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Scrollable Content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom + 16),
+                  child: Column(
+                    children: [
+                      // Form
+                      Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+
+                  // Amount Display
+                  ModernAmountDisplay(
+                    amount: double.tryParse(_amountController.text) ?? 0.0,
+                    isEditable: true,
+                    onTap: () {
+                      developer.log('EditBillBottomSheet: Amount display tapped', name: 'EditBillBottomSheet');
+                      // Focus on amount field when tapped
+                    },
+                    onAmountChanged: (value) {
+                      developer.log('EditBillBottomSheet: Amount changed to $value', name: 'EditBillBottomSheet');
+                      _amountController.text = value.toStringAsFixed(2);
+                    },
+                    onValueChanged: (value) {
+                      developer.log('EditBillBottomSheet: Amount value changed to $value', name: 'EditBillBottomSheet');
+                      setState(() {
+                        _amountController.text = value;
+                      });
+                    },
+                  ).animate()
+                    .fadeIn(duration: DesignTokens.durationNormal, delay: 100.ms)
+                    .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 100.ms),
+
+                  const SizedBox(height: spacing_lg),
 
                   // Bill Name
                   ModernTextField(
@@ -161,48 +209,9 @@ class _EnhancedEditBillBottomSheetState
                       return null;
                     },
                   ).animate()
-                    .fadeIn(duration: ModernAnimations.normal, delay: 100.ms)
-                    .slideX(begin: 0.1, duration: ModernAnimations.normal, delay: 100.ms),
+                    .fadeIn(duration: DesignTokens.durationNormal, delay: 200.ms)
+                    .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 200.ms),
 
-                  const SizedBox(height: spacing_lg),
-
-                  // Amount Display
-                  ModernAmountDisplay(
-                    amount: double.tryParse(_amountController.text) ?? 0.0,
-                    isEditable: true,
-                    onTap: () {
-                      // Focus on amount field when tapped
-                    },
-                    onAmountChanged: (value) {
-                      _amountController.text = value.toStringAsFixed(2);
-                    },
-                  ).animate()
-                    .fadeIn(duration: ModernAnimations.normal, delay: 200.ms)
-                    .slideX(begin: 0.1, duration: ModernAnimations.normal, delay: 200.ms),
-
-                  // Hidden amount input for form validation
-                  TextFormField(
-                    controller: _amountController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-                    ],
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter an amount';
-                      }
-                      final amount = double.tryParse(value);
-                      if (amount == null || amount <= 0) {
-                        return 'Please enter a valid amount';
-                      }
-                      return null;
-                    },
-                    style: const TextStyle(fontSize: 0),
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ),
 
                   const SizedBox(height: spacing_lg),
 
@@ -295,53 +304,67 @@ class _EnhancedEditBillBottomSheetState
 
                   const SizedBox(height: spacing_lg),
 
-                  // Account Selection - Modern Account Selector
-                  ModernAccountSelector(
-                    label: 'Default Account (Optional)',
-                    selectedAccount: _selectedAccountId != null
-                        ? accountsAsync.maybeWhen(
-                            data: (accounts) {
-                              try {
-                                return accounts.firstWhere((account) => account.id == _selectedAccountId);
-                              } catch (e) {
-                                return null;
-                              }
-                            },
-                            orElse: () => null,
-                          )
-                        : null,
-                    onAccountSelected: (account) {
-                      setState(() {
-                        _selectedAccountId = account?.id;
-                      });
+                  // Account Selection
+                  accountsAsync.when(
+                    data: (accounts) {
+                      return ModernDropdownSelector<String?>(
+                        label: 'Default Account (Optional)',
+                        placeholder: 'No default account',
+                        selectedValue: _selectedAccountId,
+                        items: [
+                          ModernDropdownItem(
+                            value: null,
+                            label: 'No default account',
+                          ),
+                          ...accounts.map((account) {
+                            return ModernDropdownItem(
+                              value: account.id,
+                              label: '${account.displayName} (${account.formattedAvailableBalance})',
+                              icon: Icons.account_balance_wallet,
+                              color: Color(account.type.color),
+                            );
+                          }),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedAccountId = value;
+                          });
+                        },
+                      );
                     },
+                    loading: () => const SizedBox(
+                      height: 60,
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                    error: (error, stack) => Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: ModernColors.error.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(radius_md),
+                      ),
+                      child: Text(
+                        'Error loading accounts: $error',
+                        style: TextStyle(color: ModernColors.error),
+                      ),
+                    ),
                   ).animate()
                     .fadeIn(duration: ModernAnimations.normal, delay: 300.ms)
-                    .slideX(begin: 0.1, duration: ModernAnimations.normal, delay: 300.ms),
+                    .slideY(begin: 0.1, duration: ModernAnimations.normal, delay: 300.ms),
 
                   const SizedBox(height: spacing_lg),
 
-                  // Frequency - Modern Dropdown Selector
-                  ModernDropdownSelector<BillFrequency>(
-                    label: 'Frequency',
-                    selectedValue: _selectedFrequency,
-                    items: BillFrequency.values.map((frequency) {
-                      return ModernDropdownItem<BillFrequency>(
-                        value: frequency,
-                        label: frequency.displayName,
-                        icon: _getFrequencyIcon(frequency),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() {
-                          _selectedFrequency = value;
-                        });
-                      }
+                  // Frequency
+                  ModernToggleButton(
+                    options: const ['Weekly', 'Monthly', 'Quarterly', 'Annually'],
+                    selectedIndex: _getFrequencyIndex(_selectedFrequency),
+                    onChanged: (index) {
+                      setState(() {
+                        _selectedFrequency = _getFrequencyFromIndex(index);
+                      });
                     },
                   ).animate()
                     .fadeIn(duration: ModernAnimations.normal, delay: 400.ms)
-                    .slideX(begin: 0.1, duration: ModernAnimations.normal, delay: 400.ms),
+                    .slideY(begin: 0.1, duration: ModernAnimations.normal, delay: 400.ms),
 
                   const SizedBox(height: spacing_lg),
 
@@ -357,227 +380,218 @@ class _EnhancedEditBillBottomSheetState
                     },
                   ).animate()
                     .fadeIn(duration: ModernAnimations.normal, delay: 500.ms)
-                    .slideX(begin: 0.1, duration: ModernAnimations.normal, delay: 500.ms),
+                    .slideY(begin: 0.1, duration: ModernAnimations.normal, delay: 500.ms),
 
                   const SizedBox(height: spacing_lg),
 
-                  // Optional Fields Section - Keep existing for now
-                  if (_showOptionalFields) ...[
-                    // Payee
-                    ModernTextField(
-                      controller: _payeeController,
-                      label: 'Payee (optional)',
-                      placeholder: 'e.g., Electric Company',
-                      prefixIcon: Icons.business,
-                    ).animate()
-                      .fadeIn(duration: ModernAnimations.normal, delay: 700.ms)
-                      .slideX(begin: 0.1, duration: ModernAnimations.normal, delay: 700.ms),
 
-                    const SizedBox(height: spacing_md),
+                            // Optional Fields Section - Keep existing for now
+                            if (_showOptionalFields) ...[
+                              // Payee
+                              ModernTextField(
+                                controller: _payeeController,
+                                label: 'Payee (optional)',
+                                placeholder: 'e.g., Electric Company',
+                                prefixIcon: Icons.business,
+                              ).animate()
+                                .fadeIn(duration: ModernAnimations.normal, delay: 700.ms)
+                                .slideX(begin: 0.1, duration: ModernAnimations.normal, delay: 700.ms),
 
-                    // Description
-                    ModernTextField(
-                      controller: _descriptionController,
-                      label: 'Description (optional)',
-                      placeholder: 'Additional details about this bill',
-                      maxLength: 200,
-                      prefixIcon: Icons.description_outlined,
-                    ).animate()
-                      .fadeIn(duration: ModernAnimations.normal, delay: 800.ms)
-                      .slideX(begin: 0.1, duration: ModernAnimations.normal, delay: 800.ms),
+                              const SizedBox(height: spacing_md),
 
-                    const SizedBox(height: spacing_md),
+                              // Description
+                              ModernTextField(
+                                controller: _descriptionController,
+                                label: 'Description (optional)',
+                                placeholder: 'Additional details about this bill',
+                                maxLength: 200,
+                                prefixIcon: Icons.description_outlined,
+                              ).animate()
+                                .fadeIn(duration: ModernAnimations.normal, delay: 800.ms)
+                                .slideX(begin: 0.1, duration: ModernAnimations.normal, delay: 800.ms),
 
-                    // Website
-                    ModernTextField(
-                      controller: _websiteController,
-                      label: 'Website (optional)',
-                      placeholder: 'https://example.com',
-                      keyboardType: TextInputType.url,
-                      prefixIcon: Icons.link,
-                    ).animate()
-                      .fadeIn(duration: ModernAnimations.normal, delay: 900.ms)
-                      .slideX(begin: 0.1, duration: ModernAnimations.normal, delay: 900.ms),
+                              const SizedBox(height: spacing_md),
 
-                    const SizedBox(height: spacing_md),
+                              // Website
+                              ModernTextField(
+                                controller: _websiteController,
+                                label: 'Website (optional)',
+                                placeholder: 'https://example.com',
+                                keyboardType: TextInputType.url,
+                                prefixIcon: Icons.link,
+                              ).animate()
+                                .fadeIn(duration: ModernAnimations.normal, delay: 900.ms)
+                                .slideX(begin: 0.1, duration: ModernAnimations.normal, delay: 900.ms),
 
-                    // Auto Pay Toggle
-                    Container(
-                      padding: const EdgeInsets.all(spacing_md),
-                      decoration: BoxDecoration(
-                        color: ModernColors.primaryGray,
-                        borderRadius: BorderRadius.circular(radius_md),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.autorenew,
-                            color: ModernColors.textSecondary,
-                            size: 24,
-                          ),
-                          const SizedBox(width: spacing_md),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Auto Pay',
-                                  style: ModernTypography.bodyLarge.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                              const SizedBox(height: spacing_md),
+
+                              // Auto Pay Toggle
+                              Container(
+                                padding: const EdgeInsets.all(spacing_md),
+                                decoration: BoxDecoration(
+                                  color: ModernColors.primaryGray,
+                                  borderRadius: BorderRadius.circular(radius_md),
                                 ),
-                                Text(
-                                  'Automatically pay this bill when due',
-                                  style: ModernTypography.labelMedium.copyWith(
-                                    color: ModernColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Switch(
-                            value: _isAutoPay,
-                            onChanged: (value) async {
-                              if (value && !widget.bill.isAutoPay) {
-                                // Show confirmation dialog for enabling auto-pay
-                                final confirmed = await showDialog<bool>(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: const Text('Enable Auto Pay'),
-                                    content: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          'Auto Pay will automatically process payments when bills are due. This requires:',
-                                        ),
-                                        const SizedBox(height: 12),
-                                        Text(
-                                          '• A linked account with sufficient funds',
-                                          style: TextStyle(
-                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                          ),
-                                        ),
-                                        Text(
-                                          '• Confirmation of payment processing',
-                                          style: TextStyle(
-                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                          ),
-                                        ),
-                                        Text(
-                                          '• Ability to modify or cancel auto-pay settings',
-                                          style: TextStyle(
-                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 16),
-                                        Container(
-                                          padding: const EdgeInsets.all(12),
-                                          decoration: BoxDecoration(
-                                            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              Icon(
-                                                Icons.info_outline,
-                                                color: Theme.of(context).colorScheme.primary,
-                                                size: 20,
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Expanded(
-                                                child: Text(
-                                                  'You can disable auto-pay anytime from bill settings.',
-                                                  style: TextStyle(
-                                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                                    fontSize: 14,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.autorenew,
+                                      color: ModernColors.textSecondary,
+                                      size: 24,
                                     ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(context, false),
-                                        child: const Text('Cancel'),
+                                    const SizedBox(width: spacing_md),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Auto Pay',
+                                            style: ModernTypography.bodyLarge.copyWith(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          Text(
+                                            'Automatically pay this bill when due',
+                                            style: ModernTypography.labelMedium.copyWith(
+                                              color: ModernColors.textSecondary,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      FilledButton(
-                                        onPressed: () => Navigator.pop(context, true),
-                                        child: const Text('Enable Auto Pay'),
-                                      ),
-                                    ],
-                                  ),
-                                );
+                                    ),
+                                    Switch(
+                                      value: _isAutoPay,
+                                      onChanged: (value) async {
+                                        if (value && !widget.bill.isAutoPay) {
+                                          // Show confirmation dialog for enabling auto-pay
+                                          final confirmed = await showDialog<bool>(
+                                            context: context,
+                                            builder: (context) => AlertDialog(
+                                              title: const Text('Enable Auto Pay'),
+                                              content: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  const Text(
+                                                    'Auto Pay will automatically process payments when bills are due. This requires:',
+                                                  ),
+                                                  const SizedBox(height: 12),
+                                                  Text(
+                                                    '• A linked account with sufficient funds',
+                                                    style: TextStyle(
+                                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    '• Confirmation of payment processing',
+                                                    style: TextStyle(
+                                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    '• Ability to modify or cancel auto-pay settings',
+                                                    style: TextStyle(
+                                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 16),
+                                                  Container(
+                                                    padding: const EdgeInsets.all(12),
+                                                    decoration: BoxDecoration(
+                                                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                                      borderRadius: BorderRadius.circular(8),
+                                                    ),
+                                                    child: Row(
+                                                      children: [
+                                                        Icon(
+                                                          Icons.info_outline,
+                                                          color: Theme.of(context).colorScheme.primary,
+                                                          size: 20,
+                                                        ),
+                                                        const SizedBox(width: 8),
+                                                        Expanded(
+                                                          child: Text(
+                                                            'You can disable auto-pay anytime from bill settings.',
+                                                            style: TextStyle(
+                                                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                                              fontSize: 14,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () => Navigator.pop(context, false),
+                                                  child: const Text('Cancel'),
+                                                ),
+                                                FilledButton(
+                                                  onPressed: () => Navigator.pop(context, true),
+                                                  child: const Text('Enable Auto Pay'),
+                                                ),
+                                              ],
+                                            ),
+                                          );
 
-                                if (confirmed == true) {
-                                  setState(() {
-                                    _isAutoPay = value;
-                                  });
-                                }
-                              } else {
-                                setState(() {
-                                  _isAutoPay = value;
-                                });
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                    ).animate()
-                      .fadeIn(duration: ModernAnimations.normal, delay: 1000.ms)
-                      .slideY(begin: 0.1, duration: ModernAnimations.normal, delay: 1000.ms),
+                                          if (confirmed == true) {
+                                            setState(() {
+                                              _isAutoPay = value;
+                                            });
+                                          }
+                                        } else {
+                                          setState(() {
+                                            _isAutoPay = value;
+                                          });
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ).animate()
+                                .fadeIn(duration: ModernAnimations.normal, delay: 1000.ms)
+                                .slideY(begin: 0.1, duration: ModernAnimations.normal, delay: 1000.ms),
 
-                    const SizedBox(height: spacing_md),
+                              const SizedBox(height: spacing_md),
 
-                    // Notes
-                    ModernTextField(
-                      controller: _notesController,
-                      label: 'Notes (optional)',
-                      placeholder: 'Any additional notes',
-                      maxLength: 500,
-                    ).animate()
-                      .fadeIn(duration: ModernAnimations.normal, delay: 1100.ms)
-                      .slideX(begin: 0.1, duration: ModernAnimations.normal, delay: 1100.ms),
+                              // Notes
+                              ModernTextField(
+                                controller: _notesController,
+                                label: 'Notes (optional)',
+                                placeholder: 'Any additional notes',
+                                maxLength: 500,
+                              ).animate()
+                                .fadeIn(duration: ModernAnimations.normal, delay: 1100.ms)
+                                .slideX(begin: 0.1, duration: ModernAnimations.normal, delay: 1100.ms),
 
-                    const SizedBox(height: spacing_md),
-                  ],
-
-                  // Action Buttons
-                  const SizedBox(height: spacing_xl),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ModernActionButton(
-                          text: 'Cancel',
-                          isPrimary: false,
-                          onPressed: _isSubmitting ? null : () => Navigator.pop(context),
-                        ),
-                      ),
-                      const SizedBox(width: spacing_md),
-                      Expanded(
-                        child: ModernActionButton(
-                          text: 'Update Bill',
-                          isPrimary: true,
-                          isLoading: _isSubmitting,
-                          onPressed: _isSubmitting ? null : _submitBill,
+                              const SizedBox(height: spacing_md),
+                            ],
+                          ],
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: spacing_lg),
-                ],
+                ),
               ),
-            ),
-          ),
-        );
-      }
-    });
 
-    // Return an empty container since the bottom sheet is shown via post-frame callback
-    return const SizedBox.shrink();
+              // Fixed Action Button
+              ModernActionButton(
+                text: 'Update Bill',
+                onPressed: _isSubmitting ? null : () {
+                  developer.log('EditBillBottomSheet: Update Bill button pressed', name: 'EditBillBottomSheet');
+                  _submitBill();
+                },
+                isLoading: _isSubmitting,
+                minimumPressDuration: const Duration(milliseconds: 100),
+              ),
+              const SizedBox(height: spacing_lg),
+            ],
+          );
+        },
+      ),
+    );
   }
 
   /// Get smart default category ID for expense categories (bills)
@@ -604,35 +618,46 @@ class _EnhancedEditBillBottomSheetState
     return expenseCategories.first.id;
   }
 
-  /// Get icon for frequency
-  IconData _getFrequencyIcon(BillFrequency frequency) {
+  /// Get index for frequency in toggle button
+  int _getFrequencyIndex(BillFrequency frequency) {
     switch (frequency) {
-      case BillFrequency.daily:
-        return Icons.today;
       case BillFrequency.weekly:
-        return Icons.calendar_view_week;
-      case BillFrequency.biWeekly:
-        return Icons.calendar_view_week;
+        return 0;
       case BillFrequency.monthly:
-        return Icons.calendar_month;
+        return 1;
       case BillFrequency.quarterly:
-        return Icons.calendar_view_month;
+        return 2;
       case BillFrequency.annually:
-        return Icons.calendar_today;
       case BillFrequency.yearly:
-        return Icons.calendar_today;
-      case BillFrequency.custom:
-        return Icons.settings;
+        return 3;
+      default:
+        return 1; // Default to monthly
     }
   }
+
+  /// Get frequency from toggle button index
+  BillFrequency _getFrequencyFromIndex(int index) {
+    switch (index) {
+      case 0:
+        return BillFrequency.weekly;
+      case 1:
+        return BillFrequency.monthly;
+      case 2:
+        return BillFrequency.quarterly;
+      case 3:
+        return BillFrequency.annually;
+      default:
+        return BillFrequency.monthly;
+    }
+  }
+
 
   Future<void> _submitBill() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    // Note: _isSubmitting is final, so we can't modify it
-    // The submission logic is handled in the parent widget
+    setState(() => _isSubmitting = true);
 
     try {
       final amount = double.parse(_amountController.text);
@@ -660,10 +685,22 @@ class _EnhancedEditBillBottomSheetState
       );
 
       await widget.onSubmit(updatedBill);
-      // Note: Error handling is done in the parent widget via the callback
+      if (mounted) {
+        Navigator.pop(context);
+      }
     } catch (e) {
-      // Handle error - for now just print, error handling should be in parent
-      debugPrint('Error submitting bill: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating bill: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
     }
   }
 }

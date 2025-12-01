@@ -12,8 +12,11 @@ import '../../../../core/widgets/loading_view.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../budgets/presentation/widgets/budget_stats_row.dart'; // Reuse
 import '../../../budgets/presentation/widgets/budget_bar_chart.dart'; // Reuse
+import '../../../settings/presentation/widgets/formatting_widgets.dart';
+import '../../../settings/presentation/widgets/privacy_mode_text.dart';
 import '../theme/income_theme_extended.dart';
 import '../widgets/income_metric_cards.dart';
+import '../widgets/create_recurring_income_bottom_sheet.dart';
 import '../../domain/entities/recurring_income.dart';
 import '../providers/recurring_income_providers.dart';
 
@@ -49,7 +52,7 @@ class _RecurringIncomeDashboardEnhancedState
           Container(
             margin: const EdgeInsets.only(right: 16),
             child: TextButton(
-              onPressed: () => context.go('/more/incomes/add'),
+              onPressed: () => CreateRecurringIncomeBottomSheet.show(context),
               style: TextButton.styleFrom(
                 backgroundColor: IncomeThemeExtended.incomePrimary,
                 foregroundColor: Colors.white,
@@ -300,7 +303,7 @@ class _RecurringIncomeDashboardEnhancedState
             .fadeIn(duration: 300.ms, delay: 300.ms),
           SizedBox(height: AppDimensions.spacing5),
           ElevatedButton.icon(
-            onPressed: () => context.go('/more/incomes/add'),
+            onPressed: () => CreateRecurringIncomeBottomSheet.show(context),
             icon: const Icon(Icons.add),
             label: const Text('Add Income'),
             style: ElevatedButton.styleFrom(
@@ -454,8 +457,9 @@ class _EnhancedIncomeStatusCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    '\$${status.income.amount.toStringAsFixed(0)}',
+                  PrivacyModeAmount(
+                    amount: status.income.amount,
+                    currency: '\$',
                     style: AppTypography.bodyLarge.copyWith(
                       fontWeight: FontWeight.w700,
                       color: urgencyColor,
@@ -645,8 +649,9 @@ class _EnhancedIncomeCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 2),
-                      Text(
-                        '\$${income.amount.toStringAsFixed(0)}',
+                      PrivacyModeAmount(
+                        amount: income.amount,
+                        currency: '\$',
                         style: AppTypography.bodyLarge.copyWith(
                           fontWeight: FontWeight.w700,
                           color: statusColor,
@@ -667,8 +672,9 @@ class _EnhancedIncomeCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 2),
-                        Text(
-                          DateFormat('MMM dd').format(income.nextExpectedDate!),
+                        SettingsDateText(
+                          date: income.nextExpectedDate!,
+                          format: 'MMM dd',
                           style: AppTypography.bodyMedium.copyWith(
                             fontWeight: FontWeight.w600,
                           ),

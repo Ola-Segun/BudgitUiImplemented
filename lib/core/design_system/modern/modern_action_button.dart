@@ -16,6 +16,7 @@ class ModernActionButton extends StatefulWidget {
   final bool isFullWidth;
   final IconData? icon;
   final double height;
+  final Duration minimumPressDuration;
 
   const ModernActionButton({
     super.key,
@@ -26,6 +27,7 @@ class ModernActionButton extends StatefulWidget {
     this.isFullWidth = true,
     this.icon,
     this.height = 48.0,
+    this.minimumPressDuration = Duration.zero,
   });
 
   @override
@@ -36,6 +38,7 @@ class _ModernActionButtonState extends State<ModernActionButton>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
+  DateTime? _tapDownTime;
 
   @override
   void initState() {
@@ -51,6 +54,7 @@ class _ModernActionButtonState extends State<ModernActionButton>
 
   void _onTapDown(TapDownDetails details) {
     if (!widget.isLoading && widget.onPressed != null) {
+      _tapDownTime = DateTime.now();
       _animationController.forward();
     }
   }
@@ -63,7 +67,28 @@ class _ModernActionButtonState extends State<ModernActionButton>
 
   void _onTapCancel() {
     if (!widget.isLoading && widget.onPressed != null) {
+      _tapDownTime = null;
       _animationController.reverse();
+    }
+  }
+
+  void _handleTap() {
+    if (!widget.isLoading && widget.onPressed != null) {
+      final pressDuration = _tapDownTime != null 
+          ? DateTime.now().difference(_tapDownTime!) 
+          : Duration.zero;
+      
+      debugPrint('ModernActionButton: Button tapped, text: ${widget.text}, '
+          'pressDuration: ${pressDuration.inMilliseconds}ms, '
+          'minimum: ${widget.minimumPressDuration.inMilliseconds}ms');
+      
+      if (pressDuration >= widget.minimumPressDuration) {
+        HapticFeedback.lightImpact();
+        widget.onPressed!();
+      } else {
+        debugPrint('ModernActionButton: Button tap ignored due to short press duration');
+      }
+      _tapDownTime = null;
     }
   }
 
@@ -84,13 +109,13 @@ class _ModernActionButtonState extends State<ModernActionButton>
       button: true,
       enabled: isEnabled,
       child: GestureDetector(
-        onTapDown: _onTapDown,
-        onTapUp: _onTapUp,
-        onTapCancel: _onTapCancel,
-        onTap: isEnabled ? () {
-          HapticFeedback.lightImpact();
-          widget.onPressed!();
-        } : null,
+        // FIXED: Only provide callbacks when button is enabled
+        onTapDown: isEnabled ? _onTapDown : null,
+        onTapUp: isEnabled ? _onTapUp : null,
+        onTapCancel: isEnabled ? _onTapCancel : null,
+        onTap: isEnabled ? _handleTap : null,
+        // Add behavior to make sure taps don't pass through
+        behavior: HitTestBehavior.opaque,
         child: AnimatedBuilder(
           animation: _animationController,
           builder: (context, child) {
@@ -103,7 +128,9 @@ class _ModernActionButtonState extends State<ModernActionButton>
                     ? null
                     : const BoxConstraints(minWidth: 120),
                 decoration: BoxDecoration(
-                  color: isEnabled ? backgroundColor : ModernColors.textSecondary.withOpacity(0.2),
+                  color: isEnabled 
+                      ? backgroundColor 
+                      : ModernColors.textSecondary.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(radius_lg),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: spacing_lg),

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import '../domain/services/privacy_mode_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../providers/settings_providers.dart';
 
 /// Widget that automatically obscures sensitive text when privacy mode is active
-class PrivacyModeText extends StatelessWidget {
+class PrivacyModeText extends ConsumerWidget {
   final String text;
   final String? obscuredText;
   final TextStyle? style;
@@ -21,23 +23,36 @@ class PrivacyModeText extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final privacyService = PrivacyModeService();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final privacyService = ref.watch(privacyModeServiceProvider);
     final shouldObscure = privacyService.shouldObscureSensitiveData();
-    final displayText = shouldObscure ? (obscuredText ?? '••••') : text;
 
-    return Text(
-      displayText,
-      style: style,
-      textAlign: textAlign,
-      maxLines: maxLines,
-      overflow: overflow,
-    );
+    if (shouldObscure) {
+      // When obscured, show a fixed-width container to prevent layout shifts
+      return SizedBox(
+        width: 60, // Fixed width to prevent layout shifts
+        child: Text(
+          obscuredText ?? '••••',
+          style: style,
+          textAlign: textAlign ?? TextAlign.start,
+          maxLines: maxLines,
+          overflow: overflow ?? TextOverflow.ellipsis,
+        ),
+      );
+    } else {
+      return Text(
+        text,
+        style: style,
+        textAlign: textAlign,
+        maxLines: maxLines,
+        overflow: overflow,
+      );
+    }
   }
 }
 
 /// Widget that automatically obscures sensitive amounts when privacy mode is active
-class PrivacyModeAmount extends StatelessWidget {
+class PrivacyModeAmount extends ConsumerWidget {
   final double amount;
   final String currency;
   final TextStyle? style;
@@ -52,20 +67,34 @@ class PrivacyModeAmount extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final privacyService = PrivacyModeService();
-    final displayText = privacyService.obscureAmount(amount, currency: currency);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final privacyService = ref.watch(privacyModeServiceProvider);
+    final shouldObscure = privacyService.shouldObscureSensitiveData();
 
-    return Text(
-      displayText,
-      style: style,
-      textAlign: textAlign,
-    );
+    if (shouldObscure) {
+      // When obscured, show a fixed-width container to prevent layout shifts
+      // Use a width that accommodates typical currency amounts
+      return SizedBox(
+        width: 80, // Fixed width to prevent layout shifts
+        child: Text(
+          '••••••',
+          style: style,
+          textAlign: textAlign ?? TextAlign.end,
+        ),
+      );
+    } else {
+      final displayText = privacyService.obscureAmount(amount, currency);
+      return Text(
+        displayText,
+        style: style,
+        textAlign: textAlign,
+      );
+    }
   }
 }
 
 /// Widget that provides temporary reveal functionality for sensitive data
-class PrivacyModeReveal extends StatefulWidget {
+class PrivacyModeReveal extends ConsumerStatefulWidget {
   final Widget child;
   final Duration revealDuration;
 
@@ -76,15 +105,15 @@ class PrivacyModeReveal extends StatefulWidget {
   });
 
   @override
-  State<PrivacyModeReveal> createState() => _PrivacyModeRevealState();
+  ConsumerState<PrivacyModeReveal> createState() => _PrivacyModeRevealState();
 }
 
-class _PrivacyModeRevealState extends State<PrivacyModeReveal> {
+class _PrivacyModeRevealState extends ConsumerState<PrivacyModeReveal> {
   bool _isRevealed = false;
 
   @override
   Widget build(BuildContext context) {
-    final privacyService = PrivacyModeService();
+    final privacyService = ref.watch(privacyModeServiceProvider);
 
     if (!privacyService.shouldObscureSensitiveData()) {
       return widget.child;

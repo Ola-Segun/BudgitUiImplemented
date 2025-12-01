@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 
+import '../../../../features/settings/presentation/widgets/privacy_mode_text.dart';
 import '../../../transactions/domain/services/category_icon_color_service.dart';
 import '../../../transactions/presentation/providers/transaction_providers.dart';
 import '../../domain/entities/goal.dart';
@@ -141,11 +142,27 @@ class GoalProgressCard extends ConsumerWidget {
                         fontWeight: FontWeight.w500,
                       ),
                 ),
-                Text(
-                  '${goal.formattedCurrentAmount} / ${goal.formattedTargetAmount}',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                Row(
+                  children: [
+                    PrivacyModeAmount(
+                      amount: goal.currentAmount,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                    ),
+                    Text(
+                      ' / ',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                    ),
+                    PrivacyModeAmount(
+                      amount: goal.targetAmount,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -164,8 +181,8 @@ class GoalProgressCard extends ConsumerWidget {
                                 color: Theme.of(context).colorScheme.onSurfaceVariant,
                               ),
                         ),
-                        Text(
-                          goal.formattedRemainingAmount,
+                        PrivacyModeAmount(
+                          amount: goal.remainingAmount,
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w600,
                                 color: Theme.of(context).colorScheme.primary,

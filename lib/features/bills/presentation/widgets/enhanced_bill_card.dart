@@ -3,9 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../../settings/presentation/widgets/privacy_mode_text.dart';
 import '../../domain/entities/bill.dart';
 import '../theme/bills_theme_extended.dart';
 
@@ -123,8 +123,9 @@ class EnhancedBillCard extends ConsumerWidget {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          NumberFormat.currency(symbol: '\$', decimalDigits: 0).format(bill.amount),
+                        PrivacyModeAmount(
+                          amount: bill.amount,
+                          currency: '\$',
                           style: BillsThemeExtended.billAmount.copyWith(
                             color: urgencyColor,
                             fontSize: 16,
@@ -231,12 +232,32 @@ class EnhancedBillCard extends ConsumerWidget {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          Text(
-                            '${NumberFormat.currency(symbol: '\$', decimalDigits: 0).format(bill.totalPaid)} / ${NumberFormat.currency(symbol: '\$', decimalDigits: 0).format(bill.amount)}',
-                            style: BillsThemeExtended.billAmountSmall.copyWith(
-                              color: urgencyColor,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          Row(
+                            children: [
+                              PrivacyModeAmount(
+                                amount: bill.totalPaid,
+                                currency: '\$',
+                                style: BillsThemeExtended.billAmountSmall.copyWith(
+                                  color: urgencyColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                ' / ',
+                                style: BillsThemeExtended.billAmountSmall.copyWith(
+                                  color: urgencyColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              PrivacyModeAmount(
+                                amount: bill.amount,
+                                currency: '\$',
+                                style: BillsThemeExtended.billAmountSmall.copyWith(
+                                  color: urgencyColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),

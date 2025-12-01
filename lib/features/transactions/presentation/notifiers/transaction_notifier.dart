@@ -2,6 +2,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../goals/presentation/notifiers/goal_notifier.dart';
+import '../../../notifications/domain/services/notification_service.dart';
+import '../../../notifications/domain/usecases/check_budget_alerts.dart';
 import '../../domain/entities/transaction.dart';
 import '../../domain/entities/split_transaction.dart';
 import '../../domain/entities/transaction_filter.dart';
@@ -20,6 +22,8 @@ class TransactionNotifier extends StateNotifier<AsyncValue<TransactionState>> {
   final UpdateTransaction _updateTransaction;
   final DeleteTransaction _deleteTransaction;
   final GoalNotifier? _goalNotifier;
+  final CheckBudgetAlerts? _checkBudgetAlerts;
+  final NotificationService? _notificationService;
 
   TransactionNotifier({
     required GetTransactions getTransactions,
@@ -28,12 +32,16 @@ class TransactionNotifier extends StateNotifier<AsyncValue<TransactionState>> {
     required UpdateTransaction updateTransaction,
     required DeleteTransaction deleteTransaction,
     GoalNotifier? goalNotifier,
+    CheckBudgetAlerts? checkBudgetAlerts,
+    NotificationService? notificationService,
   })  : _getTransactions = getTransactions,
         _getPaginatedTransactions = getPaginatedTransactions,
         _addTransaction = addTransaction,
         _updateTransaction = updateTransaction,
         _deleteTransaction = deleteTransaction,
         _goalNotifier = goalNotifier,
+        _checkBudgetAlerts = checkBudgetAlerts,
+        _notificationService = notificationService,
         super(const AsyncValue.loading()) {
     loadTransactions();
   }
@@ -164,6 +172,38 @@ class TransactionNotifier extends StateNotifier<AsyncValue<TransactionState>> {
         if (addedTransaction.goalAllocations != null && addedTransaction.goalAllocations!.isNotEmpty && _goalNotifier != null) {
           debugPrint('TransactionNotifier: Transaction has goal allocations, refreshing goals');
           _goalNotifier!.loadGoals();
+        }
+
+        // Check for budget alerts in real-time after transaction is added
+        if (_checkBudgetAlerts != null && addedTransaction.type == TransactionType.expense) {
+          debugPrint('TransactionNotifier: Checking budget alerts for expense transaction');
+          _checkBudgetAlerts!().then((_) {
+            debugPrint('TransactionNotifier: Budget alerts check completed');
+          }).catchError((error) {
+            debugPrint('TransactionNotifier: Error checking budget alerts: $error');
+          });
+        }
+
+        // Create transaction receipt notification
+        if (_notificationService != null) {
+          debugPrint('TransactionNotifier: Creating transaction receipt notification');
+          _notificationService!.createTransactionReceipt(
+            transactionId: addedTransaction.id,
+            description: addedTransaction.title,
+            amount: addedTransaction.amount,
+            category: addedTransaction.categoryId ?? 'Unknown',
+          ).then((result) {
+            result.when(
+              success: (notification) {
+                debugPrint('TransactionNotifier: Transaction receipt notification created');
+              },
+              error: (failure) {
+                debugPrint('TransactionNotifier: Failed to create transaction receipt: ${failure.message}');
+              },
+            );
+          }).catchError((error) {
+            debugPrint('TransactionNotifier: Error creating transaction receipt: $error');
+          });
         }
 
         debugPrint('TransactionNotifier: Transactions reloaded after successful addition');

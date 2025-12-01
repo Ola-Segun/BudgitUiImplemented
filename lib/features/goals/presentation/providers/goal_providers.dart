@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../transactions/domain/entities/transaction.dart';
@@ -124,14 +125,24 @@ final notifier = GoalNotifier(
   ref.listen<AsyncValue<CategoryState>>(
     categoryNotifierProvider,
     (previous, next) {
+      debugPrint('🔍 GoalProviders: Category state changed');
+      debugPrint('🔍 GoalProviders: previous: ${previous?.runtimeType}');
+      debugPrint('🔍 GoalProviders: next: ${next.runtimeType}');
+
       // Only refresh if categories were actually modified (not just operation state changes)
       final prevCategories = previous?.value?.categories ?? [];
       final nextCategories = next.value?.categories ?? [];
 
+      debugPrint('🔍 GoalProviders: prevCategories length: ${prevCategories.length}');
+      debugPrint('🔍 GoalProviders: nextCategories length: ${nextCategories.length}');
+
       // Check if categories actually changed (not just operation state)
       if (prevCategories.length != nextCategories.length ||
           !prevCategories.every((cat) => nextCategories.any((c) => c.id == cat.id && c.name == cat.name))) {
+        debugPrint('🔍 GoalProviders: Categories changed, calling notifier.loadGoals()');
         notifier.loadGoals();
+      } else {
+        debugPrint('🔍 GoalProviders: Categories unchanged, skipping loadGoals()');
       }
     },
     fireImmediately: false,

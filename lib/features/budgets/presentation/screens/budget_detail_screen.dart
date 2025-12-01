@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lottie/lottie.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_colors_extended.dart';
@@ -15,6 +14,9 @@ import '../../../../core/widgets/loading_view.dart';
 import '../../../../core/widgets/crash_detector.dart';
 import '../../../../core/widgets/memory_monitor.dart';
 import '../../../../core/widgets/platform_crash_handler.dart';
+import '../../../settings/presentation/providers/settings_providers.dart';
+import '../../../settings/presentation/widgets/formatting_widgets.dart';
+import '../../../settings/presentation/widgets/privacy_mode_text.dart';
 import '../../../transactions/domain/entities/transaction.dart';
 import '../../../transactions/presentation/providers/transaction_providers.dart';
 import '../../../../core/di/providers.dart' as core_providers;
@@ -332,8 +334,8 @@ class _BudgetDetailScreenState extends ConsumerState<BudgetDetailScreen>
                       padding: const EdgeInsets.only(top: 60),
                       child: CircularBudgetIndicator(
                         percentage: status.totalSpent / status.totalBudget,
-                        spent: status.totalSpent,
-                        total: status.totalBudget,
+                        // spent: status.totalSpent,
+                        // total: status.totalBudget,
                         size: 120,
                         strokeWidth: 12,
                       ),
@@ -700,16 +702,26 @@ class _BudgetDetailScreenState extends ConsumerState<BudgetDetailScreen>
                           icon: Icons.category_outlined,
                         ),
                         const SizedBox(height: 12),
-                        _InfoRow(
-                          label: 'Period',
-                          value: '${DateFormat('MMM dd').format(budget.startDate)} - ${DateFormat('MMM dd, yyyy').format(budget.endDate)}',
-                          icon: Icons.calendar_today,
+                        Consumer(
+                          builder: (context, ref, child) {
+                            final startDate = ref.watch(formattingServiceProvider).formatDate(budget.startDate, format: 'MMM dd');
+                            final endDate = ref.watch(formattingServiceProvider).formatDate(budget.endDate, format: 'MMM dd, yyyy');
+                            return _InfoRow(
+                              label: 'Period',
+                              value: '$startDate - $endDate',
+                              icon: Icons.calendar_today,
+                            );
+                          },
                         ),
                         const SizedBox(height: 12),
-                        _InfoRow(
-                          label: 'Total Budget',
-                          value: NumberFormat.currency(symbol: '\$', decimalDigits: 0).format(budget.totalBudget),
-                          icon: Icons.account_balance_wallet_outlined,
+                        Consumer(
+                          builder: (context, ref, child) {
+                            return _InfoRow(
+                              label: 'Total Budget',
+                              value: ref.watch(formattingServiceProvider).formatCurrency(budget.totalBudget, decimalDigits: 0),
+                              icon: Icons.account_balance_wallet_outlined,
+                            );
+                          },
                         ),
                         const SizedBox(height: 12),
                         _InfoRow(
@@ -1189,16 +1201,26 @@ class _BudgetDetailScreenState extends ConsumerState<BudgetDetailScreen>
                         icon: Icons.category_outlined,
                       ),
                       const SizedBox(height: 12),
-                      _InfoRow(
-                        label: 'Period',
-                        value: '${DateFormat('MMM dd').format(budget.startDate)} - ${DateFormat('MMM dd, yyyy').format(budget.endDate)}',
-                        icon: Icons.calendar_today,
+                      Consumer(
+                        builder: (context, ref, child) {
+                          final startDate = ref.watch(formattingServiceProvider).formatDate(budget.startDate, format: 'MMM dd');
+                          final endDate = ref.watch(formattingServiceProvider).formatDate(budget.endDate, format: 'MMM dd, yyyy');
+                          return _InfoRow(
+                            label: 'Period',
+                            value: '$startDate - $endDate',
+                            icon: Icons.calendar_today,
+                          );
+                        },
                       ),
                       const SizedBox(height: 12),
-                      _InfoRow(
-                        label: 'Total Budget',
-                        value: NumberFormat.currency(symbol: '\$', decimalDigits: 0).format(budget.totalBudget),
-                        icon: Icons.account_balance_wallet_outlined,
+                      Consumer(
+                        builder: (context, ref, child) {
+                          return _InfoRow(
+                            label: 'Total Budget',
+                            value: ref.watch(formattingServiceProvider).formatCurrency(budget.totalBudget, decimalDigits: 0),
+                            icon: Icons.account_balance_wallet_outlined,
+                          );
+                        },
                       ),
                       const SizedBox(height: 12),
                       _InfoRow(
@@ -1669,22 +1691,30 @@ class _BudgetDetailScreenState extends ConsumerState<BudgetDetailScreen>
             Row(
               children: [
                 Expanded(
-                  child: _buildStatCard(
-                    context,
-                    'Spent',
-                    '\$${category.totalSpent.toStringAsFixed(2)}',
-                    Icons.trending_up,
-                    color,
+                  child: Consumer(
+                    builder: (context, ref, child) {
+                      return _buildStatCard(
+                        context,
+                        'Spent',
+                        ref.watch(formattingServiceProvider).formatCurrency(category.totalSpent, decimalDigits: 2),
+                        Icons.trending_up,
+                        color,
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _buildStatCard(
-                    context,
-                    'Budget',
-                    '\$${category.totalBudget.toStringAsFixed(2)}',
-                    Icons.account_balance_wallet,
-                    Theme.of(context).colorScheme.onSurfaceVariant,
+                  child: Consumer(
+                    builder: (context, ref, child) {
+                      return _buildStatCard(
+                        context,
+                        'Budget',
+                        ref.watch(formattingServiceProvider).formatCurrency(category.totalBudget, decimalDigits: 2),
+                        Icons.account_balance_wallet,
+                        Theme.of(context).colorScheme.onSurfaceVariant,
+                      );
+                    },
                   ),
                 ),
               ],
@@ -1695,14 +1725,18 @@ class _BudgetDetailScreenState extends ConsumerState<BudgetDetailScreen>
             Row(
               children: [
                 Expanded(
-                  child: _buildStatCard(
-                    context,
-                    'Remaining',
-                    '\$${(category.totalBudget - category.totalSpent).toStringAsFixed(2)}',
-                    Icons.trending_down,
-                    (category.totalBudget - category.totalSpent) >= 0
-                        ? Colors.green
-                        : Colors.red,
+                  child: Consumer(
+                    builder: (context, ref, child) {
+                      return _buildStatCard(
+                        context,
+                        'Remaining',
+                        ref.watch(formattingServiceProvider).formatCurrency(category.totalBudget - category.totalSpent, decimalDigits: 2),
+                        Icons.trending_down,
+                        (category.totalBudget - category.totalSpent) >= 0
+                            ? Colors.green
+                            : Colors.red,
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -1830,15 +1864,17 @@ void _showBudgetOptions(BuildContext context, WidgetRef ref, budget_entity.Budge
                 context: context,
                 budget: budget,
                 onSubmit: (updatedBudget) async {
-                  await ref
+                  // Trigger update asynchronously to allow sheet to close immediately
+                  ref
                       .read(budgetNotifierProvider.notifier)
-                      .updateBudget(updatedBudget);
-
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Budget updated successfully')),
-                    );
-                  }
+                      .updateBudget(updatedBudget)
+                      .then((success) {
+                    if (success && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Budget updated successfully')),
+                      );
+                    }
+                  });
                 },
               );
             },
@@ -1996,12 +2032,16 @@ class _CategoryProgressItem extends StatelessWidget {
                   ],
                 ),
               ),
-              Text(
-                NumberFormat.currency(symbol: '\$', decimalDigits: 0).format(spent),
-                style: AppTypography.bodyMedium.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: healthColor,
-                ),
+              Consumer(
+                builder: (context, ref, child) {
+                  return Text(
+                    ref.watch(formattingServiceProvider).formatCurrency(spent, decimalDigits: 0),
+                    style: AppTypography.bodyMedium.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: healthColor,
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -2042,11 +2082,15 @@ class _CategoryProgressItem extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Budget: ${NumberFormat.currency(symbol: '\$', decimalDigits: 0).format(budget)}',
-                style: AppTypography.caption.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+              Consumer(
+                builder: (context, ref, child) {
+                  return Text(
+                    'Budget: ${ref.watch(formattingServiceProvider).formatCurrency(budget, decimalDigits: 0)}',
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  );
+                },
               ),
               if (isOverBudget)
                 Row(
@@ -2057,22 +2101,30 @@ class _CategoryProgressItem extends StatelessWidget {
                       color: healthColor,
                     ),
                     const SizedBox(width: 4),
-                    Text(
-                      '\$${(spent - budget).toStringAsFixed(0)} over',
-                      style: AppTypography.caption.copyWith(
-                        color: healthColor,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    Consumer(
+                      builder: (context, ref, child) {
+                        return Text(
+                          '${ref.watch(formattingServiceProvider).formatCurrency(spent - budget, decimalDigits: 0)} over',
+                          style: AppTypography.caption.copyWith(
+                            color: healthColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        );
+                      },
                     ),
                   ],
                 )
               else
-                Text(
-                  '\$${(budget - spent).toStringAsFixed(0)} left',
-                  style: AppTypography.caption.copyWith(
-                    color: AppColorsExtended.statusNormal,
-                    fontWeight: FontWeight.w600,
-                  ),
+                Consumer(
+                  builder: (context, ref, child) {
+                    return Text(
+                      '${ref.watch(formattingServiceProvider).formatCurrency(budget - spent, decimalDigits: 0)} left',
+                      style: AppTypography.caption.copyWith(
+                        color: AppColorsExtended.statusNormal,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    );
+                  },
                 ),
             ],
           ),
@@ -2171,8 +2223,9 @@ class _TransactionItem extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  DateFormat('MMM dd, yyyy').format(transaction.date),
+                SettingsDateText(
+                  date: transaction.date,
+                  format: 'MMM dd, yyyy',
                   style: AppTypography.caption.copyWith(
                     color: AppColors.textSecondary,
                   ),
@@ -2180,8 +2233,9 @@ class _TransactionItem extends StatelessWidget {
               ],
             ),
           ),
-          Text(
-            NumberFormat.currency(symbol: '\$', decimalDigits: 0).format(transaction.amount),
+          PrivacyModeAmount(
+            amount: transaction.amount,
+            currency: transaction.currencyCode ?? '\$',
             style: AppTypography.bodyMedium.copyWith(
               fontWeight: FontWeight.w700,
               color: AppColors.error,

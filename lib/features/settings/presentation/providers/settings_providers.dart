@@ -5,6 +5,10 @@ import '../../data/datasources/settings_hive_datasource.dart';
 import '../../data/repositories/settings_repository_impl.dart';
 import '../../domain/entities/settings.dart';
 import '../../domain/repositories/settings_repository.dart';
+import '../../domain/services/formatting_service.dart';
+import '../../domain/services/privacy_mode_service.dart';
+import '../../domain/services/background_export_service.dart';
+import '../../domain/services/scheduled_export_service.dart';
 import '../../domain/usecases/get_settings.dart';
 import '../../domain/usecases/update_settings.dart';
 import '../notifiers/settings_notifier.dart';
@@ -13,8 +17,10 @@ import '../states/settings_state.dart';
 // Data source provider
 final settingsDataSourceProvider = Provider<SettingsHiveDataSource>((ref) {
   final dataSource = SettingsHiveDataSource();
-  // Initialize the data source
-  dataSource.init();
+  // Initialize the data source asynchronously
+  dataSource.init().catchError((e) {
+    debugPrint('Failed to initialize settings data source: $e');
+  });
   return dataSource;
 });
 
@@ -52,6 +58,32 @@ final currentSettingsProvider = Provider<AppSettings?>((ref) {
   return settingsState.maybeWhen(
     data: (state) => state.settings,
     orElse: () => null,
+  );
+});
+
+// Privacy mode service provider
+final privacyModeServiceProvider = Provider<PrivacyModeService>((ref) {
+  return PrivacyModeService(ref);
+});
+
+// Formatting service provider
+final formattingServiceProvider = Provider<FormattingService>((ref) {
+  return FormattingService(ref);
+});
+
+// Background export service provider
+final backgroundExportServiceProvider = Provider<BackgroundExportService>((ref) {
+  final settingsRepository = ref.watch(settingsRepositoryProvider);
+  return BackgroundExportService(settingsRepository: settingsRepository);
+});
+
+// Scheduled export service provider
+final scheduledExportServiceProvider = Provider<ScheduledExportService>((ref) {
+  final settingsRepository = ref.watch(settingsRepositoryProvider);
+  final backgroundExportService = ref.watch(backgroundExportServiceProvider);
+  return ScheduledExportService(
+    settingsRepository: settingsRepository,
+    backgroundExportService: backgroundExportService,
   );
 });
 

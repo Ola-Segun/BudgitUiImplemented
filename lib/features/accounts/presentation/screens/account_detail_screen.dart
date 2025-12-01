@@ -13,6 +13,7 @@ import '../../../../core/design_system/patterns/action_button_pattern.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
+import '../../../settings/presentation/widgets/privacy_mode_text.dart';
 import '../../../transactions/domain/entities/transaction.dart';
 import '../../../transactions/presentation/providers/transaction_providers.dart';
 import '../../../transactions/presentation/widgets/enhanced_transaction_tile.dart';
@@ -253,7 +254,7 @@ class _AccountDetailScreenState extends ConsumerState<AccountDetailScreen>
 
   Widget _buildAccountCard(BuildContext context, Account account) {
     return Semantics(
-      label: 'Account card for ${account.name}, type ${account.type.displayName}, balance ${account.currency} ${account.currentBalance.toStringAsFixed(2)}',
+      label: 'Account card for ${account.name}, type ${account.type.displayName}',
       hint: 'Tap to view account details',
       child: Container(
         padding: EdgeInsets.all(DesignTokens.cardPaddingLg),
@@ -321,12 +322,13 @@ class _AccountDetailScreenState extends ConsumerState<AccountDetailScreen>
               semanticsLabel: 'Balance label',
             ),
             const SizedBox(height: 4),
-            Text(
-              '${account.currency} ${account.currentBalance.toStringAsFixed(2)}',
+            PrivacyModeAmount(
+              amount: account.currentBalance.abs(),
+              currency: account.currency ?? 'USD',
               style: TypographyTokens.numericXl.copyWith(
                 color: AccessibilityUtils.getAccessibleTextColor(ColorTokens.teal500),
               ),
-              semanticsLabel: 'Current balance: ${account.currency} ${account.currentBalance.toStringAsFixed(2)}',
+              textAlign: TextAlign.center,
             ),
 
             // Account Status
@@ -377,7 +379,8 @@ class _AccountDetailScreenState extends ConsumerState<AccountDetailScreen>
             Expanded(
               child: _buildBalanceStat(
                 'Available',
-                '${account.currency} ${account.availableBalance.toStringAsFixed(2)}',
+                account.availableBalance,
+                account.currency ?? 'USD',
                 ColorTokens.success500,
               ).animate()
                 .fadeIn(duration: DesignTokens.durationNormal)
@@ -387,7 +390,8 @@ class _AccountDetailScreenState extends ConsumerState<AccountDetailScreen>
             Expanded(
               child: _buildBalanceStat(
                 'Used',
-                '${account.currency} ${(account.currentBalance - account.availableBalance).abs().toStringAsFixed(2)}',
+                (account.currentBalance - account.availableBalance).abs(),
+                account.currency ?? 'USD',
                 ColorTokens.warning500,
               ).animate()
                 .fadeIn(duration: DesignTokens.durationNormal, delay: 50.ms)
@@ -446,11 +450,29 @@ class _AccountDetailScreenState extends ConsumerState<AccountDetailScreen>
               'Credit Used',
               style: TypographyTokens.bodyMd,
             ),
-            Text(
-              '${account.currency} ${usedAmount.toStringAsFixed(2)} / ${account.currency} ${account.creditLimit!.toStringAsFixed(2)}',
-              style: TypographyTokens.bodyMd.copyWith(
-                fontWeight: TypographyTokens.weightSemiBold,
-              ),
+            Row(
+              children: [
+                PrivacyModeAmount(
+                  amount: usedAmount,
+                  currency: account.currency ?? 'USD',
+                  style: TypographyTokens.bodyMd.copyWith(
+                    fontWeight: TypographyTokens.weightSemiBold,
+                  ),
+                ),
+                Text(
+                  ' / ',
+                  style: TypographyTokens.bodyMd.copyWith(
+                    fontWeight: TypographyTokens.weightSemiBold,
+                  ),
+                ),
+                PrivacyModeAmount(
+                  amount: account.creditLimit!,
+                  currency: account.currency ?? 'USD',
+                  style: TypographyTokens.bodyMd.copyWith(
+                    fontWeight: TypographyTokens.weightSemiBold,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -466,7 +488,7 @@ class _AccountDetailScreenState extends ConsumerState<AccountDetailScreen>
     );
   }
 
-  Widget _buildBalanceStat(String label, String value, Color color) {
+  Widget _buildBalanceStat(String label, double amount, String currency, Color color) {
     return Container(
       padding: EdgeInsets.all(DesignTokens.spacing3),
       decoration: BoxDecoration(
@@ -482,12 +504,14 @@ class _AccountDetailScreenState extends ConsumerState<AccountDetailScreen>
             ),
           ),
           SizedBox(height: DesignTokens.spacing1),
-          Text(
-            value,
+          PrivacyModeAmount(
+            amount: amount,
+            currency: currency,
             style: TypographyTokens.numericMd.copyWith(
               color: color,
               fontSize: 16,
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -646,7 +670,7 @@ class _AccountDetailScreenState extends ConsumerState<AccountDetailScreen>
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(String label, dynamic value, [String? currency]) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: DesignTokens.spacing2),
       child: Row(
@@ -663,10 +687,17 @@ class _AccountDetailScreenState extends ConsumerState<AccountDetailScreen>
             ),
           ),
           Expanded(
-            child: Text(
-              value,
-              style: TypographyTokens.bodyMd,
-            ),
+            child: currency != null && value is double
+                ? PrivacyModeAmount(
+                    amount: value,
+                    currency: currency,
+                    style: TypographyTokens.bodyMd,
+                    textAlign: TextAlign.start,
+                  )
+                : Text(
+                    value.toString(),
+                    style: TypographyTokens.bodyMd,
+                  ),
           ),
         ],
       ),
@@ -687,17 +718,17 @@ class _AccountDetailScreenState extends ConsumerState<AccountDetailScreen>
               .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 400.ms),
 
             SizedBox(height: DesignTokens.spacing2),
-            _buildInfoRow('Credit Limit', '${account.currency} ${account.creditLimit!.toStringAsFixed(2)}').animate()
+            _buildInfoRow('Credit Limit', account.creditLimit!, account.currency ?? 'USD').animate()
               .fadeIn(duration: DesignTokens.durationNormal, delay: 450.ms)
               .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 450.ms),
 
             if (account.availableCredit != null)
-              _buildInfoRow('Available Credit', '${account.currency} ${account.availableCredit!.toStringAsFixed(2)}').animate()
+              _buildInfoRow('Available Credit', account.availableCredit!, account.currency ?? 'USD').animate()
                 .fadeIn(duration: DesignTokens.durationNormal, delay: 500.ms)
                 .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 500.ms),
 
             if (account.minimumPayment != null)
-              _buildInfoRow('Minimum Payment', '${account.currency} ${account.minimumPayment!.toStringAsFixed(2)}').animate()
+              _buildInfoRow('Minimum Payment', account.minimumPayment!, account.currency ?? 'USD').animate()
                 .fadeIn(duration: DesignTokens.durationNormal, delay: 550.ms)
                 .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 550.ms),
           ],
@@ -721,7 +752,7 @@ class _AccountDetailScreenState extends ConsumerState<AccountDetailScreen>
                 .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 450.ms),
 
             if (account.minimumPayment != null)
-              _buildInfoRow('Monthly Payment', '${account.currency} ${account.minimumPayment!.toStringAsFixed(2)}').animate()
+              _buildInfoRow('Monthly Payment', account.minimumPayment!, account.currency ?? 'USD').animate()
                 .fadeIn(duration: DesignTokens.durationNormal, delay: 500.ms)
                 .slideX(begin: -0.1, duration: DesignTokens.durationNormal, delay: 500.ms),
           ],

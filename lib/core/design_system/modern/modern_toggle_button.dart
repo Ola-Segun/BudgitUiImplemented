@@ -72,8 +72,57 @@ class _ModernToggleButtonState extends State<ModernToggleButton>
           builder: (context, child) {
             return LayoutBuilder(
               builder: (context, constraints) {
-                final segmentWidth =
-                    constraints.maxWidth / widget.options.length;
+                // FIX: Check if we have valid width constraints
+                final maxWidth = constraints.maxWidth;
+                if (!maxWidth.isFinite || maxWidth <= 0) {
+                  // Fallback: Return a simple row without positioned elements
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: widget.options.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final option = entry.value;
+                      final isSelected = index == widget.selectedIndex;
+                      
+                      return GestureDetector(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          widget.onChanged(index);
+                        },
+                        child: Semantics(
+                          label: option,
+                          selected: isSelected,
+                          button: true,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: spacing_md,
+                              vertical: spacing_xs,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? ModernColors.lightBackground
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(radius_pill - spacing_xs),
+                              boxShadow: isSelected ? [ModernShadows.subtle] : null,
+                            ),
+                            child: Text(
+                              option,
+                              style: ModernTypography.bodyLarge.copyWith(
+                                color: isSelected
+                                    ? ModernColors.primaryBlack
+                                    : ModernColors.textSecondary,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.w400,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  );
+                }
+
+                final segmentWidth = maxWidth / widget.options.length;
 
                 return Stack(
                   children: [

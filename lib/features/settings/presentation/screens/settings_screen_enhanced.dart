@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/design_system/design_tokens.dart';
 import '../../../../core/design_system/color_tokens.dart';
 import '../../../../core/design_system/typography_tokens.dart';
@@ -12,11 +13,16 @@ import '../widgets/settings_slider_tile.dart';
 import '../widgets/theme_selector_sheet.dart';
 import '../widgets/currency_selector_sheet.dart';
 import '../widgets/date_format_selector_sheet.dart';
+import '../widgets/account_themes_editor_sheet.dart';
 import '../widgets/export_data_dialog.dart';
 import '../widgets/import_data_dialog.dart';
 import '../widgets/clear_data_dialog.dart';
+import '../../domain/services/locale_service.dart';
 import 'two_factor_setup_screen.dart';
 import '../../domain/entities/settings.dart';
+import '../../../accounts/domain/entities/account_type_theme.dart';
+import '../../../onboarding/domain/entities/user_profile.dart';
+import '../../../onboarding/presentation/providers/onboarding_providers.dart' as onboarding_providers;
 
 // Accessibility utilities
 class AccessibilityUtils {
@@ -133,9 +139,11 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
       color: ColorTokens.teal500,
       child: SingleChildScrollView(
         padding: EdgeInsets.all(DesignTokens.screenPaddingH),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        child: SizedBox(
+          width: double.infinity,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             // Profile Card
             Semantics(
               label: 'User profile section',
@@ -206,6 +214,46 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
 
             SizedBox(height: DesignTokens.sectionGapLg),
 
+            // Language Section
+            Semantics(
+              label: 'Language settings section',
+              child: _buildLanguageSection(context, settings).animate()
+                .fadeIn(duration: DesignTokens.durationNormal, delay: 400.ms)
+                .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 400.ms),
+            ),
+
+            SizedBox(height: DesignTokens.sectionGapLg),
+
+            // Quiet Hours Section
+            Semantics(
+              label: 'Quiet hours settings section',
+              child: _buildQuietHoursSection(context, settings).animate()
+                .fadeIn(duration: DesignTokens.durationNormal, delay: 450.ms)
+                .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 450.ms),
+            ),
+
+            SizedBox(height: DesignTokens.sectionGapLg),
+
+            // Export Options Section
+            Semantics(
+              label: 'Export options settings section',
+              child: _buildExportOptionsSection(context, settings).animate()
+                .fadeIn(duration: DesignTokens.durationNormal, delay: 475.ms)
+                .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 475.ms),
+            ),
+
+            SizedBox(height: DesignTokens.sectionGapLg),
+
+            // Advanced Settings Section
+            Semantics(
+              label: 'Advanced settings section',
+              child: _buildAdvancedSettingsSection(context, settings).animate()
+                .fadeIn(duration: DesignTokens.durationNormal, delay: 490.ms)
+                .slideY(begin: 0.1, duration: DesignTokens.durationNormal, delay: 490.ms),
+            ),
+
+            SizedBox(height: DesignTokens.sectionGapLg),
+
             // About Section
             Semantics(
               label: 'About section',
@@ -217,169 +265,46 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
             SizedBox(height: DesignTokens.spacing8),
           ],
         ),
+        ),
       ),
     );
   }
 
   Widget _buildProfileCard(BuildContext context) {
+    final userProfile = ref.watch(onboarding_providers.userProfileProvider);
+
     return Semantics(
       label: 'User profile card',
       hint: 'Displays user information and edit option',
-      child: Container(
-        padding: EdgeInsets.all(spacing_lg),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [ModernColors.accentGreen, ModernColors.categoryBlue],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(radius_xl),
-          boxShadow: [ModernShadows.medium],
-        ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                // Avatar
-                Semantics(
-                  label: 'User avatar',
-                  child: Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(radius_lg),
-                    ),
-                    child: Icon(
-                      Icons.person,
-                      size: 32,
-                      color: Colors.white,
-                      semanticLabel: 'User profile icon',
-                    ),
-                  ).animate()
-                    .scale(
-                      begin: const Offset(0.8, 0.8),
-                      end: const Offset(1.0, 1.0),
-                      duration: ModernAnimations.normal,
-                      delay: 200.ms,
-                      curve: ModernCurves.bounceOut,
-                    ),
-                ),
-
-                SizedBox(width: spacing_md),
-
-                // User Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'John Doe',
-                        style: ModernTypography.titleLarge.copyWith(
-                          color: ModernColors.lightText,
-                        ),
-                        semanticsLabel: 'User name: John Doe',
-                      ).animate()
-                        .fadeIn(duration: ModernAnimations.normal, delay: 300.ms)
-                        .slideX(begin: 0.1, duration: ModernAnimations.normal, delay: 300.ms),
-
-                      const SizedBox(height: 4),
-                      Text(
-                        'john.doe@example.com',
-                        style: ModernTypography.bodyLarge.copyWith(
-                          color: ModernColors.lightText.withValues(alpha: 0.9),
-                        ),
-                        semanticsLabel: 'User email: john.doe@example.com',
-                      ).animate()
-                        .fadeIn(duration: ModernAnimations.normal, delay: 400.ms)
-                        .slideX(begin: 0.1, duration: ModernAnimations.normal, delay: 400.ms),
-                    ],
-                  ),
-                ),
-
-                // Edit Button
-                Semantics(
-                  button: true,
-                  label: 'Edit profile',
-                  hint: 'Double tap to edit user profile information',
-                  child: Container(
-                    padding: EdgeInsets.all(spacing_xs),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(radius_md),
-                    ),
-                    child: Icon(
-                      Icons.edit,
-                      size: 20,
-                      color: Colors.white,
-                      semanticLabel: 'Edit profile icon',
-                    ),
-                  ).animate()
-                    .fadeIn(duration: ModernAnimations.normal, delay: 500.ms)
-                    .scale(
-                      begin: const Offset(0.8, 0.8),
-                      end: const Offset(1.0, 1.0),
-                      duration: ModernAnimations.normal,
-                      delay: 500.ms,
-                      curve: ModernCurves.bounceOut,
-                    ),
-                ),
-              ],
-            ),
-
-            SizedBox(height: spacing_lg),
-
-            // Editable Profile Fields
-            ModernTextField(
-              label: 'Name',
-              placeholder: 'Enter your name',
-              prefixIcon: Icons.person,
-              initialValue: 'John Doe',
-            ).animate()
-              .fadeIn(duration: ModernAnimations.normal, delay: 600.ms)
-              .slideY(begin: 0.1, duration: ModernAnimations.normal, delay: 600.ms),
-
-            SizedBox(height: spacing_md),
-
-            ModernTextField(
-              label: 'Email',
-              placeholder: 'Enter your email',
-              prefixIcon: Icons.email,
-              keyboardType: TextInputType.emailAddress,
-              initialValue: 'john.doe@example.com',
-            ).animate()
-              .fadeIn(duration: ModernAnimations.normal, delay: 700.ms)
-              .slideY(begin: 0.1, duration: ModernAnimations.normal, delay: 700.ms),
-
-            SizedBox(height: spacing_md),
-
-            ModernTextField(
-              label: 'Phone',
-              placeholder: 'Enter your phone number',
-              prefixIcon: Icons.phone,
-              keyboardType: TextInputType.phone,
-              initialValue: '+1 (555) 123-4567',
-            ).animate()
-              .fadeIn(duration: ModernAnimations.normal, delay: 800.ms)
-              .slideY(begin: 0.1, duration: ModernAnimations.normal, delay: 800.ms),
-
-            SizedBox(height: spacing_lg),
-
-            ModernActionButton(
-              text: 'Save Profile',
-              icon: Icons.save,
-              onPressed: () {
-                // TODO: Implement profile save functionality
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Profile saved successfully!')),
-                );
-              },
-            ).animate()
-              .fadeIn(duration: ModernAnimations.normal, delay: 900.ms)
-              .slideY(begin: 0.1, duration: ModernAnimations.normal, delay: 900.ms),
-          ],
-        ),
+      child: EditableProfileCard(
+        userProfile: userProfile,
+        onSave: (name, email) => _saveProfile(context, name, email),
       ),
+    );
+  }
+
+  Future<void> _saveProfile(BuildContext context, String name, String email) async {
+    final updateProfile = ref.read(onboarding_providers.updateUserProfileProvider);
+
+    final result = await updateProfile(name: name, email: email);
+
+    result.when(
+      success: (_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile updated successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      },
+      error: (failure) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update profile: ${failure.message}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      },
     );
   }
 
@@ -554,38 +479,39 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
           SizedBox(height: spacing_lg),
 
           // Push Notifications Toggle
-          Semantics(
-            label: 'Push notifications toggle',
-            hint: 'Double tap to enable or disable push notifications',
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Push Notifications',
-                        style: ModernTypography.bodyLarge,
-                      ),
-                      Text(
-                        'Receive app notifications',
-                        style: ModernTypography.labelMedium,
-                      ),
-                    ],
-                  ),
-                ),
-                ModernToggleButton(
-                  options: ['Off', 'On'],
-                  selectedIndex: settings.notificationsEnabled ? 1 : 0,
-                  onChanged: (index) {
-                    ref.read(settingsNotifierProvider.notifier)
-                        .updateNotificationsEnabled(index == 1);
-                  },
-                ),
-              ],
+Semantics(
+  label: 'Push notifications toggle',
+  hint: 'Double tap to enable or disable push notifications',
+  child: Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Push Notifications',
+              style: ModernTypography.bodyLarge,
             ),
-          ).animate()
+            Text(
+              'Receive app notifications',
+              style: ModernTypography.labelMedium,
+            ),
+          ],
+        ),
+      ),
+      SizedBox(width: spacing_md),
+      ModernToggleButton(
+        options: ['Off', 'On'],
+        selectedIndex: settings.notificationsEnabled ? 1 : 0,
+        onChanged: (index) {
+          ref.read(settingsNotifierProvider.notifier)
+              .updateNotificationsEnabled(index == 1);
+        },
+      ),
+    ],
+  ),
+).animate()
             .fadeIn(duration: ModernAnimations.normal)
             .slideX(begin: -0.1, duration: ModernAnimations.normal),
 
@@ -597,9 +523,11 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
               label: 'Budget alerts toggle',
               hint: 'Double tap to enable or disable budget alerts',
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(
+                  Flexible(
+                    fit: FlexFit.loose,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -614,6 +542,7 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
                       ],
                     ),
                   ),
+                  SizedBox(width: spacing_md),
                   ModernToggleButton(
                     options: ['Off', 'On'],
                     selectedIndex: settings.budgetAlertsEnabled ? 1 : 0,
@@ -659,9 +588,11 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
               label: 'Bill reminders toggle',
               hint: 'Double tap to enable or disable bill reminders',
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(
+                  Flexible(
+                    fit: FlexFit.loose,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -676,6 +607,7 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
                       ],
                     ),
                   ),
+                  SizedBox(width: spacing_md),
                   ModernToggleButton(
                     options: ['Off', 'On'],
                     selectedIndex: settings.billRemindersEnabled ? 1 : 0,
@@ -721,9 +653,11 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
               label: 'Income reminders toggle',
               hint: 'Double tap to enable or disable income reminders',
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(
+                  Flexible(
+                    fit: FlexFit.loose,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -738,6 +672,7 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
                       ],
                     ),
                   ),
+                  SizedBox(width: spacing_md),
                   ModernToggleButton(
                     options: ['Off', 'On'],
                     selectedIndex: settings.incomeRemindersEnabled ? 1 : 0,
@@ -826,9 +761,11 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
                 label: 'Biometric authentication toggle',
                 hint: 'Double tap to enable or disable biometric authentication',
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(
+                    Flexible(
+                      fit: FlexFit.loose,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -845,6 +782,7 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
                         ],
                       ),
                     ),
+                    SizedBox(width: spacing_md),
                     ModernToggleButton(
                       options: ['Off', 'On'],
                       selectedIndex: (settings.biometricEnabled && isAvailable) ? 1 : 0,
@@ -868,9 +806,11 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
             label: 'Auto backup toggle',
             hint: 'Double tap to enable or disable automatic backup',
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
+                Flexible(
+                  fit: FlexFit.loose,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -885,6 +825,7 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
                     ],
                   ),
                 ),
+                SizedBox(width: spacing_md),
                 ModernToggleButton(
                   options: ['Off', 'On'],
                   selectedIndex: settings.autoBackupEnabled ? 1 : 0,
@@ -902,19 +843,22 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
           SizedBox(height: spacing_md),
 
           // Two-Factor Authentication Button
-          Semantics(
-            button: true,
-            label: 'Two-factor authentication setup button',
-            hint: 'Double tap to setup two-factor authentication',
-            child: ModernActionButton(
-              text: settings.twoFactorEnabled
-                  ? 'Two-Factor Authentication (${_getMethodDisplayName(settings.twoFactorMethod)})'
-                  : 'Setup Two-Factor Authentication',
-              icon: Icons.security,
-              isPrimary: !settings.twoFactorEnabled,
-              onPressed: () => _navigateToTwoFactorSetup(context),
-            ),
-          ).animate()
+Semantics(
+  button: true,
+  label: 'Two-factor authentication setup button',
+  hint: 'Double tap to setup two-factor authentication',
+  child: SizedBox(
+    width: double.infinity, // Force full width
+    child: ModernActionButton(
+      text: settings.twoFactorEnabled
+          ? 'Two-Factor Auth (${_getMethodDisplayName(settings.twoFactorMethod)})'  // Shortened text
+          : 'Setup Two-Factor Auth',  // Shortened text
+      icon: Icons.security,
+      isPrimary: !settings.twoFactorEnabled,
+      onPressed: () => _navigateToTwoFactorSetup(context),
+    ),
+  ),
+).animate()
             .fadeIn(duration: ModernAnimations.normal, delay: 100.ms)
             .slideX(begin: -0.1, duration: ModernAnimations.normal, delay: 100.ms),
         ],
@@ -961,9 +905,11 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
             label: 'Privacy mode toggle',
             hint: 'Double tap to enable or disable privacy mode',
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
+                Flexible(
+                  fit: FlexFit.loose,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -978,6 +924,7 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
                     ],
                   ),
                 ),
+                SizedBox(width: spacing_md),
                 ModernToggleButton(
                   options: ['Off', 'On'],
                   selectedIndex: settings.privacyModeEnabled ? 1 : 0,
@@ -999,9 +946,11 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
             label: 'Privacy mode gesture toggle',
             hint: 'Double tap to enable or disable three-finger double tap gesture',
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
+                Flexible(
+                  fit: FlexFit.loose,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1016,6 +965,7 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
                     ],
                   ),
                 ),
+                SizedBox(width: spacing_md),
                 ModernToggleButton(
                   options: ['Off', 'On'],
                   selectedIndex: settings.privacyModeGestureEnabled ? 1 : 0,
@@ -1121,6 +1071,463 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
     );
   }
 
+  Widget _buildLanguageSection(BuildContext context, AppSettings settings) {
+    return Container(
+      padding: EdgeInsets.all(spacing_lg),
+      decoration: BoxDecoration(
+        color: ModernColors.lightBackground,
+        borderRadius: BorderRadius.circular(radius_lg),
+        border: Border.all(color: ModernColors.borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(spacing_xs),
+                decoration: BoxDecoration(
+                  color: ModernColors.categoryBlue.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(radius_md),
+                ),
+                child: Icon(
+                  Icons.language,
+                  color: ModernColors.categoryBlue,
+                  size: 20,
+                ),
+              ),
+              SizedBox(width: spacing_sm),
+              Text(
+                'Language',
+                style: ModernTypography.titleLarge,
+              ),
+            ],
+          ),
+          SizedBox(height: spacing_lg),
+
+          // Language Selection
+          Semantics(
+            label: 'Language selection',
+            hint: 'Double tap to change app language',
+            child: ModernActionButton(
+              text: 'Language: ${_getLanguageDisplayName(settings.languageCode)}',
+              icon: Icons.language,
+              isPrimary: false,
+              onPressed: () => _showLanguageSelector(context, settings.languageCode),
+            ),
+          ).animate()
+            .fadeIn(duration: ModernAnimations.normal)
+            .slideX(begin: -0.1, duration: ModernAnimations.normal),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuietHoursSection(BuildContext context, AppSettings settings) {
+    return Container(
+      padding: EdgeInsets.all(spacing_lg),
+      decoration: BoxDecoration(
+        color: ModernColors.lightBackground,
+        borderRadius: BorderRadius.circular(radius_lg),
+        border: Border.all(color: ModernColors.borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(spacing_xs),
+                decoration: BoxDecoration(
+                  color: ModernColors.warning.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(radius_md),
+                ),
+                child: Icon(
+                  Icons.nightlight,
+                  color: ModernColors.warning,
+                  size: 20,
+                ),
+              ),
+              SizedBox(width: spacing_sm),
+              Text(
+                'Quiet Hours',
+                style: ModernTypography.titleLarge,
+              ),
+            ],
+          ),
+          SizedBox(height: spacing_lg),
+
+          // Quiet Hours Toggle
+          Semantics(
+            label: 'Quiet hours toggle',
+            hint: 'Double tap to enable or disable quiet hours',
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  fit: FlexFit.loose,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Enable Quiet Hours',
+                        style: ModernTypography.bodyLarge,
+                      ),
+                      Text(
+                        'Silence notifications during specified hours',
+                        style: ModernTypography.labelMedium,
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: spacing_md),
+                ModernToggleButton(
+                  options: ['Off', 'On'],
+                  selectedIndex: settings.quietHoursEnabled ? 1 : 0,
+                  onChanged: (index) {
+                    ref.read(settingsNotifierProvider.notifier)
+                        .updateSetting('quietHoursEnabled', index == 1);
+                  },
+                ),
+              ],
+            ),
+          ).animate()
+            .fadeIn(duration: ModernAnimations.normal)
+            .slideX(begin: -0.1, duration: ModernAnimations.normal),
+
+          if (settings.quietHoursEnabled) ...[
+            SizedBox(height: spacing_md),
+
+            // Start Time Picker
+            Semantics(
+              label: 'Quiet hours start time',
+              hint: 'Double tap to set quiet hours start time',
+              child: ModernActionButton(
+                text: 'Start Time: ${settings.quietHoursStart}',
+                icon: Icons.schedule,
+                isPrimary: false,
+                onPressed: () => _showTimePicker(context, true, settings.quietHoursStart),
+              ),
+            ).animate()
+              .fadeIn(duration: ModernAnimations.normal, delay: 50.ms)
+              .slideX(begin: -0.1, duration: ModernAnimations.normal, delay: 50.ms),
+
+            SizedBox(height: spacing_md),
+
+            // End Time Picker
+            Semantics(
+              label: 'Quiet hours end time',
+              hint: 'Double tap to set quiet hours end time',
+              child: ModernActionButton(
+                text: 'End Time: ${settings.quietHoursEnd}',
+                icon: Icons.schedule,
+                isPrimary: false,
+                onPressed: () => _showTimePicker(context, false, settings.quietHoursEnd),
+              ),
+            ).animate()
+              .fadeIn(duration: ModernAnimations.normal, delay: 100.ms)
+              .slideX(begin: -0.1, duration: ModernAnimations.normal, delay: 100.ms),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExportOptionsSection(BuildContext context, AppSettings settings) {
+    final scheduledExportService = ref.watch(scheduledExportServiceProvider);
+
+    return Container(
+      padding: EdgeInsets.all(spacing_lg),
+      decoration: BoxDecoration(
+        color: ModernColors.lightBackground,
+        borderRadius: BorderRadius.circular(radius_lg),
+        border: Border.all(color: ModernColors.borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(spacing_xs),
+                decoration: BoxDecoration(
+                  color: ModernColors.accentGreen.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(radius_md),
+                ),
+                child: Icon(
+                  Icons.file_download,
+                  color: ModernColors.accentGreen,
+                  size: 20,
+                ),
+              ),
+              SizedBox(width: spacing_sm),
+              Text(
+                'Export Options',
+                style: ModernTypography.titleLarge,
+              ),
+            ],
+          ),
+          SizedBox(height: spacing_lg),
+
+          // Default Export Format
+          Semantics(
+            label: 'Default export format selection',
+            hint: 'Double tap to change default export format',
+            child: ModernActionButton(
+              text: 'Default Format: ${_getExportFormatDisplayName(settings.defaultExportFormat)}',
+              icon: Icons.file_present,
+              isPrimary: false,
+              onPressed: () => _showExportFormatSelector(context, settings.defaultExportFormat),
+            ),
+          ).animate()
+            .fadeIn(duration: ModernAnimations.normal)
+            .slideX(begin: -0.1, duration: ModernAnimations.normal),
+
+          SizedBox(height: spacing_md),
+
+          // Scheduled Export Toggle
+          Semantics(
+            label: 'Scheduled export toggle',
+            hint: 'Double tap to enable or disable scheduled export',
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  fit: FlexFit.loose,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Scheduled Export',
+                        style: ModernTypography.bodyLarge,
+                      ),
+                      Text(
+                        'Automatically export data at set intervals',
+                        style: ModernTypography.labelMedium,
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: spacing_md),
+                ModernToggleButton(
+                  options: ['Off', 'On'],
+                  selectedIndex: settings.scheduledExportEnabled ? 1 : 0,
+                  onChanged: (index) async {
+                    if (index == 1) {
+                      // Enable scheduled export
+                      await scheduledExportService.enableScheduledExport(
+                        frequency: settings.scheduledExportFrequency,
+                        format: settings.defaultExportFormat,
+                      );
+                    } else {
+                      // Disable scheduled export
+                      await scheduledExportService.disableScheduledExport();
+                    }
+                    // Refresh settings
+                    ref.invalidate(settingsNotifierProvider);
+                  },
+                ),
+              ],
+            ),
+          ).animate()
+            .fadeIn(duration: ModernAnimations.normal, delay: 50.ms)
+            .slideX(begin: -0.1, duration: ModernAnimations.normal, delay: 50.ms),
+
+          if (settings.scheduledExportEnabled) ...[
+            SizedBox(height: spacing_md),
+
+            // Export Frequency
+            Semantics(
+              label: 'Export frequency selection',
+              hint: 'Double tap to change scheduled export frequency',
+              child: ModernActionButton(
+                text: 'Frequency: ${_getFrequencyDisplayName(settings.scheduledExportFrequency)}',
+                icon: Icons.repeat,
+                isPrimary: false,
+                onPressed: () => _showExportFrequencySelector(context, settings.scheduledExportFrequency),
+              ),
+            ).animate()
+              .fadeIn(duration: ModernAnimations.normal, delay: 100.ms)
+              .slideX(begin: -0.1, duration: ModernAnimations.normal, delay: 100.ms),
+
+            SizedBox(height: spacing_md),
+
+            // Scheduled Export Status
+            FutureBuilder<Map<String, dynamic>>(
+              future: scheduledExportService.getScheduledExportStatus(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Container(
+                    padding: EdgeInsets.all(spacing_sm),
+                    decoration: BoxDecoration(
+                      color: ModernColors.info.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(radius_md),
+                    ),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(ModernColors.info),
+                          ),
+                        ),
+                        SizedBox(width: spacing_sm),
+                        Text(
+                          'Checking status...',
+                          style: ModernTypography.labelMedium.copyWith(
+                            color: ModernColors.info,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                final status = snapshot.data;
+                if (status == null || !status['isEnabled']) {
+                  return Container(
+                    padding: EdgeInsets.all(spacing_sm),
+                    decoration: BoxDecoration(
+                      color: ModernColors.warning.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(radius_md),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 16,
+                          color: ModernColors.warning,
+                        ),
+                        SizedBox(width: spacing_sm),
+                        Expanded(
+                          child: Text(
+                            'Scheduled export is enabled but status checking is not yet implemented.',
+                            style: ModernTypography.labelMedium.copyWith(
+                              color: ModernColors.warning,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return Container(
+                  padding: EdgeInsets.all(spacing_sm),
+                  decoration: BoxDecoration(
+                    color: ModernColors.success.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(radius_md),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.check_circle,
+                        size: 16,
+                        color: ModernColors.success,
+                      ),
+                      SizedBox(width: spacing_sm),
+                      Expanded(
+                        child: Text(
+                          'Scheduled export is active',
+                          style: ModernTypography.labelMedium.copyWith(
+                            color: ModernColors.success,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ).animate()
+              .fadeIn(duration: ModernAnimations.normal, delay: 150.ms)
+              .slideX(begin: -0.1, duration: ModernAnimations.normal, delay: 150.ms),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAdvancedSettingsSection(BuildContext context, AppSettings settings) {
+    return Container(
+      padding: EdgeInsets.all(spacing_lg),
+      decoration: BoxDecoration(
+        color: ModernColors.lightBackground,
+        borderRadius: BorderRadius.circular(radius_lg),
+        border: Border.all(color: ModernColors.borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(spacing_xs),
+                decoration: BoxDecoration(
+                  color: ModernColors.categoryPurple.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(radius_md),
+                ),
+                child: Icon(
+                  Icons.settings_applications,
+                  color: ModernColors.categoryPurple,
+                  size: 20,
+                ),
+              ),
+              SizedBox(width: spacing_sm),
+              Text(
+                'Advanced Settings',
+                style: ModernTypography.titleLarge,
+              ),
+            ],
+          ),
+          SizedBox(height: spacing_lg),
+
+          // Activity Logging Toggle
+          Semantics(
+            label: 'Activity logging toggle',
+            hint: 'Double tap to enable or disable activity logging',
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  fit: FlexFit.loose,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Activity Logging',
+                        style: ModernTypography.bodyLarge,
+                      ),
+                      Text(
+                        'Track and log user activities for analytics and troubleshooting',
+                        style: ModernTypography.labelMedium,
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: spacing_md),
+                ModernToggleButton(
+                  options: ['Off', 'On'],
+                  selectedIndex: settings.activityLoggingEnabled ? 1 : 0,
+                  onChanged: (index) {
+                    ref.read(settingsNotifierProvider.notifier)
+                        .updateSetting('activityLoggingEnabled', index == 1);
+                  },
+                ),
+              ],
+            ),
+          ).animate()
+            .fadeIn(duration: ModernAnimations.normal)
+            .slideX(begin: -0.1, duration: ModernAnimations.normal),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAboutSection(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(spacing_lg),
@@ -1177,9 +1584,9 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
             children: [
               Expanded(
                 child: ModernActionButton(
-                  text: 'Terms of Service',
+                  text: 'Terms',
                   isPrimary: false,
-                  onPressed: () {},
+                  onPressed: () => context.go('/more/settings/terms'),
                 ).animate()
                   .fadeIn(duration: ModernAnimations.normal, delay: 100.ms)
                   .slideY(begin: 0.1, duration: ModernAnimations.normal, delay: 100.ms),
@@ -1189,7 +1596,7 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
                 child: ModernActionButton(
                   text: 'Privacy Policy',
                   isPrimary: false,
-                  onPressed: () {},
+                  onPressed: () => context.go('/more/settings/privacy'),
                 ).animate()
                   .fadeIn(duration: ModernAnimations.normal, delay: 150.ms)
                   .slideY(begin: 0.1, duration: ModernAnimations.normal, delay: 150.ms),
@@ -1254,9 +1661,13 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
   }
 
   void _showAccountThemesEditor(BuildContext context, Map<String, dynamic> currentThemes) {
-    // TODO: Implement account themes editor sheet
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Account themes editor coming soon!')),
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => AccountThemesEditorSheet(
+        currentThemes: currentThemes.cast<String, AccountTypeTheme>(),
+      ),
     );
   }
 
@@ -1371,6 +1782,646 @@ class _SettingsScreenEnhancedState extends ConsumerState<SettingsScreenEnhanced>
           curve: DesignTokens.curveElastic,
         )
         .fadeIn(duration: DesignTokens.durationNormal),
+    );
+  }
+
+  // Helper methods for new sections
+  String _getLanguageDisplayName(String languageCode) {
+    switch (languageCode) {
+      case 'en':
+        return 'English';
+      case 'es':
+        return 'Español';
+      case 'fr':
+        return 'Français';
+      case 'de':
+        return 'Deutsch';
+      case 'it':
+        return 'Italiano';
+      case 'pt':
+        return 'Português';
+      case 'ru':
+        return 'Русский';
+      case 'ja':
+        return '日本語';
+      case 'ko':
+        return '한국어';
+      case 'zh':
+        return '中文';
+      default:
+        return 'English';
+    }
+  }
+
+  void _showLanguageSelector(BuildContext context, String currentLanguage) {
+    final localeService = ref.read(localeServiceProvider);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: EdgeInsets.all(DesignTokens.screenPaddingH),
+        decoration: BoxDecoration(
+          color: ColorTokens.surfacePrimary,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(DesignTokens.radiusXl)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Select Language',
+              style: TypographyTokens.heading4,
+            ),
+            SizedBox(height: DesignTokens.spacing4),
+            ...localeService.getSupportedLanguageCodes().map((code) => ListTile(
+              title: Text(localeService.getLanguageDisplayName(code)),
+              leading: Icon(
+                currentLanguage == code ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                color: currentLanguage == code ? ColorTokens.teal500 : ColorTokens.textSecondary,
+              ),
+              onTap: () async {
+                if (currentLanguage != code) {
+                  // Update the language setting
+                  await localeService.setLocale(code);
+                  Navigator.pop(context);
+
+                  // Show restart dialog
+                  _showRestartDialog(context);
+                } else {
+                  Navigator.pop(context);
+                }
+              },
+            )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showTimePicker(BuildContext context, bool isStartTime, String currentTime) async {
+    final timeParts = currentTime.split(':');
+    final initialTime = TimeOfDay(
+      hour: int.parse(timeParts[0]),
+      minute: int.parse(timeParts[1]),
+    );
+
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: initialTime,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            timePickerTheme: TimePickerThemeData(
+              backgroundColor: ColorTokens.surfacePrimary,
+              hourMinuteShape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (pickedTime != null) {
+      final formattedTime = '${pickedTime.hour.toString().padLeft(2, '0')}:${pickedTime.minute.toString().padLeft(2, '0')}';
+      final settingKey = isStartTime ? 'quietHoursStart' : 'quietHoursEnd';
+      ref.read(settingsNotifierProvider.notifier).updateSetting(settingKey, formattedTime);
+    }
+  }
+
+  String _getExportFormatDisplayName(String format) {
+    switch (format) {
+      case 'csv':
+        return 'CSV';
+      case 'json':
+        return 'JSON';
+      case 'pdf':
+        return 'PDF';
+      default:
+        return 'CSV';
+    }
+  }
+
+  void _showExportFormatSelector(BuildContext context, String currentFormat) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: EdgeInsets.all(DesignTokens.screenPaddingH),
+        decoration: BoxDecoration(
+          color: ColorTokens.surfacePrimary,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(DesignTokens.radiusXl)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Select Export Format',
+              style: TypographyTokens.heading4,
+            ),
+            SizedBox(height: DesignTokens.spacing4),
+            ...['csv', 'json', 'pdf'].map((format) => ListTile(
+              title: Text(_getExportFormatDisplayName(format)),
+              leading: Icon(
+                currentFormat == format ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                color: currentFormat == format ? ColorTokens.teal500 : ColorTokens.textSecondary,
+              ),
+              onTap: () {
+                ref.read(settingsNotifierProvider.notifier).updateSetting('defaultExportFormat', format);
+                Navigator.pop(context);
+              },
+            )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _getFrequencyDisplayName(String frequency) {
+    switch (frequency) {
+      case 'daily':
+        return 'Daily';
+      case 'weekly':
+        return 'Weekly';
+      case 'monthly':
+        return 'Monthly';
+      case 'quarterly':
+        return 'Quarterly';
+      default:
+        return 'Monthly';
+    }
+  }
+
+  void _showExportFrequencySelector(BuildContext context, String currentFrequency) {
+    final scheduledExportService = ref.read(scheduledExportServiceProvider);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: EdgeInsets.all(DesignTokens.screenPaddingH),
+        decoration: BoxDecoration(
+          color: ColorTokens.surfacePrimary,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(DesignTokens.radiusXl)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Select Export Frequency',
+              style: TypographyTokens.heading4,
+            ),
+            SizedBox(height: DesignTokens.spacing4),
+            ...['daily', 'weekly', 'monthly', 'quarterly'].map((frequency) => ListTile(
+              title: Text(_getFrequencyDisplayName(frequency)),
+              leading: Icon(
+                currentFrequency == frequency ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                color: currentFrequency == frequency ? ColorTokens.teal500 : ColorTokens.textSecondary,
+              ),
+              onTap: () async {
+                // Update the scheduled export with new frequency
+                final currentSettings = ref.read(currentSettingsProvider);
+                if (currentSettings != null && currentSettings.scheduledExportEnabled) {
+                  await scheduledExportService.updateScheduledExport(
+                    frequency: frequency,
+                    format: currentSettings.defaultExportFormat,
+                  );
+                } else {
+                  // Just update the setting
+                  await ref.read(settingsNotifierProvider.notifier).updateSetting('scheduledExportFrequency', frequency);
+                }
+                Navigator.pop(context);
+                // Refresh settings
+                ref.invalidate(settingsNotifierProvider);
+              },
+            )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showRestartDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: ColorTokens.surfacePrimary,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(DesignTokens.spacing2),
+              decoration: BoxDecoration(
+                color: ColorTokens.warning500.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+              ),
+              child: Icon(
+                Icons.restart_alt,
+                color: ColorTokens.warning500,
+                size: DesignTokens.iconMd,
+              ),
+            ),
+            SizedBox(width: DesignTokens.spacing3),
+            Text(
+              'Restart Required',
+              style: TypographyTokens.heading5,
+            ),
+          ],
+        ),
+        content: Text(
+          'The app needs to restart to apply the new language setting. Would you like to restart now?',
+          style: TypographyTokens.bodyMd,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Later',
+              style: TypographyTokens.labelMd.copyWith(
+                color: ColorTokens.textSecondary,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // Restart the app by exiting and letting the system restart it
+              // This is a simple approach - in production you might want more sophisticated restart logic
+              // For now, we'll just show a message that the app will restart on next launch
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Language changed. Please restart the app to see changes.'),
+                  duration: Duration(seconds: 3),
+                ),
+              );
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: ColorTokens.teal500,
+            ),
+            child: Text(
+              'Restart Now',
+              style: TypographyTokens.labelMd.copyWith(
+                color: ColorTokens.teal500,
+                fontWeight: TypographyTokens.weightSemiBold,
+              ),
+            ),
+          ),
+        ],
+      ).animate()
+        .scale(
+          begin: const Offset(0.8, 0.8),
+          end: const Offset(1.0, 1.0),
+          duration: DesignTokens.durationNormal,
+          curve: DesignTokens.curveElastic,
+        )
+        .fadeIn(duration: DesignTokens.durationNormal),
+    );
+  }
+}
+
+/// Editable profile card widget with state management
+class EditableProfileCard extends StatefulWidget {
+  final UserProfile? userProfile;
+  final Function(String name, String email) onSave;
+
+  const EditableProfileCard({
+    super.key,
+    required this.userProfile,
+    required this.onSave,
+  });
+
+  @override
+  State<EditableProfileCard> createState() => _EditableProfileCardState();
+}
+
+class _EditableProfileCardState extends State<EditableProfileCard> {
+  bool _isEditing = false;
+  bool _isLoading = false;
+
+  late TextEditingController _nameController;
+  late TextEditingController _emailController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.userProfile?.name ?? '');
+    _emailController = TextEditingController(text: widget.userProfile?.email ?? '');
+  }
+
+  @override
+  void didUpdateWidget(EditableProfileCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.userProfile != widget.userProfile) {
+      _nameController.text = widget.userProfile?.name ?? '';
+      _emailController.text = widget.userProfile?.email ?? '';
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  void _startEditing() {
+    setState(() {
+      _isEditing = true;
+    });
+  }
+
+  void _cancelEditing() {
+    setState(() {
+      _isEditing = false;
+      _nameController.text = widget.userProfile?.name ?? '';
+      _emailController.text = widget.userProfile?.email ?? '';
+    });
+  }
+
+  Future<void> _saveProfile() async {
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+
+    // Basic validation
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Name cannot be empty'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Email cannot be empty'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    if (!_isValidEmail(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid email address'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await widget.onSave(name, email);
+      setState(() {
+        _isEditing = false;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to save profile: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  bool _isValidEmail(String email) {
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    return emailRegex.hasMatch(email);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(spacing_lg),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [ModernColors.accentGreen, ModernColors.categoryBlue],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(radius_xl),
+        boxShadow: [ModernShadows.medium],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              // Avatar
+              Semantics(
+                label: 'User avatar',
+                child: Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(radius_lg),
+                  ),
+                  child: Icon(
+                    Icons.person,
+                    size: 32,
+                    color: Colors.white,
+                    semanticLabel: 'User profile icon',
+                  ),
+                ).animate()
+                  .scale(
+                    begin: const Offset(0.8, 0.8),
+                    end: const Offset(1.0, 1.0),
+                    duration: ModernAnimations.normal,
+                    delay: 200.ms,
+                    curve: ModernCurves.bounceOut,
+                  ),
+              ),
+
+              SizedBox(width: spacing_md),
+
+              // User Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.userProfile?.name ?? 'No name set',
+                      style: ModernTypography.titleLarge.copyWith(
+                        color: ModernColors.lightText,
+                      ),
+                      semanticsLabel: 'User name: ${widget.userProfile?.name ?? 'No name set'}',
+                    ).animate()
+                      .fadeIn(duration: ModernAnimations.normal, delay: 300.ms)
+                      .slideX(begin: 0.1, duration: ModernAnimations.normal, delay: 300.ms),
+
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.userProfile?.email ?? 'No email set',
+                      style: ModernTypography.bodyLarge.copyWith(
+                        color: ModernColors.lightText.withValues(alpha: 0.9),
+                      ),
+                      semanticsLabel: 'User email: ${widget.userProfile?.email ?? 'No email set'}',
+                    ).animate()
+                      .fadeIn(duration: ModernAnimations.normal, delay: 400.ms)
+                      .slideX(begin: 0.1, duration: ModernAnimations.normal, delay: 400.ms),
+                  ],
+                ),
+              ),
+
+              // Edit Button
+              if (!_isEditing)
+                Semantics(
+                  button: true,
+                  label: 'Edit profile',
+                  hint: 'Double tap to edit user profile information',
+                  child: GestureDetector(
+                    onTap: _startEditing,
+                    child: Container(
+                      padding: EdgeInsets.all(spacing_xs),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(radius_md),
+                      ),
+                      child: Icon(
+                        Icons.edit,
+                        size: 20,
+                        color: Colors.white,
+                        semanticLabel: 'Edit profile icon',
+                      ),
+                    ).animate()
+                      .fadeIn(duration: ModernAnimations.normal, delay: 500.ms)
+                      .scale(
+                        begin: const Offset(0.8, 0.8),
+                        end: const Offset(1.0, 1.0),
+                        duration: ModernAnimations.normal,
+                        delay: 500.ms,
+                        curve: ModernCurves.bounceOut,
+                      ),
+                  ),
+                )
+              else
+                Row(
+                  children: [
+                    Semantics(
+                      button: true,
+                      label: 'Cancel editing',
+                      hint: 'Double tap to cancel profile editing',
+                      child: GestureDetector(
+                        onTap: _cancelEditing,
+                        child: Container(
+                          padding: EdgeInsets.all(spacing_xs),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(radius_md),
+                          ),
+                          child: Icon(
+                            Icons.close,
+                            size: 20,
+                            color: Colors.white,
+                            semanticLabel: 'Cancel edit icon',
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: spacing_sm),
+                    Semantics(
+                      button: true,
+                      label: 'Save profile',
+                      hint: 'Double tap to save profile changes',
+                      child: GestureDetector(
+                        onTap: _saveProfile,
+                        child: Container(
+                          padding: EdgeInsets.all(spacing_xs),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(radius_md),
+                          ),
+                          child: _isLoading
+                              ? SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                )
+                              : Icon(
+                                  Icons.check,
+                                  size: 20,
+                                  color: Colors.white,
+                                  semanticLabel: 'Save profile icon',
+                                ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+
+          if (_isEditing) ...[
+            SizedBox(height: spacing_lg),
+
+            // Editable Profile Fields
+            ModernTextField(
+              controller: _nameController,
+              label: 'Name',
+              placeholder: 'Enter your name',
+              prefixIcon: Icons.person,
+            ).animate()
+              .fadeIn(duration: ModernAnimations.normal, delay: 600.ms)
+              .slideY(begin: 0.1, duration: ModernAnimations.normal, delay: 600.ms),
+
+            SizedBox(height: spacing_md),
+
+            ModernTextField(
+              controller: _emailController,
+              label: 'Email',
+              placeholder: 'Enter your email',
+              prefixIcon: Icons.email,
+              keyboardType: TextInputType.emailAddress,
+            ).animate()
+              .fadeIn(duration: ModernAnimations.normal, delay: 700.ms)
+              .slideY(begin: 0.1, duration: ModernAnimations.normal, delay: 700.ms),
+
+            SizedBox(height: spacing_lg),
+
+            Row(
+              children: [
+                Expanded(
+                  child: ModernActionButton(
+                    text: 'Cancel',
+                    icon: Icons.close,
+                    isPrimary: false,
+                    onPressed: _cancelEditing,
+                  ),
+                ),
+                SizedBox(width: spacing_md),
+                Expanded(
+                  child: ModernActionButton(
+                    text: 'Save',
+                    icon: Icons.save,
+                    isLoading: _isLoading,
+                    onPressed: _saveProfile,
+                  ),
+                ),
+              ],
+            ).animate()
+              .fadeIn(duration: ModernAnimations.normal, delay: 800.ms)
+              .slideY(begin: 0.1, duration: ModernAnimations.normal, delay: 800.ms),
+          ],
+        ],
+      ),
     );
   }
 }

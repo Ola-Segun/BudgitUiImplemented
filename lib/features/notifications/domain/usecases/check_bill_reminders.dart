@@ -3,6 +3,7 @@ import '../../../../core/error/result.dart';
 import '../../../bills/domain/entities/bill.dart';
 import '../../../bills/domain/repositories/bill_repository.dart';
 import '../../../settings/domain/repositories/settings_repository.dart';
+import '../../../settings/domain/services/formatting_service.dart';
 import '../entities/notification.dart';
 
 /// Use case for checking bill reminders
@@ -10,10 +11,12 @@ class CheckBillReminders {
   const CheckBillReminders(
     this._billRepository,
     this._settingsRepository,
+    this._formattingService,
   );
 
   final BillRepository _billRepository;
   final SettingsRepository _settingsRepository;
+  final FormattingService _formattingService;
 
   /// Check for bill reminders and return notifications
   Future<Result<List<AppNotification>>> call() async {
@@ -58,8 +61,9 @@ class CheckBillReminders {
     final daysUntilDue = bill.daysUntilDue;
 
     // Define reminder intervals as per Guide.md (lines 703-709)
+    final formattedAmount = _formattingService.formatCurrency(bill.amount);
     final reminderIntervals = [
-      {'days': 7, 'message': '${bill.name} due in one week (\$${bill.amount.toStringAsFixed(2)})'},
+      {'days': 7, 'message': '${bill.name} due in one week ($formattedAmount)'},
       {'days': 3, 'message': '${bill.name} due soon'},
       {'days': 1, 'message': 'Reminder: ${bill.name} due tomorrow'},
       {'days': 0, 'message': '${bill.name} is due today'},

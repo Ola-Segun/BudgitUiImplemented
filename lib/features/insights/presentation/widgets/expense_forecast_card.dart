@@ -5,6 +5,7 @@ import 'package:gap/gap.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../settings/presentation/widgets/privacy_mode_text.dart';
 
 /// Card widget for expense forecasting
 class ExpenseForecastCard extends ConsumerWidget {
@@ -152,8 +153,9 @@ class ExpenseForecastCard extends ConsumerWidget {
             color: AppColors.textSecondary,
           ),
         ),
-        Text(
-          '\$${amount.toStringAsFixed(0)}',
+        PrivacyModeAmount(
+          amount: amount,
+          currency: '\$',
           style: AppTypography.bodyMedium.copyWith(
             color: amountColor,
             fontWeight: FontWeight.w600,

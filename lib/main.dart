@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hive/hive.dart';
 import 'package:accessibility_tools/accessibility_tools.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 import 'core/di/providers.dart';
 import 'core/router/app_router.dart';
@@ -11,10 +14,20 @@ import 'features/onboarding/presentation/onboarding_flow.dart';
 import 'features/onboarding/presentation/providers/onboarding_providers.dart';
 import 'features/recurring_incomes/data/models/recurring_income_dto.dart';
 import 'features/budgets/data/models/budget_dto.dart';
+import 'features/settings/domain/services/background_export_service.dart';
+import 'l10n/generated/app_localizations.dart';
 
 void main() async {
   // Ensure Flutter is initialized
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // Initialize WorkManager for background tasks
+  await BackgroundExportService.initialize();
 
   // Initialize Hive storage
   await HiveStorage.init();
@@ -87,6 +100,13 @@ class MyApp extends ConsumerWidget {
             themeMode: themeMode,
             home: const OnboardingFlow(),
             debugShowCheckedModeBanner: false,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
             builder: (context, child) => AccessibilityTools(
               child: child,
             ),
@@ -101,6 +121,13 @@ class MyApp extends ConsumerWidget {
           themeMode: themeMode,
           routerConfig: AppRouter.router,
           debugShowCheckedModeBanner: false,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => AccessibilityTools(
             child: child,
           ),

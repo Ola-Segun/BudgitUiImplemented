@@ -1,7 +1,10 @@
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
+import 'check_account_alerts.dart';
 import 'check_bill_reminders.dart';
 import 'check_budget_alerts.dart';
+import 'check_goal_milestones.dart';
+import 'check_income_reminders.dart';
 import '../entities/notification.dart';
 
 /// Use case for checking all types of notifications
@@ -9,29 +12,39 @@ class CheckAllNotifications {
   const CheckAllNotifications(
     this._checkBudgetAlerts,
     this._checkBillReminders,
+    this._checkAccountAlerts,
+    this._checkGoalMilestones,
+    this._checkIncomeReminders,
   );
 
   final CheckBudgetAlerts _checkBudgetAlerts;
   final CheckBillReminders _checkBillReminders;
+  final CheckAccountAlerts _checkAccountAlerts;
+  final CheckGoalMilestones _checkGoalMilestones;
+  final CheckIncomeReminders _checkIncomeReminders;
 
   /// Check for all types of notifications
   Future<Result<List<AppNotification>>> call() async {
     try {
-      final budgetAlertsResult = await _checkBudgetAlerts();
-      final billRemindersResult = await _checkBillReminders();
+      final results = await Future.wait([
+        _checkBudgetAlerts(),
+        _checkBillReminders(),
+        _checkAccountAlerts(),
+        _checkGoalMilestones(),
+        _checkIncomeReminders(),
+      ]);
 
-      if (budgetAlertsResult.isError) {
-        return Result.error(budgetAlertsResult.failureOrNull!);
+      // Check for errors
+      for (final result in results) {
+        if (result.isError) {
+          return Result.error(result.failureOrNull!);
+        }
       }
 
-      if (billRemindersResult.isError) {
-        return Result.error(billRemindersResult.failureOrNull!);
-      }
-
-      final allNotifications = [
-        ...budgetAlertsResult.dataOrNull!,
-        ...billRemindersResult.dataOrNull!,
-      ];
+      final allNotifications = results
+          .map((result) => result.dataOrNull!)
+          .expand((notifications) => notifications)
+          .toList();
 
       // Sort by priority (critical first) and then by creation time
       allNotifications.sort((a, b) {

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_typography_extended.dart';
 import '../theme/goals_theme_extended.dart';
 import '../../domain/entities/goal.dart';
 
-class GoalMetricCards extends StatelessWidget {
+class GoalMetricCards extends ConsumerWidget {
   const GoalMetricCards({
     super.key,
     required this.goal,
@@ -13,7 +14,7 @@ class GoalMetricCards extends StatelessWidget {
   final Goal goal;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final daysPercentage = goal.daysRemaining > 0
         ? (goal.daysRemaining / (goal.deadline.difference(goal.createdAt).inDays)).clamp(0.0, 1.0)
         : 0.0;

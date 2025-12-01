@@ -7,6 +7,8 @@ import 'dart:developer' as developer;
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/recurring_income.dart';
 import '../providers/recurring_income_providers.dart';
+import '../widgets/edit_recurring_income_bottom_sheet.dart';
+import '../widgets/create_recurring_income_bottom_sheet.dart';
 
 /// Dashboard screen for managing recurring incomes
 class RecurringIncomeDashboardScreen extends ConsumerStatefulWidget {
@@ -27,8 +29,8 @@ class _RecurringIncomeDashboardScreenState extends ConsumerState<RecurringIncome
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
-              developer.log('Navigating to add recurring income screen', name: 'Navigation');
-              context.go('/more/incomes/add');
+              developer.log('Showing add recurring income bottom sheet', name: 'Navigation');
+              CreateRecurringIncomeBottomSheet.show(context);
             },
             tooltip: 'Add Income',
           ),
@@ -249,8 +251,8 @@ class _RecurringIncomeDashboardScreenState extends ConsumerState<RecurringIncome
         trailing: IconButton(
           icon: const Icon(Icons.edit),
           onPressed: () {
-            developer.log('Navigating to edit recurring income: ${income.id}', name: 'Navigation');
-            context.go('/more/incomes/${income.id}/edit');
+            developer.log('Showing edit recurring income bottom sheet: ${income.id}', name: 'Navigation');
+            EditRecurringIncomeBottomSheet.show(context, incomeId: income.id);
           },
         ),
         onTap: () {
@@ -287,8 +289,8 @@ class _RecurringIncomeDashboardScreenState extends ConsumerState<RecurringIncome
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: () {
-              developer.log('Navigating to add recurring income from empty state', name: 'Navigation');
-              context.go('/more/incomes/add');
+              developer.log('Showing add recurring income bottom sheet from empty state', name: 'Navigation');
+              CreateRecurringIncomeBottomSheet.show(context);
             },
             icon: const Icon(Icons.add),
             label: const Text('Add Recurring Income'),

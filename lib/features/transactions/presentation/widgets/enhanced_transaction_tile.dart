@@ -11,6 +11,8 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/extensions/date_extensions.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../shared/presentation/widgets/cards/app_card.dart';
+import '../../../settings/presentation/widgets/formatting_widgets.dart';
+import '../../../settings/presentation/widgets/privacy_mode_text.dart';
 import '../../domain/entities/transaction.dart';
 import '../providers/transaction_providers.dart';
 import '../../../../core/widgets/notification_manager.dart';
@@ -194,14 +196,26 @@ class _EnhancedTransactionTileState extends ConsumerState<EnhancedTransactionTil
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 // Transaction Amount
-                                Text(
-                                  widget.transaction.signedAmount,
-                                  style: AppTypography.bodyMedium.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: widget.transaction.isIncome ? AppColors.success : AppColors.danger,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      widget.transaction.isIncome ? '+' : '-',
+                                      style: AppTypography.bodyMedium.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: widget.transaction.isIncome ? AppColors.success : AppColors.danger,
+                                      ),
+                                    ),
+                                    PrivacyModeAmount(
+                                      amount: widget.transaction.amount,
+                                      currency: widget.transaction.currencyCode ?? 'USD',
+                                      style: AppTypography.bodyMedium.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: widget.transaction.isIncome ? AppColors.success : AppColors.danger,
+                                      ),
+                                      textAlign: TextAlign.end,
+                                    ),
+                                  ],
                                 ).animate()
                                   .fadeIn(duration: 400.ms, delay: 300.ms)
                                   .slideX(begin: -0.2, duration: 400.ms, delay: 300.ms, curve: Curves.easeOutCubic),
@@ -278,8 +292,9 @@ class _EnhancedTransactionTileState extends ConsumerState<EnhancedTransactionTil
                               .fadeIn(duration: 200.ms, delay: 500.ms),
                             SizedBox(width: AppDimensions.spacing2),
                             // Date - fixed content
-                            Text(
-                              DateFormat('MMM dd').format(widget.transaction.date),
+                            SettingsDateText(
+                              date: widget.transaction.date,
+                              format: 'MMM dd',
                               style: AppTypography.caption.copyWith(
                                 color: AppColors.textSecondary,
                               ),
@@ -389,7 +404,7 @@ class _EnhancedTransactionTileState extends ConsumerState<EnhancedTransactionTil
   Future<void> _shareTransaction(BuildContext context) async {
     HapticFeedback.selectionClick();
 
-    // Create share text
+    // Create share text - Note: This still uses hardcoded formatting for sharing
     final shareText = '''
 Transaction Details:
 Title: ${widget.transaction.title}

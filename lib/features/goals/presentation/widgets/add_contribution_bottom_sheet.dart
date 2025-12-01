@@ -24,6 +24,7 @@ class _AddContributionBottomSheetState extends State<AddContributionBottomSheet>
   final _noteController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   bool _isLoading = false;
+  double _currentAmount = 0.0;
 
   @override
   void dispose() {
@@ -63,13 +64,18 @@ class _AddContributionBottomSheetState extends State<AddContributionBottomSheet>
 
             // Amount Display (prominent)
             ModernAmountDisplay(
-              amount: double.tryParse(_amountController.text) ?? 0.0,
+              amount: _currentAmount,
               isEditable: true,
-              onAmountChanged: (amount) {
-                _amountController.text = amount.toStringAsFixed(2);
+              onValueChanged: (value) {
+                setState(() {
+                  _currentAmount = double.tryParse(value) ?? 0.0;
+                });
               },
-              onTap: () {
-                // Could show keyboard here
+              onAmountChanged: (amount) {
+                setState(() {
+                  _currentAmount = amount;
+                });
+                _amountController.text = amount.toStringAsFixed(2);
               },
             ),
             const SizedBox(height: spacing_lg),

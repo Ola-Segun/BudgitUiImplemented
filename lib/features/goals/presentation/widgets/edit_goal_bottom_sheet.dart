@@ -7,20 +7,20 @@ import '../../../../core/design_system/widgets/custom_numeric_keyboard.dart';
 import '../../../transactions/domain/services/category_icon_color_service.dart';
 import '../../../transactions/presentation/providers/transaction_providers.dart';
 import '../../domain/entities/goal.dart';
+import '../providers/goal_providers.dart';
 
 /// Bottom sheet for editing an existing goal
 class EditGoalBottomSheet extends ConsumerStatefulWidget {
   const EditGoalBottomSheet({
     super.key,
     required this.goal,
-    required this.onSubmit,
   });
 
   final Goal goal;
-  final Future<void> Function(Goal updatedGoal) onSubmit;
 
   @override
-  ConsumerState<EditGoalBottomSheet> createState() => _EditGoalBottomSheetState();
+  ConsumerState<EditGoalBottomSheet> createState() =>
+      _EditGoalBottomSheetState();
 }
 
 class _EditGoalBottomSheetState extends ConsumerState<EditGoalBottomSheet> {
@@ -68,8 +68,14 @@ class _EditGoalBottomSheetState extends ConsumerState<EditGoalBottomSheet> {
   @override
   void initState() {
     super.initState();
+    // Null safety guards for widget.goal properties
+    if (widget.goal.description == null) {
+      return;
+    }
+
     _titleController = TextEditingController(text: widget.goal.title);
-    _descriptionController = TextEditingController(text: widget.goal.description);
+    _descriptionController =
+        TextEditingController(text: widget.goal.description);
 
     // Initialize amount variables
     _targetAmount = widget.goal.targetAmount;
@@ -89,220 +95,252 @@ class _EditGoalBottomSheetState extends ConsumerState<EditGoalBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return ModernBottomSheet(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: spacing_md),
-            child: Row(
-              children: [
-                Text(
-                  'Edit Goal',
-                  style: ModernTypography.titleLarge.copyWith(
-                    fontWeight: FontWeight.w600,
+    try {
+      return ModernBottomSheet(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: spacing_md),
+              child: Row(
+                children: [
+                  Text(
+                    'Edit Goal',
+                    style: ModernTypography.titleLarge.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                const Spacer(),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
-                ),
-              ],
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          // Form
-          Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Target Amount
-                ModernAmountDisplay(
-                  amount: _targetAmount,
-                  isEditable: true,
-                  onAmountChanged: (value) {
-                    _editingTargetAmountIndex = 0;
-                    setState(() {
-                      _targetAmount = value ?? 0.0;
-                    });
-                    Future.delayed(const Duration(milliseconds: 10), () {
-                      _editingTargetAmountIndex = null;
-                    });
-                  },
-                  onTap: () async {
-                    final result = await showCustomNumericKeyboard(
-                      context: context,
-                      initialValue: _targetAmount.toStringAsFixed(2),
-                      showDecimal: true,
-                    );
-                    if (result != null) {
+            // Form
+            Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Target Amount
+                  ModernAmountDisplay(
+                    amount: _targetAmount,
+                    isEditable: true,
+                    onAmountChanged: (value) {
+                      _editingTargetAmountIndex = 0;
                       setState(() {
-                        _targetAmount = double.tryParse(result) ?? 0.0;
+                        _targetAmount = value ?? 0.0;
                       });
-                    }
-                  },
-                  currencySymbol: '\$',
-                ),
-                const SizedBox(height: spacing_md),
-
-                // Category
-                Consumer(
-                  builder: (context, ref, child) {
-                    final categoryStateAsync = ref.watch(categoryNotifierProvider);
-                    final categoryService = CategoryIconColorService(ref.read(categoryNotifierProvider.notifier));
-
-                    return categoryStateAsync.when(
-                      data: (categoryState) {
-                        final categories = categoryState.expenseCategories;
-                        if (categories.isEmpty) {
-                          return const Text('No categories available');
+                      Future.delayed(const Duration(milliseconds: 10), () {
+                        if (mounted) {
+                          _editingTargetAmountIndex = null;
                         }
+                      });
+                    },
+                    onTap: () async {
+                      final result = await showCustomNumericKeyboard(
+                        context: context,
+                        initialValue: _targetAmount.toStringAsFixed(2),
+                        showDecimal: true,
+                      );
+                      if (result != null && mounted) {
+                        setState(() {
+                          _targetAmount = double.tryParse(result) ?? 0.0;
+                        });
+                      }
+                    },
+                    currencySymbol: '\$',
+                  ),
+                  const SizedBox(height: spacing_md),
 
-                        return ModernCategorySelector(
-                          categories: categories.map((category) {
-                            final iconAndColor = categoryService.getIconAndColorForCategory(category.id);
-                            return CategoryItem(
-                              id: category.id,
-                              name: category.name,
-                              icon: iconAndColor.icon,
-                              color: iconAndColor.color.toARGB32(),
-                            );
-                          }).toList(),
-                          selectedId: _selectedCategoryId,
-                          onChanged: (value) {
-                            if (value != null) {
-                              setState(() {
-                                _selectedCategoryId = value;
-                              });
-                            }
-                          },
-                        );
-                      },
-                      loading: () => const SizedBox(
-                        height: 100,
-                        child: Center(child: CircularProgressIndicator()),
-                      ),
-                      error: (error, stack) => Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: ModernColors.error.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(radius_md),
+                  // Category
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final categoryStateAsync =
+                          ref.watch(categoryNotifierProvider);
+                      final categoryService = CategoryIconColorService(
+                          ref.read(categoryNotifierProvider.notifier));
+
+                      return categoryStateAsync.when(
+                        data: (categoryState) {
+                          if (categoryState.expenseCategories == null) {
+                            return const Text('Error loading categories');
+                          }
+                          final categories = categoryState.expenseCategories;
+                          if (categories.isEmpty) {
+                            return const Text('No categories available');
+                          }
+
+                          return ModernCategorySelector(
+                            categories: categories.map((category) {
+                              final iconAndColor = categoryService
+                                  .getIconAndColorForCategory(category.id);
+                              return CategoryItem(
+                                id: category.id,
+                                name: category.name,
+                                icon: iconAndColor.icon,
+                                color: iconAndColor.color.toARGB32(),
+                              );
+                            }).toList(),
+                            selectedId: _selectedCategoryId,
+                            onChanged: (value) {
+                              if (value != null) {
+                                setState(() {
+                                  _selectedCategoryId = value;
+                                });
+                              }
+                            },
+                          );
+                        },
+                        loading: () => const SizedBox(
+                          height: 100,
+                          child: Center(child: CircularProgressIndicator()),
                         ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.error_outline,
-                              color: ModernColors.error,
-                            ),
-                            const SizedBox(width: spacing_md),
-                            Expanded(
-                              child: Text(
-                                'Error loading categories: $error',
-                                style: TextStyle(
-                                  color: ModernColors.error,
-                                  fontSize: 14,
+                        error: (error, stack) => Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: ModernColors.error.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(radius_md),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                color: ModernColors.error,
+                              ),
+                              const SizedBox(width: spacing_md),
+                              Expanded(
+                                child: Text(
+                                  'Error loading categories: $error',
+                                  style: TextStyle(
+                                    color: ModernColors.error,
+                                    fontSize: 14,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: spacing_md),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: spacing_md),
 
-                // Current Amount
-                ModernTextField(
-                  controller: TextEditingController(text: _currentAmount.toStringAsFixed(2)),
-                  label: 'Current Amount (optional)',
-                  placeholder: '0.00',
-                  prefixIcon: Icons.attach_money,
-                  keyboardType: TextInputType.numberWithOptions(decimal: true),
-                  onChanged: (value) {
-                    setState(() {
-                      _currentAmount = double.tryParse(value ?? '0') ?? 0.0;
-                    });
-                  },
-                ),
-                const SizedBox(height: spacing_md),
-
-                // Goal Title
-                ModernTextField(
-                  controller: _titleController,
-                  // label: 'Goal Title',
-                  placeholder: 'e.g., Emergency Fund',
-                  prefixIcon: Icons.flag,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter a goal title';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: spacing_md),
-
-                // Description
-                ModernTextField(
-                  controller: _descriptionController,
-                  // label: 'Description',
-                  prefixIcon: Icons.description,
-                  placeholder: 'Describe your goal...',
-                  maxLength: 200,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter a description';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: spacing_md),
-
-                // Deadline
-                ModernDateTimePicker(
-                  selectedDate: _selectedDeadline,
-                  onDateChanged: (date) {
-                    if (date != null) {
+                  // Current Amount
+                  ModernTextField(
+                    controller: TextEditingController(
+                        text: _currentAmount.toStringAsFixed(2)),
+                    label: 'Current Amount (optional)',
+                    placeholder: '0.00',
+                    prefixIcon: Icons.attach_money,
+                    keyboardType:
+                        TextInputType.numberWithOptions(decimal: true),
+                    onChanged: (value) {
                       setState(() {
-                        _selectedDeadline = date;
+                        _currentAmount = double.tryParse(value ?? '0') ?? 0.0;
                       });
-                    }
-                  },
-                  showTime: false,
-                ),
-                const SizedBox(height: spacing_md),
+                    },
+                  ),
+                  const SizedBox(height: spacing_md),
 
-                // Priority
-                ModernPrioritySelector(
-                  label: 'Priority',
-                  selectedPriority: _selectedPriority,
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        _selectedPriority = value;
-                      });
-                    }
-                  },
-                ),
+                  // Goal Title
+                  ModernTextField(
+                    controller: _titleController,
+                    // label: 'Goal Title',
+                    placeholder: 'e.g., Emergency Fund',
+                    prefixIcon: Icons.flag,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter a goal title';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: spacing_md),
 
-                const SizedBox(height: spacing_xl),
+                  // Description
+                  ModernTextField(
+                    controller: _descriptionController,
+                    // label: 'Description',
+                    prefixIcon: Icons.description,
+                    placeholder: 'Describe your goal...',
+                    maxLength: 200,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter a description';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: spacing_md),
 
-                // Action Button
-                ModernActionButton(
-                  text: 'Update Goal',
-                  onPressed: _isSubmitting ? null : _submitGoal,
-                  isLoading: _isSubmitting,
-                ),
-                const SizedBox(height: spacing_lg),
-              ],
+                  // Deadline
+                  ModernDateTimePicker(
+                    selectedDate: _selectedDeadline,
+                    onDateChanged: (date) {
+                      if (date != null) {
+                        setState(() {
+                          _selectedDeadline = date;
+                        });
+                      }
+                    },
+                    showTime: false,
+                  ),
+                  const SizedBox(height: spacing_md),
+
+                  // Priority
+                  ModernPrioritySelector(
+                    label: 'Priority',
+                    selectedPriority: _selectedPriority,
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() {
+                          _selectedPriority = value;
+                        });
+                      }
+                    },
+                  ),
+
+                  const SizedBox(height: spacing_xl),
+
+                  // Action Button
+                  ModernActionButton(
+                    text: 'Update Goal',
+                    onPressed: _isSubmitting ? null : _submitGoal,
+                    isLoading: _isSubmitting,
+                  ),
+                  const SizedBox(height: spacing_lg),
+                ],
+              ),
             ),
+          ],
+        ),
+      );
+    } catch (e) {
+      // Return a fallback widget to prevent crash
+      return ModernBottomSheet(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Error loading goal editor'),
+              const SizedBox(height: 16),
+              Text('Error: $e', style: const TextStyle(color: Colors.red)),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close'),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
+        ),
+      );
+    }
   }
 
   Future<void> _submitGoal() async {
@@ -316,7 +354,21 @@ class _EditGoalBottomSheetState extends ConsumerState<EditGoalBottomSheet> {
       final targetAmount = _targetAmount;
       final currentAmount = _currentAmount;
 
+      debugPrint('=== START GOAL UPDATE DEBUG ===');
+      debugPrint('Goal ID: ${widget.goal.id}');
+      debugPrint('Title: ${_titleController.text}');
+      debugPrint('Description: ${_descriptionController.text}');
+      debugPrint('Target Amount: $_targetAmount');
+      debugPrint('Current Amount: $_currentAmount');
+      debugPrint('Priority: $_selectedPriority');
+      debugPrint('Category ID: $_selectedCategoryId');
+      debugPrint(
+          'Created At: ${widget.goal.createdAt} (${widget.goal.createdAt.runtimeType})');
+      debugPrint('Tags: ${widget.goal.tags}');
+      debugPrint('Contributions: ${widget.goal.contributions}');
+
       final updatedGoal = widget.goal.copyWith(
+        id: widget.goal.id,
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         targetAmount: targetAmount,
@@ -325,10 +377,22 @@ class _EditGoalBottomSheetState extends ConsumerState<EditGoalBottomSheet> {
         priority: _priorityLevelToGoalPriority(_selectedPriority),
         categoryId: _selectedCategoryId,
         updatedAt: DateTime.now(),
+        createdAt: widget.goal.createdAt,
+        tags: widget.goal.tags,
+        contributions: widget.goal.contributions,
       );
 
-      await widget.onSubmit(updatedGoal);
-    } catch (e) {
+      debugPrint('Goal object created successfully');
+      debugPrint('=== END GOAL UPDATE DEBUG ===');
+
+      final success = await ref
+          .read(goalNotifierProvider.notifier)
+          .updateGoal(updatedGoal);
+
+      if (success && mounted) {
+        Navigator.of(context).pop(true);
+      }
+    } catch (e, stackTrace) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -336,13 +400,17 @@ class _EditGoalBottomSheetState extends ConsumerState<EditGoalBottomSheet> {
             backgroundColor: Colors.red,
           ),
         );
+
+        debugPrint('=== ERROR IN GOAL UPDATE ===');
+        debugPrint('Error: $e');
+        debugPrint('Stack trace: $stackTrace');
+        debugPrint('============================');
+        rethrow;
       }
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);
       }
     }
-   }
-
-
+  }
 }

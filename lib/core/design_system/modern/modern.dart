@@ -20,6 +20,7 @@ export 'modern_goal_allocation_selector.dart';
 export 'modern_dropdown_selector.dart';
 export 'modern_priority_selector.dart';
 export 'modern_form_validators.dart';
+export 'modern_color_picker.dart';
 
 // Re-export commonly used types
 export 'modern_category_selector.dart' show CategoryItem;

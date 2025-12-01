@@ -7,6 +7,7 @@ import '../widgets/create_goal_bottom_sheet.dart';
 import '../widgets/goal_template_card.dart';
 
 /// Screen for selecting a goal template with visual template cards
+@Deprecated('Use EnhancedGoalTemplateSelectionScreen instead')
 class GoalTemplateSelectionScreen extends StatefulWidget {
   const GoalTemplateSelectionScreen({super.key});
 

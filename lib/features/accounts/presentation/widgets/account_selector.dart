@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../settings/presentation/widgets/privacy_mode_text.dart';
 import '../../domain/entities/account.dart';
 import '../../presentation/providers/account_providers.dart';
 
@@ -107,7 +108,12 @@ class _AccountSelectorState extends ConsumerState<AccountSelector> {
                 ),
                 title: Text(account.displayName),
                 subtitle: widget.showBalance
-                    ? Text('\$${account.currentBalance.toStringAsFixed(2)}')
+                    ? PrivacyModeAmount(
+                        amount: account.currentBalance,
+                        currency: account.currency ?? 'USD',
+                        style: Theme.of(context).textTheme.bodySmall,
+                        textAlign: TextAlign.start,
+                      )
                     : null,
                 onTap: () => Navigator.of(context).pop(account),
               );
@@ -181,11 +187,13 @@ class _AccountSelectorState extends ConsumerState<AccountSelector> {
                         ),
                 ),
                 if (widget.selectedAccount != null && widget.showBalance)
-                  Text(
-                    '\$${widget.selectedAccount!.currentBalance.toStringAsFixed(2)}',
+                  PrivacyModeAmount(
+                    amount: widget.selectedAccount!.currentBalance,
+                    currency: widget.selectedAccount!.currency ?? 'USD',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w500,
                     ),
+                    textAlign: TextAlign.end,
                   ),
               ],
             ),
